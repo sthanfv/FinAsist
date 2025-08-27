@@ -97,6 +97,33 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     else saveGuestData({ balance, transactions, goals: newGoals });
   }, [user, balance, transactions, saveDataToFirestore]);
 
+  const checkForAlerts = (newBalance: number, allTransactions: Transaction[]) => {
+    const totalGastoOcio = allTransactions
+      .filter((t) => t.category === 'Ocio' && t.type === 'Gasto')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    if (totalGastoOcio / (newBalance || 1) > 0.4) {
+      toast({
+        title: 'Advertencia de Gasto',
+        description: 'Has gastado más del 40% de tu saldo en ocio.',
+        variant: 'destructive',
+      });
+    }
+
+    const totalGastos = allTransactions
+        .filter((t) => t.type === 'Gasto')
+        .reduce((sum, t) => sum + t.amount, 0);
+    
+    if (newBalance < 1000) {
+        toast({
+            title: 'Alerta de Saldo Bajo',
+            description: 'Tu saldo es inferior a 1000. Considera revisar tus gastos.',
+            variant: 'destructive',
+        });
+    }
+  };
+
+
   const addTransaction = useCallback((newTransaction: Omit<Transaction, 'id'>) => {
     const newId = transactions.length > 0 ? Math.max(...transactions.map(t => t.id)) + 1 : 1;
     const transactionWithId = { ...newTransaction, id: newId };
@@ -104,12 +131,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const updatedTransactions = [transactionWithId, ...transactions];
     setTransactions(updatedTransactions);
   
+    let newBalance;
     if (newTransaction.type === 'Ingreso') {
-      setBalance(balance + newTransaction.amount);
+      newBalance = balance + newTransaction.amount;
     } else {
-      setBalance(balance - newTransaction.amount);
+      newBalance = balance - newTransaction.amount;
     }
-  }, [transactions, balance, setTransactions, setBalance]);
+    setBalance(newBalance);
+    checkForAlerts(newBalance, updatedTransactions);
+
+  }, [transactions, balance, setTransactions, setBalance, toast]);
 
   const addGoal = useCallback((newGoal: Omit<Goal, 'id'>) => {
     const newId = goals.length > 0 ? Math.max(...goals.map(g => g.id)) + 1 : 1;
@@ -154,7 +185,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const firestoreData = userDoc.data();
         // Merge guest data with Firestore data (Firestore has priority)
         const mergedTransactions = [...firestoreData.transactions, ...guestData.transactions.filter(gt => !firestoreData.transactions.some(ft => ft.id === gt.id))];
-        const mergedGoals = [...firestoreData.goals, ...guestData.goals.filter(gg => !firestoreData.goals.some(fg => fg.id === gg.id))];
+        const mergedGoals = [...firestoreData.goals, ...guestData.goals.filter(gg => !firestoreData.goals.some(fg => fg.id === fg.id))];
         
         await updateDoc(userDocRef, {
             transactions: mergedTransactions,
