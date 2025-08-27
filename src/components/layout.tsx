@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { ReactNode, useState, useEffect, useRef } from 'react';
@@ -38,7 +39,7 @@ export default function Layout({ children }: LayoutProps) {
   };
   
   const formatCurrency = (value: number) => {
-    return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+    return value.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
   };
 
   const navItems = [
@@ -118,7 +119,7 @@ export default function Layout({ children }: LayoutProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-40 md:hidden"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-all duration-300 ease-out md:hidden"
               onClick={() => setSidebarOpen(false)}
             />
             <motion.aside
@@ -126,19 +127,21 @@ export default function Layout({ children }: LayoutProps) {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="fixed inset-y-0 left-0 z-50 w-64 bg-card shadow-lg md:hidden"
+              className="fixed inset-y-0 left-0 z-50 w-80 bg-white dark:bg-gray-900 shadow-2xl md:hidden border-r border-gray-200 dark:border-gray-700"
             >
-              <div className="p-6 flex flex-col h-full">
-                <div className="flex justify-between items-center mb-8">
-                    <button
-                        onClick={() => setSidebarOpen(false)}
-                        className="text-muted-foreground hover:text-foreground"
+              <div className="flex flex-col h-full">
+                 <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                      FinAssist
+                    </h2>
+                    <button 
+                      onClick={() => setSidebarOpen(false)}
+                      className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                     >
-                        <X size={24} />
+                      <X className="w-5 h-5 text-gray-500" />
                     </button>
-                    <ThemeToggle />
-                </div>
-                <nav className="flex-1 space-y-2">
+                  </div>
+                <nav className="flex-1 p-4 space-y-2">
                   {navItems.map((item) => (
                     <Link
                       key={item.name}
@@ -151,7 +154,7 @@ export default function Layout({ children }: LayoutProps) {
                     </Link>
                   ))}
                 </nav>
-                <div className="mt-auto">
+                <div className="p-4 mt-auto">
                     {authAction}
                     <BalanceDisplay />
                 </div>
@@ -173,7 +176,7 @@ export default function Layout({ children }: LayoutProps) {
              <p className="text-sm text-muted-foreground">Saldo</p>
              <p className={cn(
                 "text-lg font-semibold text-primary balance-animation",
-                balanceChanged && "animate-[pulse-gentle_0.6s_ease-in-out]"
+                balanceChanged && "animate-[pulse-gentle_0.6s_ease_in-out]"
               )}>
               {formatCurrency(balance)}
             </p>
