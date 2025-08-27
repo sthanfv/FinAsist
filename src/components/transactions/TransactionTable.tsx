@@ -17,7 +17,8 @@ import {
   SelectValue,
   SelectGroup,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
 
 export type Transaction = {
   id: number;
@@ -32,9 +33,10 @@ export type Transaction = {
 type Props = {
   transactions: Transaction[];
   onUpdate?: (updated: Transaction) => void;
+  onDelete?: (id: number) => void;
 };
 
-export default function TransactionTable({ transactions, onUpdate }: Props) {
+export default function TransactionTable({ transactions, onUpdate, onDelete }: Props) {
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterType, setFilterType] = useState('all');
 
@@ -81,9 +83,10 @@ export default function TransactionTable({ transactions, onUpdate }: Props) {
               <TableHead>Fecha</TableHead>
               <TableHead>Categoría</TableHead>
               <TableHead>Tipo</TableHead>
-              <TableHead className="text-right">Monto</TableHead>
               <TableHead>Cuenta</TableHead>
               <TableHead>Nota</TableHead>
+              <TableHead className="text-right">Monto</TableHead>
+              <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -102,9 +105,16 @@ export default function TransactionTable({ transactions, onUpdate }: Props) {
                 >
                   {t.type}
                 </TableCell>
-                <TableCell className="text-right">{t.amount.toLocaleString('es-ES')} pts</TableCell>
                 <TableCell>{t.account}</TableCell>
                 <TableCell>{t.note}</TableCell>
+                <TableCell className="text-right">{t.amount.toLocaleString('es-ES')} pts</TableCell>
+                <TableCell>
+                  {onDelete && (
+                    <Button variant="ghost" size="icon" onClick={() => onDelete(t.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  )}
+                </TableCell>
               </motion.tr>
             ))}
           </TableBody>

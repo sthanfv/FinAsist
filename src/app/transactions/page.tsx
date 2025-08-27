@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useAppContext } from '@/context/AppContext';
 import ExportImport from '@/components/transactions/ExportImport';
+import { useToast } from '@/hooks/use-toast';
 
 export default function TransactionsPage() {
-    const { transactions, addTransaction, setTransactions, loading, balance, setBalance } = useAppContext();
+    const { transactions, addTransaction, setTransactions, loading, balance, setBalance, deleteTransaction } = useAppContext();
     const [isFormVisible, setIsFormVisible] = useState(false);
+    const { toast } = useToast();
 
     if (loading) {
       return <Layout><div className="flex h-full items-center justify-center"><p>Cargando datos...</p></div></Layout>;
@@ -24,6 +26,16 @@ export default function TransactionsPage() {
       const updatedTransactions = transactions.map((t) => (t.id === updated.id ? updated : t));
       setTransactions(updatedTransactions);
     };
+    
+    const handleDelete = async (id: number) => {
+      try {
+        await deleteTransaction(id);
+        toast({ title: 'Éxito', description: 'Transacción eliminada correctamente.' });
+      } catch (error) {
+        toast({ title: 'Error', description: 'No se pudo eliminar la transacción.', variant: 'destructive' });
+      }
+    };
+
 
     const handleImport = (imported: any[]) => {
         const formatted = imported.map((t, index) => ({
@@ -64,7 +76,7 @@ export default function TransactionsPage() {
                     </div>
                 )}
                 <ExportImport transactions={transactions} onImport={handleImport} />
-                <TransactionTable transactions={transactions} onUpdate={handleUpdate} />
+                <TransactionTable transactions={transactions} onUpdate={handleUpdate} onDelete={handleDelete} />
             </div>
         </Layout>
     );
