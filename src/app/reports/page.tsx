@@ -18,14 +18,14 @@ export default function ReportsPage() {
     const monthTransactions = transactions.filter((t) => {
       const tDate = new Date(t.date);
       // getMonth() is 0-indexed, so it matches the index
-      return tDate.getMonth() === index && t.type === 'Gasto';
+      return tDate.getMonth() === index && t.type === 'expense';
     });
     const amount = monthTransactions.reduce((sum, t) => sum + t.amount, 0);
     return { name: month, amount };
   });
 
   const categoryData = Array.from(transactions.reduce((acc, t) => {
-    if (t.type === 'Gasto') {
+    if (t.type === 'expense') {
         const existing = acc.get(t.category) || { name: t.category, amount: 0 };
         existing.amount += t.amount;
         acc.set(t.category, existing);

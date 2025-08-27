@@ -5,6 +5,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import './globals.css';
+import LoadingSpinner from '@/components/ui/loading-spinner';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -13,7 +14,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { initializeApp, isInitialized } = useAppStore();
+  const { initializeApp, isInitialized, isLoading } = useAppStore();
 
   useEffect(() => {
     const unsubscribe = initializeApp();
@@ -43,9 +44,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-          {!isInitialized ? (
+          {!isInitialized || isLoading ? (
             <div className="flex h-screen items-center justify-center bg-background">
-              <p>Cargando aplicación...</p>
+              <LoadingSpinner />
             </div>
           ) : (
             children

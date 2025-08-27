@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import EditTransactionForm from '@/components/transactions/EditTransactionForm';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
-import type { Transaction } from '@/components/transactions/TransactionTable';
+import type { Transaction } from '@/store/useAppStore';
 
 
 export default function TransactionsPage() {
@@ -21,7 +21,7 @@ export default function TransactionsPage() {
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const { toast } = useToast();
 
-    const handleAddTransaction = (newTransaction: Omit<Transaction, 'id'>) => {
+    const handleAddTransaction = (newTransaction: Omit<Transaction, 'id' | 'createdAt'>) => {
         addTransaction(newTransaction);
         setIsAddFormVisible(false);
         toast({ title: 'Éxito', description: 'Transacción añadida correctamente.' });
@@ -32,14 +32,14 @@ export default function TransactionsPage() {
         setIsEditModalOpen(true);
     };
 
-    const handleUpdateTransaction = async (updatedTransaction: Transaction) => {
-        await updateTransaction(updatedTransaction);
+    const handleUpdateTransaction = async (id: string, updatedData: Partial<Transaction>) => {
+        await updateTransaction(id, updatedData);
         setIsEditModalOpen(false);
         setSelectedTransaction(null);
         toast({ title: 'Éxito', description: 'Transacción actualizada correctamente.' });
     };
     
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
       try {
         await deleteTransaction(id);
         toast({ title: 'Éxito', description: 'Transacción eliminada correctamente.' });
@@ -49,17 +49,17 @@ export default function TransactionsPage() {
     };
 
     const handleImport = (imported: any[]) => {
-        const formatted = imported.map((t, index) => ({
-          id: Date.now() + index,
+        const formatted: Transaction[] = imported.map((t, index) => ({
+          id: `${Date.now() + index}`,
           date: t.date || new Date().toISOString().split('T')[0],
           category: t.category || 'Importado',
-          type: t.type === 'Ingreso' ? 'Ingreso' : 'Gasto',
+          type: t.type === 'income' ? 'income' : 'expense',
           amount: Number(t.amount) || 0,
-          account: t.account || 'Principal',
-          note: t.note || '',
+          description: t.description || '',
+          createdAt: new Date().toISOString(),
         }));
     
-        setTransactions(formatted, true);
+        setTransactions(formatted);
         toast({ title: 'Éxito', description: 'Datos importados correctamente.' });
       };
 

@@ -3,14 +3,14 @@
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Goal } from './GoalsList';
+import { Goal } from '@/store/useAppStore';
 
 type Props = {
   goal: Goal;
 };
 
 export default function GoalCard({ goal }: Props) {
-  const progress = Math.min((goal.savedAmount / goal.targetAmount) * 100, 100);
+  const progress = Math.min((goal.currentAmount / goal.targetAmount) * 100, 100);
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
@@ -19,9 +19,9 @@ export default function GoalCard({ goal }: Props) {
   return (
     <Card className="shadow-soft rounded-xl flex flex-col">
         <CardHeader>
-            <CardTitle>{goal.title}</CardTitle>
+            <CardTitle>{goal.name}</CardTitle>
              <CardDescription>
-                {formatCurrency(goal.savedAmount)} / {formatCurrency(goal.targetAmount)}
+                {formatCurrency(goal.currentAmount)} / {formatCurrency(goal.targetAmount)}
             </CardDescription>
         </CardHeader>
         <CardContent>

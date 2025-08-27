@@ -5,8 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Sparkles, Wand2 } from 'lucide-react';
 import { getFinancialRecommendation, RecommendationInput } from '@/ai/flows/recommendationFlow';
 import { getAdvancedRecommendation, AdvancedRecommendationInput } from '@/ai/flows/advancedRecommendationFlow';
-import type { Goal } from '@/components/goals/GoalsList';
-import type { Transaction } from '@/components/transactions/TransactionTable';
+import type { Goal, Transaction } from '@/store/useAppStore';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 type Props = {
@@ -43,7 +42,17 @@ export default function UnifiedAssistant({ balance, transactions, goals, isGloba
     setAdvancedRecommendations([]);
     setError('');
     try {
-        const input: AdvancedRecommendationInput = { balance, transactions: transactions.slice(-20), goals };
+        const input: AdvancedRecommendationInput = { 
+          balance, 
+          transactions: transactions.slice(-20).map(t => ({...t, type: t.type === 'income' ? 'Ingreso' : 'Gasto'})), 
+          goals: goals.map(g => ({
+            id: g.id,
+            title: g.name,
+            targetAmount: g.targetAmount,
+            savedAmount: g.currentAmount,
+            deadline: g.deadline,
+          }))
+        };
         const result = await getAdvancedRecommendation(input);
         setAdvancedRecommendations(result.recommendations);
     } catch (err) {

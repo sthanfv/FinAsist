@@ -1,13 +1,6 @@
 "use client";
 import GoalCard from './GoalCard';
-
-export type Goal = {
-  id: number;
-  title: string;
-  targetAmount: number;
-  savedAmount: number;
-  deadline: string;
-};
+import type { Goal } from '@/store/useAppStore';
 
 type Props = {
   goals: Goal[];

@@ -19,21 +19,12 @@ import {
 } from "@/components/ui/select";
 import { Button } from '@/components/ui/button';
 import { Trash2, Edit } from 'lucide-react';
-
-export type Transaction = {
-  id: number;
-  date: string;
-  category: string;
-  type: 'Ingreso' | 'Gasto';
-  amount: number;
-  account: string;
-  note: string;
-};
+import { Transaction } from '@/store/useAppStore';
 
 type Props = {
   transactions: Transaction[];
   onEdit: (transaction: Transaction) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
 };
 
 export default function TransactionTable({ transactions, onEdit, onDelete }: Props) {
@@ -73,8 +64,8 @@ export default function TransactionTable({ transactions, onEdit, onDelete }: Pro
           <SelectContent>
              <SelectGroup>
               <SelectItem value="all">Todos los tipos</SelectItem>
-              <SelectItem value="Ingreso">Ingreso</SelectItem>
-              <SelectItem value="Gasto">Gasto</SelectItem>
+              <SelectItem value="income">Ingreso</SelectItem>
+              <SelectItem value="expense">Gasto</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
@@ -87,7 +78,6 @@ export default function TransactionTable({ transactions, onEdit, onDelete }: Pro
               <TableHead>Fecha</TableHead>
               <TableHead>Categoría</TableHead>
               <TableHead>Tipo</TableHead>
-              <TableHead>Cuenta</TableHead>
               <TableHead>Nota</TableHead>
               <TableHead className="text-right">Monto</TableHead>
               <TableHead>Acciones</TableHead>
@@ -105,12 +95,11 @@ export default function TransactionTable({ transactions, onEdit, onDelete }: Pro
                 <TableCell>{t.date}</TableCell>
                 <TableCell>{t.category}</TableCell>
                 <TableCell
-                  className={t.type === 'Gasto' ? 'text-destructive' : 'text-accent'}
+                  className={t.type === 'expense' ? 'text-destructive' : 'text-accent'}
                 >
-                  {t.type}
+                  {t.type === 'expense' ? 'Gasto' : 'Ingreso'}
                 </TableCell>
-                <TableCell>{t.account}</TableCell>
-                <TableCell>{t.note}</TableCell>
+                <TableCell>{t.description}</TableCell>
                 <TableCell className="text-right">{formatCurrency(t.amount)}</TableCell>
                 <TableCell className="flex gap-2">
                     <Button variant="ghost" size="icon" onClick={() => onEdit(t)}>

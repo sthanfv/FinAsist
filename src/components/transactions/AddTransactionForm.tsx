@@ -21,19 +21,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Transaction } from "./TransactionTable";
+import { Transaction } from "@/store/useAppStore";
+import { Textarea } from "../ui/textarea";
 
 const formSchema = z.object({
   date: z.string().min(1, "La fecha es requerida."),
   category: z.string().min(1, "La categoría es requerida."),
-  type: z.enum(["Ingreso", "Gasto"]),
+  type: z.enum(["income", "expense"]),
   amount: z.coerce.number().positive("El monto debe ser positivo."),
-  account: z.string().min(1, "La cuenta es requerida."),
-  note: z.string().optional(),
+  description: z.string().optional(),
 });
 
 type AddTransactionFormProps = {
-  onAddTransaction: (transaction: Omit<Transaction, 'id'>) => void;
+  onAddTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt'>) => void;
 };
 
 export default function AddTransactionForm({ onAddTransaction }: AddTransactionFormProps) {
@@ -42,10 +42,9 @@ export default function AddTransactionForm({ onAddTransaction }: AddTransactionF
     defaultValues: {
       date: new Date().toISOString().split('T')[0],
       category: "",
-      type: "Gasto",
+      type: "expense",
       amount: 0,
-      account: "Principal",
-      note: "",
+      description: "",
     },
   });
 
@@ -102,8 +101,8 @@ export default function AddTransactionForm({ onAddTransaction }: AddTransactionF
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Gasto">Gasto</SelectItem>
-                        <SelectItem value="Ingreso">Ingreso</SelectItem>
+                        <SelectItem value="expense">Gasto</SelectItem>
+                        <SelectItem value="income">Ingreso</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -125,33 +124,12 @@ export default function AddTransactionForm({ onAddTransaction }: AddTransactionF
               />
               <FormField
                 control={form.control}
-                name="account"
+                name="description"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cuenta</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona una cuenta" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Principal">Principal</SelectItem>
-                        <SelectItem value="Ahorro">Ahorro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="note"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nota (Opcional)</FormLabel>
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Descripción (Opcional)</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Textarea {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

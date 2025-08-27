@@ -25,7 +25,7 @@ export default function Dashboard() {
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
 
   const chartData = transactions
-    .filter(t => t.type === 'Gasto')
+    .filter(t => t.type === 'expense')
     .reduce((acc, t) => {
         const existing = acc.find(item => item.name === t.category);
         if (existing) {
@@ -36,7 +36,7 @@ export default function Dashboard() {
         return acc;
     }, [] as { name: string; amount: number }[]);
 
-  const totalGoalsAmount = goals.reduce((sum, g) => sum + g.savedAmount, 0);
+  const totalGoalsAmount = goals.reduce((sum, g) => sum + g.currentAmount, 0);
 
   return (
     <Layout>

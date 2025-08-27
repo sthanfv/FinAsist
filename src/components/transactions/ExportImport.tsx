@@ -4,7 +4,7 @@ import { utils, writeFile, read } from 'xlsx';
 import { ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Upload } from 'lucide-react';
-import { Transaction } from './TransactionTable';
+import { Transaction } from '@/store/useAppStore';
 
 
 type Props = {

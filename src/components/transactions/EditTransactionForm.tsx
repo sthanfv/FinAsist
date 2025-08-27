@@ -21,20 +21,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Transaction } from "./TransactionTable";
+import { Transaction } from "@/store/useAppStore";
+import { Textarea } from "../ui/textarea";
 
 const formSchema = z.object({
   date: z.string().min(1, "La fecha es requerida."),
   category: z.string().min(1, "La categoría es requerida."),
-  type: z.enum(["Ingreso", "Gasto"]),
+  type: z.enum(["income", "expense"]),
   amount: z.coerce.number().positive("El monto debe ser positivo."),
-  account: z.string().min(1, "La cuenta es requerida."),
-  note: z.string().optional(),
+  description: z.string().optional(),
 });
 
 type EditTransactionFormProps = {
   transaction: Transaction;
-  onUpdateTransaction: (transaction: Transaction) => void;
+  onUpdateTransaction: (id: string, data: Partial<Transaction>) => void;
 };
 
 export default function EditTransactionForm({ transaction, onUpdateTransaction }: EditTransactionFormProps) {
@@ -45,13 +45,12 @@ export default function EditTransactionForm({ transaction, onUpdateTransaction }
       category: transaction.category,
       type: transaction.type,
       amount: transaction.amount,
-      account: transaction.account,
-      note: transaction.note || "",
+      description: transaction.description || "",
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    onUpdateTransaction({ ...transaction, ...values });
+    onUpdateTransaction(transaction.id, values);
   }
 
   return (
@@ -97,8 +96,8 @@ export default function EditTransactionForm({ transaction, onUpdateTransaction }
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Gasto">Gasto</SelectItem>
-                    <SelectItem value="Ingreso">Ingreso</SelectItem>
+                    <SelectItem value="expense">Gasto</SelectItem>
+                    <SelectItem value="income">Ingreso</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -119,39 +118,18 @@ export default function EditTransactionForm({ transaction, onUpdateTransaction }
             )}
           />
           <FormField
-            control={form.control}
-            name="account"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cuenta</FormLabel>
-                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona una cuenta" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Principal">Principal</SelectItem>
-                    <SelectItem value="Ahorro">Ahorro</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="note"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nota (Opcional)</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Descripción (Opcional)</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
         </div>
         <Button type="submit">Actualizar Transacción</Button>
       </form>

@@ -14,26 +14,26 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Goal } from "./GoalsList";
+import { Goal } from "@/store/useAppStore";
 
 const formSchema = z.object({
-  title: z.string().min(1, "El título es requerido."),
+  name: z.string().min(1, "El título es requerido."),
   targetAmount: z.coerce.number().positive("El monto objetivo debe ser positivo."),
-  savedAmount: z.coerce.number().min(0, "El monto ahorrado no puede ser negativo."),
+  currentAmount: z.coerce.number().min(0, "El monto ahorrado no puede ser negativo."),
   deadline: z.string().min(1, "La fecha límite es requerida."),
 });
 
 type AddGoalFormProps = {
-  onAddGoal: (goal: Omit<Goal, 'id'>) => void;
+  onAddGoal: (goal: Omit<Goal, 'id' | 'createdAt'>) => void;
 };
 
 export default function AddGoalForm({ onAddGoal }: AddGoalFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
+      name: "",
       targetAmount: 0,
-      savedAmount: 0,
+      currentAmount: 0,
       deadline: new Date().toISOString().split('T')[0],
     },
   });
@@ -54,7 +54,7 @@ export default function AddGoalForm({ onAddGoal }: AddGoalFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
-                name="title"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Título de la meta</FormLabel>
@@ -80,7 +80,7 @@ export default function AddGoalForm({ onAddGoal }: AddGoalFormProps) {
               />
                 <FormField
                 control={form.control}
-                name="savedAmount"
+                name="currentAmount"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Monto Ahorrado Inicial</FormLabel>

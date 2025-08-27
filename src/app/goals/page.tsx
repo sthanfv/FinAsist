@@ -7,15 +7,15 @@ import { Button } from '@/components/ui/button';
 import BackButton from '@/components/BackButton';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
-import type { Goal } from '@/components/goals/GoalsList';
+import type { Goal } from '@/store/useAppStore';
 
 
 export default function GoalsPage() {
     const { goals, addGoal } = useAppStore();
     const [isFormVisible, setIsFormVisible] = useState(false);
 
-    const handleAddGoal = (newGoal: Omit<Goal, 'id' | 'savedAmount'>) => {
-        addGoal({...newGoal, savedAmount: 0});
+    const handleAddGoal = (newGoal: Omit<Goal, 'id' | 'createdAt' | 'currentAmount'>) => {
+        addGoal({...newGoal, currentAmount: 0});
         setIsFormVisible(false);
     };
 
