@@ -114,30 +114,33 @@ export function StatsCard({
   trendValue?: string;
   className?: string;
 }) {
-  const trendConfig = {
-    up: { icon: TrendingUp, color: 'text-success-500' },
-    down: { icon: TrendingDown, color: 'text-danger-500' },
-    neutral: { icon: Minus, color: 'text-muted-foreground' },
+  const trendColors = {
+    up: 'text-success-600',
+    down: 'text-danger-600',
+    neutral: 'text-muted-foreground',
   };
 
-  const TrendIcon = trend ? trendConfig[trend].icon : null;
-
   return (
-    <Card className={cn("shadow-soft", className)}>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        {Icon && <Icon className="h-5 w-5 text-muted-foreground" />}
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
-        {trend && TrendIcon && trendValue && (
-          <div className="flex items-center gap-1 text-xs mt-2">
-            <TrendIcon className={cn("h-4 w-4", trendConfig[trend].color)} />
-            <span className={cn(trendConfig[trend].color)}>{trendValue}</span>
+    <EnhancedCard className={cn('relative overflow-hidden', className)}>
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <p className="text-2xl font-bold">{value}</p>
+          {subtitle && (
+            <p className="text-xs text-muted-foreground">{subtitle}</p>
+          )}
+        </div>
+        {Icon && (
+          <div className="rounded-full bg-primary/10 p-2">
+            <Icon className="h-4 w-4 text-primary" />
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+      {trend && trendValue && (
+        <div className={cn('mt-2 flex items-center text-sm', trendColors[trend])}>
+          <span>{trendValue}</span>
+        </div>
+      )}
+    </EnhancedCard>
   );
 }
