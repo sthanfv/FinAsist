@@ -16,13 +16,13 @@ const TransactionSchema = z.object({
   type: z.enum(['Ingreso', 'Gasto']).describe('El tipo de transacción.'),
 });
 
-export const RecommendationInputSchema = z.object({
+const RecommendationInputSchema = z.object({
   balance: z.number().describe('El saldo actual del usuario.'),
   transactions: z.array(TransactionSchema).describe('La lista de transacciones del usuario.'),
 });
 export type RecommendationInput = z.infer<typeof RecommendationInputSchema>;
 
-export const RecommendationOutputSchema = z.object({
+const RecommendationOutputSchema = z.object({
   recommendation: z.string().describe('La recomendación financiera para el usuario.'),
 });
 export type RecommendationOutput = z.infer<typeof RecommendationOutputSchema>;
