@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useAppContext } from '@/context/AppContext';
 import ExportImport from '@/components/transactions/ExportImport';
 import { useToast } from '@/hooks/use-toast';
+import BackButton from '@/components/BackButton';
 
 export default function TransactionsPage() {
     const { transactions, addTransaction, setTransactions, loading, balance, setBalance, deleteTransaction } = useAppContext();
@@ -65,7 +66,10 @@ export default function TransactionsPage() {
         <Layout>
             <div className="container mx-auto py-10">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-4xl font-bold font-headline">Transacciones</h1>
+                    <div className="flex items-center gap-4">
+                        <BackButton />
+                        <h1 className="text-4xl font-bold font-headline">Transacciones</h1>
+                    </div>
                     <Button onClick={() => setIsFormVisible(!isFormVisible)}>
                         {isFormVisible ? 'Cerrar Formulario' : 'Añadir Transacción'}
                     </Button>

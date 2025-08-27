@@ -2,7 +2,7 @@
 import Layout from '@/components/layout';
 import ReportCard from '@/components/reports/ReportCard';
 import { useAppContext } from '@/context/AppContext';
-import { ChartComponent } from '@/components/dashboard/ChartComponent';
+import BackButton from '@/components/BackButton';
 
 export default function ReportsPage() {
   const { transactions, loading } = useAppContext();
@@ -39,7 +39,10 @@ export default function ReportsPage() {
   return (
     <Layout>
       <div className="container mx-auto py-10">
-        <h1 className="text-4xl font-bold font-headline mb-8">Reportes</h1>
+        <div className="flex items-center gap-4 mb-8">
+            <BackButton />
+            <h1 className="text-4xl font-bold font-headline">Reportes</h1>
+        </div>
         
         <ReportCard title="Gastos Mensuales" data={monthlyData} />
         <ReportCard title="Gastos por Categoría" data={categoryData} />
