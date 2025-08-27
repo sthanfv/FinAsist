@@ -3,6 +3,8 @@
 import { ReactNode, HTMLAttributes } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './card';
 
 interface EnhancedCardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
@@ -28,7 +30,7 @@ const paddingVariants = {
 };
 
 const shadowVariants = {
-  none: '',
+  none: 'shadow-none',
   sm: 'shadow-sm',
   md: 'shadow-md',
   lg: 'shadow-lg',
@@ -54,7 +56,7 @@ const animations = {
   },
 };
 
-export const EnhancedCard = ({
+export function EnhancedCard({
   children,
   variant = 'default',
   hoverEffect = false,
@@ -63,19 +65,29 @@ export const EnhancedCard = ({
   animation = 'none',
   className,
   ...props
-}: EnhancedCardProps) => {
+}: EnhancedCardProps) {
   const motionProps = animations[animation];
+
+  const cardClasses = cn(
+    'rounded-xl transition-all duration-300',
+    cardVariants[variant],
+    paddingVariants[padding],
+    shadowVariants[shadow],
+    hoverEffect && 'card-hover',
+    className
+  );
+  
+  if (animation === 'none') {
+    return (
+      <div className={cardClasses} {...props}>
+        {children}
+      </div>
+    );
+  }
 
   return (
     <motion.div
-      className={cn(
-        'rounded-xl transition-all duration-300',
-        cardVariants[variant],
-        paddingVariants[padding],
-        shadowVariants[shadow],
-        hoverEffect && 'card-hover',
-        className
-      )}
+      className={cardClasses}
       {...motionProps}
       {...props}
     >
@@ -83,3 +95,49 @@ export const EnhancedCard = ({
     </motion.div>
   );
 };
+
+// Componentes específicos
+export function StatsCard({ 
+  title, 
+  value, 
+  subtitle, 
+  icon: Icon, 
+  trend,
+  trendValue,
+  className 
+}: {
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  trend?: 'up' | 'down' | 'neutral';
+  trendValue?: string;
+  className?: string;
+}) {
+  const trendConfig = {
+    up: { icon: TrendingUp, color: 'text-success-500' },
+    down: { icon: TrendingDown, color: 'text-danger-500' },
+    neutral: { icon: Minus, color: 'text-muted-foreground' },
+  };
+
+  const TrendIcon = trend ? trendConfig[trend].icon : null;
+
+  return (
+    <Card className={cn("shadow-soft", className)}>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        {Icon && <Icon className="h-5 w-5 text-muted-foreground" />}
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+        {trend && TrendIcon && trendValue && (
+          <div className="flex items-center gap-1 text-xs mt-2">
+            <TrendIcon className={cn("h-4 w-4", trendConfig[trend].color)} />
+            <span className={cn(trendConfig[trend].color)}>{trendValue}</span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

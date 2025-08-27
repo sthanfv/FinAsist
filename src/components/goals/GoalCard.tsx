@@ -1,7 +1,7 @@
 "use client";
 
-import { motion } from 'framer-motion';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { EnhancedCard } from '@/components/ui/EnhancedCard';
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Goal } from '@/store/useAppStore';
 
@@ -17,7 +17,7 @@ export default function GoalCard({ goal }: Props) {
   };
 
   return (
-    <Card className="shadow-soft rounded-xl flex flex-col">
+    <EnhancedCard animation='slide' padding='sm' className="flex flex-col">
         <CardHeader>
             <CardTitle>{goal.name}</CardTitle>
              <CardDescription>
@@ -30,6 +30,6 @@ export default function GoalCard({ goal }: Props) {
         <CardFooter>
             <p className="text-sm text-muted-foreground">Fecha límite: {goal.deadline}</p>
         </CardFooter>
-    </Card>
+    </EnhancedCard>
   );
 }
