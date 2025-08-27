@@ -21,6 +21,10 @@ export default function Layout({ children }: LayoutProps) {
     await logout();
     router.push('/');
   };
+  
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+  };
 
   const navItems = [
     { name: 'Dashboard', icon: <Home />, href: '/dashboard' },
@@ -72,7 +76,7 @@ export default function Layout({ children }: LayoutProps) {
             {authAction}
             <div className="p-4 bg-muted/50 rounded-lg shadow-inner">
                 <p className="text-sm text-muted-foreground">Saldo disponible</p>
-                <p className="text-xl font-semibold text-secondary-foreground">{balance.toLocaleString('es-ES')} pts</p>
+                <p className="text-xl font-semibold text-secondary-foreground">{formatCurrency(balance)}</p>
             </div>
           </div>
         </div>
@@ -123,7 +127,7 @@ export default function Layout({ children }: LayoutProps) {
                     {authAction}
                     <div className="p-4 bg-muted/50 rounded-lg shadow-inner">
                         <p className="text-sm text-muted-foreground">Saldo disponible</p>
-                        <p className="text-xl font-semibold text-secondary-foreground">{balance.toLocaleString('es-ES')} pts</p>
+                        <p className="text-xl font-semibold text-secondary-foreground">{formatCurrency(balance)}</p>
                     </div>
                 </div>
               </div>
@@ -142,7 +146,7 @@ export default function Layout({ children }: LayoutProps) {
           <h1 className="text-xl font-semibold text-primary font-headline">FinAssist</h1>
           <div className="text-right">
             <p className="text-sm text-muted-foreground">Saldo</p>
-            <p className="text-lg font-semibold text-secondary-foreground">{balance.toLocaleString('es-ES')} pts</p>
+            <p className="text-lg font-semibold text-secondary-foreground">{formatCurrency(balance)}</p>
           </div>
         </header>
 

@@ -47,6 +47,10 @@ export default function TransactionTable({ transactions, onEdit, onDelete }: Pro
   );
   
   const categories = [...new Set(transactions.map(t => t.category))];
+  
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+  };
 
   return (
     <div className="bg-card shadow-soft rounded-xl p-4">
@@ -107,7 +111,7 @@ export default function TransactionTable({ transactions, onEdit, onDelete }: Pro
                 </TableCell>
                 <TableCell>{t.account}</TableCell>
                 <TableCell>{t.note}</TableCell>
-                <TableCell className="text-right">{t.amount.toLocaleString('es-ES')} pts</TableCell>
+                <TableCell className="text-right">{formatCurrency(t.amount)}</TableCell>
                 <TableCell className="flex gap-2">
                     <Button variant="ghost" size="icon" onClick={() => onEdit(t)}>
                       <Edit className="h-4 w-4 text-muted-foreground" />

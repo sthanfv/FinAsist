@@ -12,12 +12,16 @@ type Props = {
 export default function GoalCard({ goal }: Props) {
   const progress = Math.min((goal.savedAmount / goal.targetAmount) * 100, 100);
 
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+  };
+
   return (
     <Card className="shadow-soft rounded-xl flex flex-col">
         <CardHeader>
             <CardTitle>{goal.title}</CardTitle>
              <CardDescription>
-                {goal.savedAmount.toLocaleString('es-ES')} pts / {goal.targetAmount.toLocaleString('es-ES')} pts
+                {formatCurrency(goal.savedAmount)} / {formatCurrency(goal.targetAmount)}
             </CardDescription>
         </CardHeader>
         <CardContent>

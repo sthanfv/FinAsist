@@ -14,6 +14,10 @@ type Props = {
 };
 
 export default function ReportCard({ title, data }: Props) {
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+  };
+  
   const handleExportExcel = () => {
     const ws = utils.json_to_sheet(data);
     const wb = utils.book_new();
@@ -34,7 +38,7 @@ export default function ReportCard({ title, data }: Props) {
         doc.addPage();
         y = 20;
       }
-      doc.text(`${d.name}: ${d.amount.toLocaleString('es-ES')} pts`, 14, y);
+      doc.text(`${d.name}: ${formatCurrency(d.amount)}`, 14, y);
       y += 7;
     });
 
