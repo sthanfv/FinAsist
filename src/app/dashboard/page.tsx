@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import Layout from '@/components/layout';
 import BalanceCard from '@/components/dashboard/BalanceCard';
-import { AlertCard } from '@/components/dashboard/AlertCard';
 import { ChartComponent } from '@/components/dashboard/ChartComponent';
 import UnifiedAssistant from '@/components/assistant/UnifiedAssistant';
 import { Button } from '@/components/ui/button';
