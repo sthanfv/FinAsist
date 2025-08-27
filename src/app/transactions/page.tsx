@@ -11,6 +11,7 @@ import EditTransactionForm from '@/components/transactions/EditTransactionForm';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
 import type { Transaction } from '@/store/useAppStore';
+import { useRouter } from 'next/navigation';
 
 
 export default function TransactionsPage() {
@@ -18,6 +19,7 @@ export default function TransactionsPage() {
     const [isAddFormVisible, setIsAddFormVisible] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+    const router = useRouter();
 
     const handleAddTransaction = async (newTransaction: Omit<Transaction, 'id' | 'createdAt'>) => {
         await addTransaction(newTransaction);
@@ -69,20 +71,43 @@ export default function TransactionsPage() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
             >
-              <div className="container mx-auto py-10">
-                  <div className="flex justify-between items-center mb-6">
-                      <div className="flex items-center gap-4">
-                          <BackButton />
-                          <h1 className="text-4xl font-bold font-headline">Transacciones</h1>
-                      </div>
-                      <Button onClick={() => setIsAddFormVisible(!isAddFormVisible)}>
-                          {isAddFormVisible ? 'Cerrar Formulario' : 'Añadir Transacción'}
-                      </Button>
+              <div className="bg-gradient-to-r from-green-600 via-green-700 to-emerald-700 text-white p-6 rounded-b-2xl shadow-xl mb-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <button 
+                      onClick={() => router.back()}
+                      className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-all duration-200"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <div>
+                      <h1 className="text-2xl font-bold tracking-tight">Transacciones</h1>
+                      <p className="text-green-100 text-sm">Gestiona tus ingresos y gastos</p>
+                    </div>
                   </div>
+                  
+                  <button 
+                    onClick={() => setIsAddFormVisible(!isAddFormVisible)}
+                    className="group bg-white text-green-600 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 hover:rotate-12"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div className="container mx-auto py-2">
                    {isAddFormVisible && (
-                      <div className="mb-6">
+                      <motion.div 
+                        className="mb-6"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                      >
                           <AddTransactionForm onAddTransaction={handleAddTransaction} />
-                      </div>
+                      </motion.div>
                   )}
                   <div className="mb-6">
                       <ExportImport transactions={transactions} onImport={handleImport} />
