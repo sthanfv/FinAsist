@@ -4,38 +4,25 @@ import TransactionTable, { Transaction } from '@/components/transactions/Transac
 import AddTransactionForm from '@/components/transactions/AddTransactionForm';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
-import { useBalance } from '@/hooks/useBalance';
+import { useAppContext } from '@/context/AppContext';
 import ExportImport from '@/components/transactions/ExportImport';
 
-const initialTransactions: Transaction[] = [
-    { id: 1, date: '2025-08-01', category: 'Universidad', type: 'Gasto', amount: 4000, account: 'Principal', note: 'Pago semestre' },
-    { id: 2, date: '2025-08-03', category: 'Ocio', type: 'Gasto', amount: 1500, account: 'Principal', note: 'Cine' },
-    { id: 3, date: '2025-08-05', category: 'Transporte', type: 'Gasto', amount: 1200, account: 'Principal', note: 'Gasolina' },
-    { id: 4, date: '2025-08-10', category: 'Ahorro', type: 'Gasto', amount: 2000, account: 'Ahorro', note: 'Meta mensual' },
-];
-
 export default function TransactionsPage() {
-    const { balance, setBalance } = useBalance(10000);
-    const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+    const { transactions, addTransaction, setTransactions, loading, balance, setBalance } = useAppContext();
     const [isFormVisible, setIsFormVisible] = useState(false);
 
+    if (loading) {
+      return <Layout><div className="flex h-full items-center justify-center"><p>Cargando datos...</p></div></Layout>;
+    }
+    
     const handleAddTransaction = (newTransaction: Omit<Transaction, 'id'>) => {
-        const newId = transactions.length > 0 ? Math.max(...transactions.map(t => t.id)) + 1 : 1;
-        const transactionWithId = { ...newTransaction, id: newId };
-        
-        setTransactions(prev => [transactionWithId, ...prev]);
-
-        if (newTransaction.type === 'Ingreso') {
-            setBalance(prev => prev + newTransaction.amount);
-        } else {
-            setBalance(prev => prev - newTransaction.amount);
-        }
-
+        addTransaction(newTransaction);
         setIsFormVisible(false);
     };
 
     const handleUpdate = (updated: Transaction) => {
-        setTransactions((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      const updatedTransactions = transactions.map((t) => (t.id === updated.id ? updated : t));
+      setTransactions(updatedTransactions);
     };
 
     const handleImport = (imported: any[]) => {
@@ -49,7 +36,6 @@ export default function TransactionsPage() {
           note: t.note || '',
         }));
     
-        // Recalculate balance based on a fresh start with imported data
         let newBalance = 0;
         formatted.forEach(t => {
             if (t.type === 'Ingreso') {

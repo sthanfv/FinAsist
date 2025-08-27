@@ -3,9 +3,8 @@
 import React, { ReactNode, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { Menu, Home, Wallet, Goal, FileText, X, LogOut } from 'lucide-react';
-import { useBalance } from '@/hooks/useBalance';
-import { useAuth } from '@/context/AppContext';
+import { Menu, Home, Wallet, Goal, FileText, X, LogOut, LogIn } from 'lucide-react';
+import { useAppContext } from '@/context/AppContext';
 import { useRouter } from 'next/navigation';
 
 type LayoutProps = {
@@ -14,8 +13,7 @@ type LayoutProps = {
 
 export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { balance } = useBalance(10000);
-  const { logout, user } = useAuth();
+  const { balance, user, logout } = useAppContext();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -30,13 +28,23 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Reportes', icon: <FileText />, href: '/reports' },
   ];
 
-  if (!user) {
-    return (
-        <div className="flex h-screen items-center justify-center bg-background">
-            <p>Cargando...</p>
-        </div>
-    )
-  }
+  const authAction = user ? (
+    <button
+      onClick={handleLogout}
+      className="w-full flex items-center p-3 rounded-lg text-foreground hover:bg-destructive/10 transition-colors mb-4"
+    >
+      <span className="mr-3 text-lg"><LogOut /></span>
+      Cerrar sesión
+    </button>
+  ) : (
+    <Link
+      href="/login"
+      className="w-full flex items-center p-3 rounded-lg text-foreground hover:bg-primary/10 transition-colors mb-4"
+    >
+      <span className="mr-3 text-lg"><LogIn /></span>
+      Iniciar sesión
+    </Link>
+  );
 
   return (
     <div className="min-h-screen flex bg-background font-body">
@@ -57,13 +65,7 @@ export default function Layout({ children }: LayoutProps) {
             ))}
           </nav>
           <div className="mt-auto">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center p-3 rounded-lg text-foreground hover:bg-destructive/10 transition-colors mb-4"
-            >
-              <span className="mr-3 text-lg"><LogOut /></span>
-              Cerrar sesión
-            </button>
+            {authAction}
             <div className="p-4 bg-muted/50 rounded-lg shadow-inner">
                 <p className="text-sm text-muted-foreground">Saldo disponible</p>
                 <p className="text-xl font-semibold text-secondary-foreground">{balance.toLocaleString('es-ES')} pts</p>
@@ -111,13 +113,7 @@ export default function Layout({ children }: LayoutProps) {
                   ))}
                 </nav>
                 <div className="mt-auto">
-                    <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center p-3 rounded-lg text-foreground hover:bg-destructive/10 transition-colors mb-4"
-                    >
-                        <span className="mr-3 text-lg"><LogOut /></span>
-                        Cerrar sesión
-                    </button>
+                    {authAction}
                     <div className="p-4 bg-muted/50 rounded-lg shadow-inner">
                         <p className="text-sm text-muted-foreground">Saldo disponible</p>
                         <p className="text-xl font-semibold text-secondary-foreground">{balance.toLocaleString('es-ES')} pts</p>

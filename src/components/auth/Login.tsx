@@ -8,12 +8,16 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+import { useAppContext } from '@/context/AppContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
+  const { login } = useAppContext();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -22,8 +26,9 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await login(email, password);
       toast({ title: 'Éxito', description: 'Has iniciado sesión correctamente.' });
+      router.push('/dashboard');
     } catch (err: any) {
         toast({ title: 'Error de inicio de sesión', description: err.message, variant: 'destructive' });
     } finally {

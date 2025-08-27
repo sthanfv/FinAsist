@@ -1,24 +1,13 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useAppContext } from '@/context/AppContext';
 
 /**
- * A placeholder hook to simulate fetching a user's balance.
- * In a real application, this would make an API call.
+ * A hook to get the balance from the AppContext.
+ * This is just a wrapper for convenience.
  */
-export const useBalance = (initialBalance: number = 0) => {
-  const [balance, setBalance] = useState<number>(initialBalance);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    // Simulate a network request
-    const timer = setTimeout(() => {
-      setBalance(5432.10); // Example balance
-      setLoading(false);
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  return { balance, loading, setBalance };
+export const useBalance = () => {
+    const { balance, setBalance, loading } = useAppContext();
+    return { balance, loading, setBalance };
 };
