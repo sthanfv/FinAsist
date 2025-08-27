@@ -129,4 +129,25 @@
            focus:ring-2 focus:ring-primary focus:border-transparent
            transition-all duration-200;
   }
+  /* Animaciones de entrada para páginas */
+  .page-transition {
+    animation: fadeIn 0.4s ease-out;
+  }
+  /* Loading states */
+  .skeleton {
+    @apply animate-pulse bg-muted rounded;
+  }
+  /* Toast customization */
+  .toast-success {
+    @apply bg-success-500 text-white;
+  }
+  .toast-error {
+    @apply bg-danger-500 text-white;
+  }
+  .toast-warning {
+    @apply bg-warning-500 text-black;
+  }
+  .toast-info {
+    @apply bg-primary text-white;
+  }
 }
