@@ -6,9 +6,10 @@ import { AlertCard } from '@/components/dashboard/AlertCard';
 import { ChartComponent } from '@/components/dashboard/ChartComponent';
 import { useAppContext } from '@/context/AppContext';
 import FinancialAssistant from '@/components/assistant/FinancialAssistant';
+import AdvancedAssistant from '@/components/assistant/AdvancedAssistant';
 
 export default function Dashboard() {
-  const { balance, transactions, loading } = useAppContext();
+  const { balance, transactions, goals, loading } = useAppContext();
 
   if (loading) {
     return <Layout><div className="flex h-full items-center justify-center"><p>Cargando datos...</p></div></Layout>;
@@ -22,7 +23,7 @@ export default function Dashboard() {
     <Layout>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         <BalanceCard title="Saldo Principal" amount={balance} />
-        <BalanceCard title="Saldo Ahorro" amount={2000} color="text-accent" />
+        <BalanceCard title="Saldo Ahorro" amount={goals.find(g => g.title.toLowerCase().includes('ahorro'))?.savedAmount || 0} color="text-accent" />
         <div className="col-span-1 md:col-span-2 lg:col-span-1 bg-card shadow-soft p-6 rounded-xl">
           <h2 className="text-lg font-semibold text-card-foreground mb-4">Gastos por categoría</h2>
           <ChartComponent data={chartData} />
@@ -37,6 +38,7 @@ export default function Dashboard() {
       </div>
 
       <FinancialAssistant balance={balance} transactions={transactions} />
+      <AdvancedAssistant balance={balance} transactions={transactions} goals={goals} />
     </Layout>
   );
 }
