@@ -78,7 +78,7 @@ interface AppState {
   removeToast: (id: string) => void;
   
   // Inicialización
-  initializeApp: () => void;
+  initializeApp: () => () => void;
   subscribeToUserData: () => () => void;
   loadGuestData: () => void;
   saveGuestData: () => void;
@@ -266,6 +266,98 @@ export const useAppStore = create<AppState>()(
             document.documentElement.classList.toggle('dark', state.isDarkMode);
           }
         }),
+        toggleSidebar: () => set((state) => {
+          state.sidebarOpen = !state.sidebarOpen;
+        }),
+        addToast: (message: string) => {
+          const id = `toast-${Date.now()}`;
+          set((state) => {
+            state.activeToasts.push(id);
+          });
+          
+          // Auto remove toast after 5 seconds
+          setTimeout(() => {
+            get().removeToast(id);
+          }, 5000);
+          
+          return id;
+        },
+        removeToast: (id: string) => set((state) => {
+          state.activeToasts = state.activeToasts.filter(toastId => toastId !== id);
+        }),
+        
+        // Inicialización
+        initializeApp: () => {
+          const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+            get().setUser(user);
+            get().setLoading(false);
+            
+            if (user) {
+              // Suscribirse a datos del usuario
+              const unsubscribeData = get().subscribeToUserData();
+              // Guardar función de desuscripción para limpieza posterior
+              return unsubscribeData;
+            } else {
+              // Cargar datos de invitado
+              get().loadGuestData();
+            }
+            
+            get().setInitialized(true);
+          });
+          return unsubscribeAuth;
+        },
+        subscribeToUserData: () => {
+          const { user } = get();
+          if (!user) return () => {};
+          // Suscribirse a transacciones
+          const transactionsRef = collection(db, 'users', user.uid, 'transactions');
+          const transactionsQuery = query(transactionsRef);
+          const unsubscribeTransactions = onSnapshot(transactionsQuery, (snapshot) => {
+            const transactions = snapshot.docs.map(doc => ({
+              ...doc.data(),
+              id: doc.id
+            } as Transaction));
+            
+            get().setTransactions(transactions);
+            get().calculateBalance();
+          });
+
+          // Suscribirse a metas
+          const goalsRef = collection(db, 'users', user.uid, 'goals');
+          const goalsQuery = query(goalsRef);
+          const unsubscribeGoals = onSnapshot(goalsQuery, (snapshot) => {
+            const goals = snapshot.docs.map(doc => ({
+              ...doc.data(),
+              id: doc.id
+            } as Goal));
+            get().setGoals(goals);
+          });
+
+          // Retornar una función para desuscribirse de ambos listeners
+          return () => {
+            unsubscribeTransactions();
+            unsubscribeGoals();
+          };
+        },
+        loadGuestData: () => {
+          if (typeof window !== 'undefined') {
+            const guestData = localStorage.getItem(GUEST_DATA_KEY);
+            if (guestData) {
+              const { transactions, goals } = JSON.parse(guestData);
+              set((state) => {
+                state.transactions = transactions || [];
+                state.goals = goals || [];
+              });
+            }
+            get().calculateBalance();
+          }
+        },
+        saveGuestData: () => {
+          if (typeof window !== 'undefined') {
+            const { transactions, goals } = get();
+            localStorage.setItem(GUEST_DATA_KEY, JSON.stringify({ transactions, goals }));
+          }
+        },
       })),
       {
         name: 'finassist-storage', 
