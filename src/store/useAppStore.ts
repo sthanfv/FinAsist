@@ -115,7 +115,7 @@ export const useAppStore = create<AppState>()(
           state.transactions = transactions;
         }),
         addTransaction: async (transactionData) => {
-          const { user, addToast, saveGuestData, calculateBalance } = get();
+          const { user } = get();
           const newTransaction: Transaction = {
             ...transactionData,
             id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -133,19 +133,19 @@ export const useAppStore = create<AppState>()(
               });
             } catch (error) {
               console.error('Error adding transaction:', error);
-              // get().addToast('Error al agregar transacción'); // Toast needs to be implemented
+              get().addToast('Error al agregar transacción');
             }
           } else {
             // Usuario invitado: guardar en localStorage
             set((state) => {
               state.transactions.push(newTransaction);
             });
-            // get().saveGuestData(); // saveGuestData needs to be implemented
+            get().saveGuestData();
           }
-          // get().calculateBalance(); // calculateBalance needs to be implemented
+          get().calculateBalance();
         },
         updateTransaction: async (id, transactionData) => {
-          const { user, addToast, saveGuestData, calculateBalance } = get();
+          const { user } = get();
           
           if (user) {
             try {
@@ -155,7 +155,7 @@ export const useAppStore = create<AppState>()(
               );
             } catch (error) {
               console.error('Error updating transaction:', error);
-              // get().addToast('Error al actualizar transacción');
+              get().addToast('Error al actualizar transacción');
             }
           } else {
             set((state) => {
@@ -164,33 +164,33 @@ export const useAppStore = create<AppState>()(
                 Object.assign(state.transactions[index], transactionData);
               }
             });
-            // get().saveGuestData();
+            get().saveGuestData();
           }
-          // get().calculateBalance();
+          get().calculateBalance();
         },
         deleteTransaction: async (id) => {
-          const { user, addToast, saveGuestData, calculateBalance } = get();
+          const { user } = get();
           
           if (user) {
             try {
               await deleteDoc(doc(db, 'users', user.uid, 'transactions', id));
             } catch (error) {
               console.error('Error deleting transaction:', error);
-              // get().addToast('Error al eliminar transacción');
+              get().addToast('Error al eliminar transacción');
             }
           } else {
             set((state) => {
               state.transactions = state.transactions.filter(t => t.id !== id);
             });
-            // get().saveGuestData();
+            get().saveGuestData();
           }
-          // get().calculateBalance();
+          get().calculateBalance();
         },
         setGoals: (goals) => set((state) => {
           state.goals = goals;
         }),
         addGoal: async (goalData) => {
-          const { user, addToast, saveGuestData } = get();
+          const { user } = get();
           const newGoal: Goal = {
             ...goalData,
             id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -204,7 +204,7 @@ export const useAppStore = create<AppState>()(
               );
             } catch (error) {
               console.error('Error adding goal:', error);
-              // get().addToast('Error al agregar meta');
+              get().addToast('Error al agregar meta');
             }
           }
           set((state) => {
@@ -212,18 +212,18 @@ export const useAppStore = create<AppState>()(
           });
           
           if (!user) {
-            // get().saveGuestData();
+            get().saveGuestData();
           }
         },
         updateGoal: async (id, goalData) => {
-          const { user, addToast, saveGuestData } = get();
+          const { user } = get();
           
           if (user) {
             try {
               await updateDoc(doc(db, 'users', user.uid, 'goals', id), goalData);
             } catch (error) {
               console.error('Error updating goal:', error);
-              // get().addToast('Error al actualizar meta');
+              get().addToast('Error al actualizar meta');
             }
           } else {
             set((state) => {
@@ -232,24 +232,24 @@ export const useAppStore = create<AppState>()(
                 Object.assign(state.goals[index], goalData);
               }
             });
-            // get().saveGuestData();
+            get().saveGuestData();
           }
         },
         deleteGoal: async (id) => {
-          const { user, addToast, saveGuestData } = get();
+          const { user } = get();
           
           if (user) {
             try {
               await deleteDoc(doc(db, 'users', user.uid, 'goals', id));
             } catch (error) {
               console.error('Error deleting goal:', error);
-              // get().addToast('Error al eliminar meta');
+              get().addToast('Error al eliminar meta');
             }
           } else {
             set((state) => {
               state.goals = state.goals.filter(g => g.id !== id);
             });
-            // get().saveGuestData();
+            get().saveGuestData();
           }
         },
         calculateBalance: () => set((state) => {
@@ -321,7 +321,6 @@ export const useAppStore = create<AppState>()(
             get().setTransactions(transactions);
             get().calculateBalance();
           });
-
           // Suscribirse a metas
           const goalsRef = collection(db, 'users', user.uid, 'goals');
           const goalsQuery = query(goalsRef);
@@ -330,40 +329,50 @@ export const useAppStore = create<AppState>()(
               ...doc.data(),
               id: doc.id
             } as Goal));
+            
             get().setGoals(goals);
           });
-
-          // Retornar una función para desuscribirse de ambos listeners
           return () => {
             unsubscribeTransactions();
             unsubscribeGoals();
           };
         },
         loadGuestData: () => {
-          if (typeof window !== 'undefined') {
-            const guestData = localStorage.getItem(GUEST_DATA_KEY);
-            if (guestData) {
-              const { transactions, goals } = JSON.parse(guestData);
+          if (typeof window === 'undefined') return;
+          
+          try {
+            const saved = localStorage.getItem(GUEST_DATA_KEY);
+            if (saved) {
+              const guestData = JSON.parse(saved);
               set((state) => {
-                state.transactions = transactions || [];
-                state.goals = goals || [];
+                state.transactions = guestData.transactions || [];
+                state.goals = guestData.goals || [];
               });
+              get().calculateBalance();
             }
-            get().calculateBalance();
+          } catch (error) {
+            console.error('Error loading guest data:', error);
           }
         },
         saveGuestData: () => {
-          if (typeof window !== 'undefined') {
-            const { transactions, goals } = get();
-            localStorage.setItem(GUEST_DATA_KEY, JSON.stringify({ transactions, goals }));
+          if (typeof window === 'undefined') return;
+          
+          const { transactions, goals } = get();
+          try {
+            localStorage.setItem(GUEST_DATA_KEY, JSON.stringify({
+              transactions,
+              goals,
+              lastSaved: new Date().toISOString()
+            }));
+          } catch (error) {
+            console.error('Error saving guest data:', error);
           }
         },
       })),
       {
-        name: 'finassist-storage', 
+        name: 'finassist-settings',
         storage: createJSONStorage(() => localStorage),
-        partialize: (state) => ({ 
-          // Aquí puedes elegir qué partes del estado persistir
+        partialize: (state) => ({
           isDarkMode: state.isDarkMode,
           sidebarOpen: state.sidebarOpen,
         }),
