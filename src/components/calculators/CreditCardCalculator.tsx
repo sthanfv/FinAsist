@@ -302,19 +302,22 @@ export function CreditCardCalculator() {
               );
             })()}
             {/* Comparación de ahorros */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6">
-              <h4 className="font-semibold text-blue-700 dark:text-blue-300 mb-4">💡 Ahorro Potencial</h4>
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6 shadow-lg">
+              <h4 className="font-semibold text-blue-700 dark:text-blue-300 mb-4 flex items-center">
+                <CheckCircle className="w-5 h-5 mr-2" />
+                Ahorro con tu estrategia
+              </h4>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-sm text-blue-600 dark:text-blue-400">Ahorro vs pago mínimo:</span>
-                  <span className="font-bold text-blue-700 dark:text-blue-300">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Ahorras en intereses:</span>
+                  <span className="font-bold text-green-600 dark:text-green-400">
                     {formatCurrency(result.scenarios.minimumPayment.totalInterest - result.scenarios.customPayment.totalInterest)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-blue-600 dark:text-blue-400">Tiempo ahorrado:</span>
-                  <span className="font-bold text-blue-700 dark:text-blue-300">
-                    {result.scenarios.minimumPayment.totalMonths - result.scenarios.customPayment.totalMonths} meses
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Te liberas en:</span>
+                  <span className="font-bold text-blue-600 dark:text-blue-400">
+                    {result.scenarios.minimumPayment.totalMonths - result.scenarios.customPayment.totalMonths} meses menos
                   </span>
                 </div>
               </div>
