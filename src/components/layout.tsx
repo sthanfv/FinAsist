@@ -135,13 +135,13 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-2xl font-bold tracking-tight text-primary font-headline">FinAssist</h1>
           </div>
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className="flex-1 space-y-2">
             {navItems.map((item) => (
               <NavItem key={item.name} {...item} />
             ))}
           </nav>
-          <div className="mt-auto">
-             <div className="flex justify-end mb-4">
+          <div className="mt-auto space-y-4">
+             <div className="flex justify-end">
                 <ThemeToggle />
             </div>
             {authAction}
@@ -185,7 +185,7 @@ export default function Layout({ children }: LayoutProps) {
                     <NavItem key={item.name} {...item} />
                   ))}
                 </nav>
-                <div className="p-4 mt-auto">
+                <div className="p-4 mt-auto space-y-4">
                     {authAction}
                     <BalanceDisplay />
                 </div>
