@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { Menu, Home, Wallet, Goal, FileText, X, LogOut, LogIn } from 'lucide-react';
@@ -9,6 +9,7 @@ import { ThemeToggle } from './ThemeToggle';
 import { useAppStore } from '@/store/useAppStore';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { cn } from '@/lib/utils';
 
 type LayoutProps = {
   children: ReactNode;
@@ -18,6 +19,18 @@ export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { balance, user } = useAppStore();
   const router = useRouter();
+
+  const [balanceChanged, setBalanceChanged] = useState(false);
+  const prevBalanceRef = useRef(balance);
+
+  useEffect(() => {
+    if (prevBalanceRef.current !== balance) {
+      setBalanceChanged(true);
+      const timer = setTimeout(() => setBalanceChanged(false), 600); // Duración de la animación
+      prevBalanceRef.current = balance;
+      return () => clearTimeout(timer);
+    }
+  }, [balance]);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -53,13 +66,29 @@ export default function Layout({ children }: LayoutProps) {
     </Link>
   );
 
+  const BalanceDisplay = () => (
+    <div className="p-4 bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800 text-white rounded-lg shadow-lg">
+      <div className="flex justify-between items-center">
+        <div>
+          <p className="text-sm opacity-90">Saldo disponible</p>
+           <p className={cn(
+                "text-2xl font-semibold tracking-tight balance-animation",
+                balanceChanged && "animate-[pulse-gentle_0.6s_ease-in-out]"
+              )}>
+              {formatCurrency(balance)}
+            </p>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex bg-background font-body">
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex flex-col w-64 bg-card shadow-soft">
         <div className="p-6 flex flex-col h-full">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-2xl font-semibold text-primary font-headline">FinAssist</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-primary font-headline">FinAssist</h1>
             <ThemeToggle />
           </div>
           <nav className="flex-1 space-y-2">
@@ -76,10 +105,7 @@ export default function Layout({ children }: LayoutProps) {
           </nav>
           <div className="mt-auto">
             {authAction}
-            <div className="p-4 bg-muted/50 rounded-lg shadow-inner">
-                <p className="text-sm text-muted-foreground">Saldo disponible</p>
-                <p className="text-xl font-semibold text-primary">{formatCurrency(balance)}</p>
-            </div>
+            <BalanceDisplay />
           </div>
         </div>
       </aside>
@@ -127,10 +153,7 @@ export default function Layout({ children }: LayoutProps) {
                 </nav>
                 <div className="mt-auto">
                     {authAction}
-                    <div className="p-4 bg-muted/50 rounded-lg shadow-inner">
-                        <p className="text-sm text-muted-foreground">Saldo disponible</p>
-                        <p className="text-xl font-semibold text-primary">{formatCurrency(balance)}</p>
-                    </div>
+                    <BalanceDisplay />
                 </div>
               </div>
             </motion.aside>
@@ -145,10 +168,15 @@ export default function Layout({ children }: LayoutProps) {
           <button onClick={() => setSidebarOpen(true)} className="text-primary text-2xl">
             <Menu />
           </button>
-          <h1 className="text-xl font-semibold text-primary font-headline">FinAssist</h1>
+          <h1 className="text-xl font-bold tracking-tight text-primary font-headline">FinAssist</h1>
           <div className="text-right">
-            <p className="text-sm text-muted-foreground">Saldo</p>
-            <p className="text-lg font-semibold text-primary">{formatCurrency(balance)}</p>
+             <p className="text-sm text-muted-foreground">Saldo</p>
+             <p className={cn(
+                "text-lg font-semibold text-primary balance-animation",
+                balanceChanged && "animate-[pulse-gentle_0.6s_ease-in-out]"
+              )}>
+              {formatCurrency(balance)}
+            </p>
           </div>
         </header>
 
