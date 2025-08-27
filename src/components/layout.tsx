@@ -200,7 +200,10 @@ export default function Layout({ children }: LayoutProps) {
           <button onClick={() => setSidebarOpen(true)} className="text-primary text-2xl">
             <Menu />
           </button>
-          <h1 className="text-xl font-bold tracking-tight text-primary font-headline">FinAssist</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold tracking-tight text-primary font-headline">FinAssist</h1>
+            <ThemeToggle />
+          </div>
           <div className="text-right">
              <p className="text-sm text-muted-foreground">Saldo</p>
              <p className={cn(
@@ -220,3 +223,5 @@ export default function Layout({ children }: LayoutProps) {
     </div>
   );
 }
+
+    
