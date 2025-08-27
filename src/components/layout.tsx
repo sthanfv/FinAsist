@@ -4,7 +4,7 @@
 import React, { ReactNode, useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { Menu, Home, Wallet, Goal, FileText, X, LogOut, LogIn } from 'lucide-react';
+import { Menu, Home, Wallet, Goal, FileText, X, LogOut, LogIn, Target, BarChart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from './ThemeToggle';
 import { useAppStore } from '@/store/useAppStore';
@@ -43,10 +43,10 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   const navItems = [
-    { name: 'Dashboard', icon: <Home />, href: '/dashboard' },
-    { name: 'Transacciones', icon: <Wallet />, href: '/transactions' },
-    { name: 'Metas', icon: <Goal />, href: '/goals' },
-    { name: 'Reportes', icon: <FileText />, href: '/reports' },
+    { name: 'Dashboard', icon: Home, href: '/dashboard', color: 'blue' },
+    { name: 'Transacciones', icon: Wallet, href: '/transactions', color: 'green' },
+    { name: 'Metas', icon: Target, href: '/goals', color: 'purple' },
+    { name: 'Reportes', icon: BarChart, href: '/reports', color: 'yellow' },
   ];
 
   const authAction = user ? (
@@ -74,7 +74,7 @@ export default function Layout({ children }: LayoutProps) {
           <p className="text-sm opacity-90">Saldo disponible</p>
            <p className={cn(
                 "text-2xl font-semibold tracking-tight balance-animation",
-                balanceChanged && "animate-[pulse-gentle_0.6s_ease-in-out]"
+                balanceChanged && "animate-[pulse-gentle_0.6s_ease_in_out]"
               )}>
               {formatCurrency(balance)}
             </p>
@@ -82,6 +82,50 @@ export default function Layout({ children }: LayoutProps) {
       </div>
     </div>
   );
+
+  const NavItem = ({ href, name, icon: Icon, color }: { href: string; name: string; icon: React.ElementType; color: string }) => {
+    const colorClasses = {
+      blue: {
+        text: 'hover:text-blue-600 dark:hover:text-blue-400',
+        bg: 'hover:bg-blue-50 dark:hover:bg-blue-900/20',
+        iconContainer: 'bg-blue-100 dark:bg-blue-900/50 group-hover:bg-blue-200 dark:group-hover:bg-blue-900',
+        icon: 'text-blue-600 dark:text-blue-400'
+      },
+      green: {
+        text: 'hover:text-green-600 dark:hover:text-green-400',
+        bg: 'hover:bg-green-50 dark:hover:bg-green-900/20',
+        iconContainer: 'bg-green-100 dark:bg-green-900/50 group-hover:bg-green-200 dark:group-hover:bg-green-900',
+        icon: 'text-green-600 dark:text-green-400'
+      },
+      purple: {
+        text: 'hover:text-purple-600 dark:hover:text-purple-400',
+        bg: 'hover:bg-purple-50 dark:hover:bg-purple-900/20',
+        iconContainer: 'bg-purple-100 dark:bg-purple-900/50 group-hover:bg-purple-200 dark:group-hover:bg-purple-900',
+        icon: 'text-purple-600 dark:text-purple-400'
+      },
+      yellow: {
+        text: 'hover:text-yellow-600 dark:hover:text-yellow-400',
+        bg: 'hover:bg-yellow-50 dark:hover:bg-yellow-900/20',
+        iconContainer: 'bg-yellow-100 dark:bg-yellow-900/50 group-hover:bg-yellow-200 dark:group-hover:bg-yellow-900',
+        icon: 'text-yellow-600 dark:text-yellow-400'
+      }
+    };
+    const classes = colorClasses[color as keyof typeof colorClasses] || colorClasses.blue;
+
+    return (
+      <Link 
+        href={href}
+        onClick={() => setSidebarOpen(false)}
+        className={cn("group flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-xl transition-all duration-200 transform hover:scale-[1.02]", classes.text, classes.bg)}
+      >
+        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center mr-3 transition-colors", classes.iconContainer)}>
+          <Icon className={cn("w-5 h-5", classes.icon)} />
+        </div>
+        <span className="font-medium">{name}</span>
+      </Link>
+    );
+  };
+
 
   return (
     <div className="min-h-screen flex bg-background font-body">
@@ -92,16 +136,9 @@ export default function Layout({ children }: LayoutProps) {
             <h1 className="text-2xl font-bold tracking-tight text-primary font-headline">FinAssist</h1>
             <ThemeToggle />
           </div>
-          <nav className="flex-1 space-y-2">
+          <nav className="flex-1 p-4 space-y-2">
             {navItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="flex items-center p-3 rounded-lg text-foreground hover:bg-primary/10 transition-colors"
-              >
-                <span className="mr-3 text-lg">{item.icon}</span>
-                {item.name}
-              </Link>
+              <NavItem key={item.name} {...item} />
             ))}
           </nav>
           <div className="mt-auto">
@@ -142,16 +179,8 @@ export default function Layout({ children }: LayoutProps) {
                     </button>
                   </div>
                 <nav className="flex-1 p-4 space-y-2">
-                  {navItems.map((item) => (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className="flex items-center p-3 rounded-lg text-foreground hover:bg-primary/10 transition-colors"
-                      onClick={() => setSidebarOpen(false)}
-                    >
-                      <span className="mr-3 text-lg">{item.icon}</span>
-                      {item.name}
-                    </Link>
+                   {navItems.map((item) => (
+                    <NavItem key={item.name} {...item} />
                   ))}
                 </nav>
                 <div className="p-4 mt-auto">
@@ -176,7 +205,7 @@ export default function Layout({ children }: LayoutProps) {
              <p className="text-sm text-muted-foreground">Saldo</p>
              <p className={cn(
                 "text-lg font-semibold text-primary balance-animation",
-                balanceChanged && "animate-[pulse-gentle_0.6s_ease_in-out]"
+                balanceChanged && "animate-[pulse-gentle_0.6s_ease_in_out]"
               )}>
               {formatCurrency(balance)}
             </p>
