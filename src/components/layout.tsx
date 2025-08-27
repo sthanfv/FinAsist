@@ -3,8 +3,10 @@
 import React, { ReactNode, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { Menu, Home, Wallet, Goal, FileText, X } from 'lucide-react';
+import { Menu, Home, Wallet, Goal, FileText, X, LogOut } from 'lucide-react';
 import { useBalance } from '@/hooks/useBalance';
+import { useAuth } from '@/context/AppContext';
+import { useRouter } from 'next/navigation';
 
 type LayoutProps = {
   children: ReactNode;
@@ -13,6 +15,13 @@ type LayoutProps = {
 export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { balance } = useBalance(10000);
+  const { logout, user } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/');
+  };
 
   const navItems = [
     { name: 'Dashboard', icon: <Home />, href: '/dashboard' },
@@ -21,12 +30,20 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Reportes', icon: <FileText />, href: '/reports' },
   ];
 
+  if (!user) {
+    return (
+        <div className="flex h-screen items-center justify-center bg-background">
+            <p>Cargando...</p>
+        </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex bg-background font-body">
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex flex-col w-64 bg-card shadow-soft">
         <div className="p-6 flex flex-col h-full">
-          <h1 className="text-2xl font-semibold text-primary mb-8 font-headline">Asistente Financiero</h1>
+          <h1 className="text-2xl font-semibold text-primary mb-8 font-headline">FinAssist</h1>
           <nav className="flex-1 space-y-2">
             {navItems.map((item) => (
               <Link
@@ -39,9 +56,18 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
             ))}
           </nav>
-          <div className="mt-auto p-4 bg-muted/50 rounded-lg shadow-inner">
-            <p className="text-sm text-muted-foreground">Saldo disponible</p>
-            <p className="text-xl font-semibold text-secondary-foreground">{balance.toLocaleString('es-ES')} pts</p>
+          <div className="mt-auto">
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center p-3 rounded-lg text-foreground hover:bg-destructive/10 transition-colors mb-4"
+            >
+              <span className="mr-3 text-lg"><LogOut /></span>
+              Cerrar sesión
+            </button>
+            <div className="p-4 bg-muted/50 rounded-lg shadow-inner">
+                <p className="text-sm text-muted-foreground">Saldo disponible</p>
+                <p className="text-xl font-semibold text-secondary-foreground">{balance.toLocaleString('es-ES')} pts</p>
+            </div>
           </div>
         </div>
       </aside>
@@ -84,9 +110,18 @@ export default function Layout({ children }: LayoutProps) {
                     </Link>
                   ))}
                 </nav>
-                <div className="mt-auto p-4 bg-muted/50 rounded-lg shadow-inner">
-                  <p className="text-sm text-muted-foreground">Saldo disponible</p>
-                  <p className="text-xl font-semibold text-secondary-foreground">{balance.toLocaleString('es-ES')} pts</p>
+                <div className="mt-auto">
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center p-3 rounded-lg text-foreground hover:bg-destructive/10 transition-colors mb-4"
+                    >
+                        <span className="mr-3 text-lg"><LogOut /></span>
+                        Cerrar sesión
+                    </button>
+                    <div className="p-4 bg-muted/50 rounded-lg shadow-inner">
+                        <p className="text-sm text-muted-foreground">Saldo disponible</p>
+                        <p className="text-xl font-semibold text-secondary-foreground">{balance.toLocaleString('es-ES')} pts</p>
+                    </div>
                 </div>
               </div>
             </motion.aside>

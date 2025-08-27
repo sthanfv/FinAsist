@@ -1,29 +1,66 @@
 "use client";
 
-import React, { createContext, useContext, ReactNode, useState } from 'react';
+import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import { onAuthStateChanged, User, signOut, Auth } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { useRouter, usePathname } from 'next/navigation';
 
-interface AppContextType {
-  // This is a placeholder for context values
-  // In a real app, you would define your state and functions here
-  isAuthenticated: boolean;
+interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  logout: () => Promise<void>;
 }
 
-const AppContext = createContext<AppContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated] = useState(false);
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const value = {
-    isAuthenticated,
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (loading) return;
+
+    const isAuthPage = pathname === '/' || pathname === '/register';
+
+    if (!user && !isAuthPage) {
+      router.push('/');
+    }
+    if (user && isAuthPage) {
+      router.push('/dashboard');
+    }
+  }, [user, loading, router, pathname]);
+
+  const logout = async () => {
+    await signOut(auth);
   };
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  const value = {
+    user,
+    loading,
+    logout,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAppContext = () => {
-  const context = useContext(AppContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAppContext must be used within an AppProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
+
+export const AppProvider = AuthProvider;
+export const useAppContext = useAuth;
