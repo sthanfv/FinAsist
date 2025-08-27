@@ -141,9 +141,6 @@ export default function Layout({ children }: LayoutProps) {
             ))}
           </nav>
           <div className="mt-auto space-y-4">
-             <div className="flex justify-end">
-                <ThemeToggle />
-            </div>
             {authAction}
             <BalanceDisplay />
           </div>
@@ -195,9 +192,10 @@ export default function Layout({ children }: LayoutProps) {
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
+        
+        {/* Header Mobile */}
         <header className="flex items-center justify-between bg-card shadow-soft p-4 md:hidden">
           <button onClick={() => setSidebarOpen(true)} className="text-primary text-2xl">
             <Menu />
@@ -205,21 +203,54 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold tracking-tight text-primary font-headline">FinAssist</h1>
           </div>
-          <div className="flex items-center gap-2">
-             <div className="text-right">
-                <p className="text-sm text-muted-foreground">Saldo</p>
-                <p className={cn(
-                    "text-lg font-semibold text-primary balance-animation",
-                    balanceChanged && "animate-[pulse-gentle_0.6s_ease_in_out]"
-                  )}>
-                  {formatCurrency(balance)}
-                </p>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Saldo</p>
+              <p className={cn(
+                  "text-lg font-semibold text-primary balance-animation",
+                  balanceChanged && "animate-[pulse-gentle_0.6s_ease_in_out]"
+                )}>
+                {formatCurrency(balance)}
+              </p>
             </div>
             <ThemeToggle />
           </div>
         </header>
 
+        {/* Header Desktop */}
+        <div className="hidden md:flex items-center justify-between bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white p-4 shadow-lg">
+            <div className="flex items-center space-x-4">
+                <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+            </div>
+
+            <div className="flex items-center space-x-6">
+                <div className="text-center">
+                    <p className="text-blue-100 text-sm">Saldo Principal</p>
+                    <p className={cn(
+                        "text-2xl font-bold balance-animation",
+                        balanceChanged && "animate-[pulse-gentle_0.6s_ease_in_out]"
+                    )}>
+                        {formatCurrency(balance)}
+                    </p>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                    <button className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 transform hover:scale-105">
+                        <span className="text-sm font-medium">+ Añadir Transacción</span>
+                    </button>
+                    <button className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 transform hover:scale-105">
+                        <span className="text-sm font-medium">🤖 Asistente IA</span>
+                    </button>
+
+                    <div className="bg-white/20 backdrop-blur-sm rounded-lg p-1">
+                        <ThemeToggle />
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <main className="flex-1 p-6">{children}</main>
+        
         <footer className="bg-card shadow-soft p-4 text-center text-muted-foreground text-sm mt-auto">
           © 2025 FinAssist
         </footer>
@@ -227,5 +258,3 @@ export default function Layout({ children }: LayoutProps) {
     </div>
   );
 }
-
-    
