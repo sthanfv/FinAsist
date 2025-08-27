@@ -29,7 +29,16 @@ export default function Dashboard() {
 
   const chartData = transactions
     .filter(t => t.type === 'Gasto')
-    .map(t => ({ name: t.category, amount: t.amount }));
+    .reduce((acc, t) => {
+        const existing = acc.find(item => item.name === t.category);
+        if (existing) {
+            existing.amount += t.amount;
+        } else {
+            acc.push({ name: t.category, amount: t.amount });
+        }
+        return acc;
+    }, [] as { name: string; amount: number }[]);
+
 
   return (
     <Layout>
@@ -63,7 +72,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         <BalanceCard title="Saldo Principal" amount={balance} />
-        <BalanceCard title="Saldo Ahorro" amount={goals.find(g => g.title.toLowerCase().includes('ahorro'))?.savedAmount || 0} color="text-accent" />
+        <BalanceCard title="Total Ahorrado" amount={goals.reduce((sum, g) => sum + g.savedAmount, 0)} color="text-accent" />
         <div className="col-span-1 md:col-span-2 lg:col-span-1 bg-card shadow-soft p-6 rounded-xl">
           <h2 className="text-lg font-semibold text-card-foreground mb-4">Gastos por categoría</h2>
           <ChartComponent data={chartData} />
@@ -71,10 +80,10 @@ export default function Dashboard() {
       </div>
 
       <div className="mt-6">
-        <h2 className="text-xl font-semibold text-card-foreground mb-4">Alertas recientes</h2>
-        <AlertCard type="success" message="Has cumplido tu meta de ahorro del mes." />
-        <AlertCard type="warning" message="Gasto en ocio supera el 40% de tu balance." />
-        <AlertCard type="error" message="Balance restante insuficiente para cubrir próximos gastos." />
+        <h2 className="text-xl font-semibold text-card-foreground mb-4">Alertas y Sugerencias</h2>
+        <AlertCard type="success" message="¡Felicidades! Has cumplido tu meta de ahorro para 'Viaje Vacaciones'." />
+        <AlertCard type="warning" message="Tu gasto en 'Ocio' este mes es un 35% más alto que el mes pasado." />
+        <AlertCard type="error" message="Detectamos un posible pago duplicado en la categoría 'Suscripciones'." />
       </div>
     </Layout>
   );
