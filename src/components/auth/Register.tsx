@@ -6,16 +6,18 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useAppContext } from '@/context/AppContext';
 import { useRouter } from 'next/navigation';
+import { useAppStore } from '@/store/useAppStore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { register } = useAppContext();
   const router = useRouter();
+  const { isLoading, setLoading } = useAppStore();
+
 
   const handleRegister = async () => {
     if (!email || !password) {
@@ -24,7 +26,7 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      await register(email, password);
+      await createUserWithEmailAndPassword(auth, email, password);
       toast({ title: 'Éxito', description: 'Tu cuenta ha sido creada.' });
       router.push('/dashboard');
     } catch (err: any) {
@@ -50,6 +52,7 @@ export default function Register() {
               placeholder="tu@correo.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
             />
           </div>
           <div className="space-y-2">
@@ -60,12 +63,13 @@ export default function Register() {
               placeholder="Mínimo 6 caracteres"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
             />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <Button onClick={handleRegister} className="w-full" disabled={loading}>
-            {loading ? 'Creando cuenta...' : 'Registrarse'}
+          <Button onClick={handleRegister} className="w-full" disabled={isLoading}>
+            {isLoading ? 'Creando cuenta...' : 'Registrarse'}
           </Button>
            <p className="text-sm text-muted-foreground">
             ¿Ya tienes una cuenta?{' '}

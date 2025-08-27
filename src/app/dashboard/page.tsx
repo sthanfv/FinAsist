@@ -13,20 +13,16 @@ import Layout from '@/components/layout';
 import BalanceCard from '@/components/dashboard/BalanceCard';
 import { AlertCard } from '@/components/dashboard/AlertCard';
 import { ChartComponent } from '@/components/dashboard/ChartComponent';
-import { useAppContext } from '@/context/AppContext';
 import UnifiedAssistant from '@/components/assistant/UnifiedAssistant';
 import { Button } from '@/components/ui/button';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, PlusCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
-
+import { useAppStore } from '@/store/useAppStore';
+import Link from 'next/link';
 
 export default function Dashboard() {
-  const { balance, transactions, goals, loading } = useAppContext();
+  const { balance, transactions, goals } = useAppStore();
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
-
-  if (loading) {
-    return <Layout><div className="flex h-full items-center justify-center"><p>Cargando datos...</p></div></Layout>;
-  }
 
   const chartData = transactions
     .filter(t => t.type === 'Gasto')
@@ -40,6 +36,7 @@ export default function Dashboard() {
         return acc;
     }, [] as { name: string; amount: number }[]);
 
+  const totalGoalsAmount = goals.reduce((sum, g) => sum + g.savedAmount, 0);
 
   return (
     <Layout>
@@ -49,49 +46,60 @@ export default function Dashboard() {
         exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
           <h1 className="text-4xl font-bold font-headline">Dashboard</h1>
-          <Dialog open={isAssistantOpen} onOpenChange={setIsAssistantOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Asistente IA
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Sparkles className="text-primary"/>
+          <div className="flex gap-2">
+            <Button asChild>
+              <Link href="/transactions">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Añadir Transacción
+              </Link>
+            </Button>
+            <Dialog open={isAssistantOpen} onOpenChange={setIsAssistantOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Sparkles className="mr-2 h-4 w-4" />
                   Asistente IA
-                </DialogTitle>
-                <DialogDescription>
-                  Obtén recomendaciones simples o avanzadas basadas en tus datos.
-                </DialogDescription>
-              </DialogHeader>
-              <UnifiedAssistant 
-                balance={balance} 
-                transactions={transactions} 
-                goals={goals} 
-              />
-            </DialogContent>
-          </Dialog>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Sparkles className="text-primary"/>
+                    Asistente IA
+                  </DialogTitle>
+                  <DialogDescription>
+                    Obtén recomendaciones simples o avanzadas basadas en tus datos.
+                  </DialogDescription>
+                </DialogHeader>
+                <UnifiedAssistant 
+                  balance={balance} 
+                  transactions={transactions} 
+                  goals={goals} 
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+        
+        <div className="mb-6">
+          <UnifiedAssistant 
+            balance={balance} 
+            transactions={transactions} 
+            goals={goals}
+            isGlobal
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
           <BalanceCard title="Saldo Principal" amount={balance} />
-          <BalanceCard title="Total Ahorrado" amount={goals.reduce((sum, g) => sum + g.savedAmount, 0)} color="text-accent" />
+          <BalanceCard title="Total Ahorrado" amount={totalGoalsAmount} color="text-accent" />
           <div className="col-span-1 md:col-span-2 lg:col-span-1 bg-card shadow-soft p-6 rounded-xl">
             <h2 className="text-lg font-semibold text-card-foreground mb-4">Gastos por categoría</h2>
             <ChartComponent data={chartData} />
           </div>
         </div>
 
-        <div className="mt-6">
-          <h2 className="text-xl font-semibold text-card-foreground mb-4">Alertas y Sugerencias</h2>
-          <AlertCard type="success" message="¡Felicidades! Has cumplido tu meta de ahorro para 'Viaje Vacaciones'." />
-          <AlertCard type="warning" message="Tu gasto en 'Ocio' este mes es un 35% más alto que el mes pasado." />
-          <AlertCard type="error" message="Detectamos un posible pago duplicado en la categoría 'Suscripciones'." />
-        </div>
       </motion.div>
     </Layout>
   );

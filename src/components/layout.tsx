@@ -4,9 +4,11 @@ import React, { ReactNode, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { Menu, Home, Wallet, Goal, FileText, X, LogOut, LogIn } from 'lucide-react';
-import { useAppContext } from '@/context/AppContext';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from './ThemeToggle';
+import { useAppStore } from '@/store/useAppStore';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 type LayoutProps = {
   children: ReactNode;
@@ -14,12 +16,12 @@ type LayoutProps = {
 
 export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { balance, user, logout } = useAppContext();
+  const { balance, user } = useAppStore();
   const router = useRouter();
 
   const handleLogout = async () => {
-    await logout();
-    router.push('/');
+    await signOut(auth);
+    router.push('/login');
   };
   
   const formatCurrency = (value: number) => {
@@ -76,7 +78,7 @@ export default function Layout({ children }: LayoutProps) {
             {authAction}
             <div className="p-4 bg-muted/50 rounded-lg shadow-inner">
                 <p className="text-sm text-muted-foreground">Saldo disponible</p>
-                <p className="text-xl font-semibold text-secondary-foreground">{formatCurrency(balance)}</p>
+                <p className="text-xl font-semibold text-primary">{formatCurrency(balance)}</p>
             </div>
           </div>
         </div>
@@ -127,7 +129,7 @@ export default function Layout({ children }: LayoutProps) {
                     {authAction}
                     <div className="p-4 bg-muted/50 rounded-lg shadow-inner">
                         <p className="text-sm text-muted-foreground">Saldo disponible</p>
-                        <p className="text-xl font-semibold text-secondary-foreground">{formatCurrency(balance)}</p>
+                        <p className="text-xl font-semibold text-primary">{formatCurrency(balance)}</p>
                     </div>
                 </div>
               </div>
@@ -146,7 +148,7 @@ export default function Layout({ children }: LayoutProps) {
           <h1 className="text-xl font-semibold text-primary font-headline">FinAssist</h1>
           <div className="text-right">
             <p className="text-sm text-muted-foreground">Saldo</p>
-            <p className="text-lg font-semibold text-secondary-foreground">{formatCurrency(balance)}</p>
+            <p className="text-lg font-semibold text-primary">{formatCurrency(balance)}</p>
           </div>
         </header>
 

@@ -1,28 +1,26 @@
 "use client";
 import Layout from '@/components/layout';
-import TransactionTable, { Transaction } from '@/components/transactions/TransactionTable';
+import TransactionTable from '@/components/transactions/TransactionTable';
 import AddTransactionForm from '@/components/transactions/AddTransactionForm';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
-import { useAppContext } from '@/context/AppContext';
 import ExportImport from '@/components/transactions/ExportImport';
 import { useToast } from '@/hooks/use-toast';
 import BackButton from '@/components/BackButton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import EditTransactionForm from '@/components/transactions/EditTransactionForm';
 import { motion } from 'framer-motion';
+import { useAppStore } from '@/store/useAppStore';
+import type { Transaction } from '@/components/transactions/TransactionTable';
+
 
 export default function TransactionsPage() {
-    const { transactions, addTransaction, setTransactions, loading, balance, updateTransaction, deleteTransaction } = useAppContext();
+    const { transactions, addTransaction, setTransactions, updateTransaction, deleteTransaction } = useAppStore();
     const [isAddFormVisible, setIsAddFormVisible] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const { toast } = useToast();
 
-    if (loading) {
-      return <Layout><div className="flex h-full items-center justify-center"><p>Cargando datos...</p></div></Layout>;
-    }
-    
     const handleAddTransaction = (newTransaction: Omit<Transaction, 'id'>) => {
         addTransaction(newTransaction);
         setIsAddFormVisible(false);
@@ -52,7 +50,7 @@ export default function TransactionsPage() {
 
     const handleImport = (imported: any[]) => {
         const formatted = imported.map((t, index) => ({
-          id: Date.now() + index, // More robust ID generation
+          id: Date.now() + index,
           date: t.date || new Date().toISOString().split('T')[0],
           category: t.category || 'Importado',
           type: t.type === 'Ingreso' ? 'Ingreso' : 'Gasto',
@@ -61,12 +59,7 @@ export default function TransactionsPage() {
           note: t.note || '',
         }));
     
-        // Recalculate balance from scratch based on imported data
-        const newBalance = formatted.reduce((acc, t) => {
-            return t.type === 'Ingreso' ? acc + t.amount : acc - t.amount;
-        }, 0);
-    
-        setTransactions(formatted);
+        setTransactions(formatted, true);
         toast({ title: 'Éxito', description: 'Datos importados correctamente.' });
       };
 
@@ -96,11 +89,18 @@ export default function TransactionsPage() {
                   <div className="mb-6">
                       <ExportImport transactions={transactions} onImport={handleImport} />
                   </div>
-                  <TransactionTable 
-                      transactions={transactions} 
-                      onEdit={handleEditClick} 
-                      onDelete={handleDelete} 
-                  />
+                   {transactions.length === 0 ? (
+                    <div className="text-center py-10 bg-card rounded-xl shadow-soft">
+                        <p className="text-muted-foreground mb-4">Aún no tienes transacciones.</p>
+                        <Button onClick={() => setIsAddFormVisible(true)}>Añadir tu primera transacción</Button>
+                    </div>
+                    ) : (
+                    <TransactionTable 
+                        transactions={transactions} 
+                        onEdit={handleEditClick} 
+                        onDelete={handleDelete} 
+                    />
+                  )}
               </div>
               {selectedTransaction && (
                  <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>

@@ -1,16 +1,12 @@
 "use client";
 import Layout from '@/components/layout';
 import ReportCard from '@/components/reports/ReportCard';
-import { useAppContext } from '@/context/AppContext';
 import BackButton from '@/components/BackButton';
 import { motion } from 'framer-motion';
+import { useAppStore } from '@/store/useAppStore';
 
 export default function ReportsPage() {
-  const { transactions, loading } = useAppContext();
-
-  if (loading) {
-    return <Layout><div className="flex h-full items-center justify-center"><p>Cargando datos...</p></div></Layout>;
-  }
+  const { transactions } = useAppStore();
 
   // Agrupar por mes para reporte
   const months = [

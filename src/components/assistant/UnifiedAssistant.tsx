@@ -7,28 +7,32 @@ import { getFinancialRecommendation, RecommendationInput } from '@/ai/flows/reco
 import { getAdvancedRecommendation, AdvancedRecommendationInput } from '@/ai/flows/advancedRecommendationFlow';
 import type { Goal } from '@/components/goals/GoalsList';
 import type { Transaction } from '@/components/transactions/TransactionTable';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 type Props = {
   balance: number;
   transactions: Transaction[];
   goals: Goal[];
+  isGlobal?: boolean;
 };
 
-export default function UnifiedAssistant({ balance, transactions, goals }: Props) {
+export default function UnifiedAssistant({ balance, transactions, goals, isGlobal = false }: Props) {
   const [recommendation, setRecommendation] = useState('');
   const [advancedRecommendations, setAdvancedRecommendations] = useState<string[]>([]);
   const [loading, setLoading] = useState(''); // 'simple' | 'advanced' | ''
+  const [error, setError] = useState('');
 
   const handleGetSimpleRecommendation = async () => {
     setLoading('simple');
     setRecommendation('');
+    setError('');
     try {
-        const input: RecommendationInput = { balance, transactions };
+        const input: RecommendationInput = { balance, transactions: transactions.slice(-10) }; // Solo últimas 10
         const result = await getFinancialRecommendation(input);
         setRecommendation(result.recommendation);
-    } catch (error) {
-        console.error('Error fetching recommendation:', error);
-        setRecommendation('No se pudo obtener una recomendación en este momento.');
+    } catch (err) {
+        console.error('Error fetching recommendation:', err);
+        setError('No se pudo obtener una recomendación en este momento.');
     } finally {
         setLoading('');
     }
@@ -37,17 +41,44 @@ export default function UnifiedAssistant({ balance, transactions, goals }: Props
   const handleGetAdvancedRecommendation = async () => {
     setLoading('advanced');
     setAdvancedRecommendations([]);
+    setError('');
     try {
-        const input: AdvancedRecommendationInput = { balance, transactions, goals };
+        const input: AdvancedRecommendationInput = { balance, transactions: transactions.slice(-20), goals };
         const result = await getAdvancedRecommendation(input);
         setAdvancedRecommendations(result.recommendations);
-    } catch (error) {
-        console.error('Error fetching advanced recommendation:', error);
-        setAdvancedRecommendations(['No se pudo obtener una recomendación avanzada.']);
+    } catch (err) {
+        console.error('Error fetching advanced recommendation:', err);
+        setError('No se pudo obtener una recomendación avanzada.');
     } finally {
         setLoading('');
     }
   };
+
+  if (isGlobal) {
+    return (
+      <div className='mb-6'>
+        <Button onClick={handleGetSimpleRecommendation} disabled={!!loading} className="w-full">
+            {loading === 'simple' ? <Loader2 className="animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+            Obtener Consejo Rápido de IA
+        </Button>
+         {recommendation && !error && (
+            <Alert className="mt-4 bg-accent/10 border-accent/50 text-accent [&>svg]:text-accent">
+                <Sparkles className="h-4 w-4" />
+                <AlertTitle>Consejo Financiero</AlertTitle>
+                <AlertDescription>
+                    {recommendation}
+                </AlertDescription>
+            </Alert>
+        )}
+        {error && (
+             <Alert variant="destructive" className="mt-4">
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+            </Alert>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
@@ -79,6 +110,12 @@ export default function UnifiedAssistant({ balance, transactions, goals }: Props
                 </Card>
             )}
         </div>
+        {error && (
+             <Alert variant="destructive" className="mt-4">
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+            </Alert>
+        )}
     </div>
   );
 }

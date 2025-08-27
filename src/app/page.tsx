@@ -1,18 +1,26 @@
 "use client";
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AppContext';
+import { useAppStore } from '@/store/useAppStore';
 
 export default function HomePage() {
-  const { loading } = useAuth();
+  const { isInitialized, user } = useAppStore();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading) {
-      router.replace('/dashboard');
+    if (isInitialized) {
+      if (user) {
+        router.replace('/dashboard');
+      } else {
+        // Si no hay usuario y ya inicializó, podría redirigir a login o a una landing page
+        // Por ahora, lo más seguro es llevarlo al dashboard, que ya maneja la lógica de contenido para invitados
+        router.replace('/dashboard');
+      }
     }
-  }, [loading, router]);
+  }, [isInitialized, user, router]);
 
+  // El estado de carga principal ahora se maneja en RootLayout,
+  // pero mantenemos un loader aquí como fallback.
   return (
     <main className="flex h-screen items-center justify-center bg-background">
       <p>Cargando aplicación...</p>

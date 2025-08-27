@@ -7,15 +7,16 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useAppContext } from '@/context/AppContext';
+import { useAppStore } from '@/store/useAppStore';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
-  const { login } = useAppContext();
+  const { isLoading, setLoading } = useAppStore();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -24,7 +25,7 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      await login(email, password);
+      await signInWithEmailAndPassword(auth, email, password);
       toast({ title: 'Éxito', description: 'Has iniciado sesión correctamente.' });
       router.push('/dashboard');
     } catch (err: any) {
@@ -50,6 +51,7 @@ export default function Login() {
               placeholder="tu@correo.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
             />
           </div>
           <div className="space-y-2">
@@ -60,12 +62,13 @@ export default function Login() {
               placeholder="********"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
             />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <Button onClick={handleLogin} className="w-full" disabled={loading}>
-            {loading ? 'Entrando...' : 'Entrar'}
+          <Button onClick={handleLogin} className="w-full" disabled={isLoading}>
+            {isLoading ? 'Entrando...' : 'Entrar'}
           </Button>
           <p className="text-sm text-muted-foreground">
             ¿No tienes una cuenta?{' '}

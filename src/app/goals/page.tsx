@@ -2,22 +2,20 @@
 import { useState } from 'react';
 import Layout from '@/components/layout';
 import AddGoalForm from '@/components/goals/AddGoalForm';
-import GoalsList, { Goal } from '@/components/goals/GoalsList';
+import GoalsList from '@/components/goals/GoalsList';
 import { Button } from '@/components/ui/button';
-import { useAppContext } from '@/context/AppContext';
 import BackButton from '@/components/BackButton';
 import { motion } from 'framer-motion';
+import { useAppStore } from '@/store/useAppStore';
+import type { Goal } from '@/components/goals/GoalsList';
+
 
 export default function GoalsPage() {
-    const { goals, addGoal, loading } = useAppContext();
+    const { goals, addGoal } = useAppStore();
     const [isFormVisible, setIsFormVisible] = useState(false);
 
-    if (loading) {
-      return <Layout><div className="flex h-full items-center justify-center"><p>Cargando datos...</p></div></Layout>;
-    }
-
-    const handleAddGoal = (newGoal: Omit<Goal, 'id'>) => {
-        addGoal(newGoal);
+    const handleAddGoal = (newGoal: Omit<Goal, 'id' | 'savedAmount'>) => {
+        addGoal({...newGoal, savedAmount: 0});
         setIsFormVisible(false);
     };
 
