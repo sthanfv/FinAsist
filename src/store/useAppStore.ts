@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import type { Toast } from '@/components/ui/toast-system';
 
 export interface Transaction {
   id: string;
@@ -51,7 +52,7 @@ interface AppState {
   // UI State
   isDarkMode: boolean;
   sidebarOpen: boolean;
-  activeToasts: string[];
+  toasts: Toast[];
   
   // Acciones de autenticación
   setUser: (user: User | null) => void;
@@ -74,8 +75,9 @@ interface AppState {
   // Acciones de UI
   toggleDarkMode: () => void;
   toggleSidebar: () => void;
-  addToast: (message: string) => string;
+  addToast: (message: string, type?: 'success' | 'error' | 'warning' | 'info', duration?: number) => string;
   removeToast: (id: string) => void;
+  clearAllToasts: () => void;
   
   // Inicialización
   initializeApp: () => () => void;
@@ -99,7 +101,7 @@ export const useAppStore = create<AppState>()(
         balance: 0,
         isDarkMode: false,
         sidebarOpen: false,
-        activeToasts: [],
+        toasts: [],
         // Acciones de autenticación
         setUser: (user) => set((state) => {
           state.user = user;
@@ -133,7 +135,7 @@ export const useAppStore = create<AppState>()(
               });
             } catch (error) {
               console.error('Error adding transaction:', error);
-              get().addToast('Error al agregar transacción');
+              get().addToast('Error al agregar transacción', 'error');
             }
           } else {
             // Usuario invitado: guardar en localStorage
@@ -155,7 +157,7 @@ export const useAppStore = create<AppState>()(
               );
             } catch (error) {
               console.error('Error updating transaction:', error);
-              get().addToast('Error al actualizar transacción');
+              get().addToast('Error al actualizar transacción', 'error');
             }
           } else {
             set((state) => {
@@ -176,7 +178,7 @@ export const useAppStore = create<AppState>()(
               await deleteDoc(doc(db, 'users', user.uid, 'transactions', id));
             } catch (error) {
               console.error('Error deleting transaction:', error);
-              get().addToast('Error al eliminar transacción');
+              get().addToast('Error al eliminar transacción', 'error');
             }
           } else {
             set((state) => {
@@ -204,7 +206,7 @@ export const useAppStore = create<AppState>()(
               );
             } catch (error) {
               console.error('Error adding goal:', error);
-              get().addToast('Error al agregar meta');
+              get().addToast('Error al agregar meta', 'error');
             }
           }
           set((state) => {
@@ -223,7 +225,7 @@ export const useAppStore = create<AppState>()(
               await updateDoc(doc(db, 'users', user.uid, 'goals', id), goalData);
             } catch (error) {
               console.error('Error updating goal:', error);
-              get().addToast('Error al actualizar meta');
+              get().addToast('Error al actualizar meta', 'error');
             }
           } else {
             set((state) => {
@@ -243,7 +245,7 @@ export const useAppStore = create<AppState>()(
               await deleteDoc(doc(db, 'users', user.uid, 'goals', id));
             } catch (error) {
               console.error('Error deleting goal:', error);
-              get().addToast('Error al eliminar meta');
+              get().addToast('Error al eliminar meta', 'error');
             }
           } else {
             set((state) => {
@@ -269,21 +271,27 @@ export const useAppStore = create<AppState>()(
         toggleSidebar: () => set((state) => {
           state.sidebarOpen = !state.sidebarOpen;
         }),
-        addToast: (message: string) => {
-          const id = `toast-${Date.now()}`;
-          set((state) => {
-            state.activeToasts.push(id);
-          });
+        toasts: [],
+        addToast: (message, type = 'info', duration = 5000) => {
+          const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          const newToast: Toast = {
+            id,
+            message,
+            type,
+            duration,
+          };
           
-          // Auto remove toast after 5 seconds
-          setTimeout(() => {
-            get().removeToast(id);
-          }, 5000);
+          set((state) => {
+            state.toasts.push(newToast);
+          });
           
           return id;
         },
-        removeToast: (id: string) => set((state) => {
-          state.activeToasts = state.activeToasts.filter(toastId => toastId !== id);
+        removeToast: (id) => set((state) => {
+          state.toasts = state.toasts.filter(toast => toast.id !== id);
+        }),
+        clearAllToasts: () => set((state) => {
+          state.toasts = [];
         }),
         
         // Inicialización
