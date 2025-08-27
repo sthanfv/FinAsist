@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import BackButton from '@/components/BackButton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import EditTransactionForm from '@/components/transactions/EditTransactionForm';
+import { motion } from 'framer-motion';
 
 export default function TransactionsPage() {
     const { transactions, addTransaction, setTransactions, loading, balance, updateTransaction, deleteTransaction } = useAppContext();
@@ -71,43 +72,50 @@ export default function TransactionsPage() {
 
     return (
         <Layout>
-            <div className="container mx-auto py-10">
-                <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center gap-4">
-                        <BackButton />
-                        <h1 className="text-4xl font-bold font-headline">Transacciones</h1>
-                    </div>
-                    <Button onClick={() => setIsAddFormVisible(!isAddFormVisible)}>
-                        {isAddFormVisible ? 'Cerrar Formulario' : 'Añadir Transacción'}
-                    </Button>
-                </div>
-                 {isAddFormVisible && (
-                    <div className="mb-6">
-                        <AddTransactionForm onAddTransaction={handleAddTransaction} />
-                    </div>
-                )}
-                <div className="mb-6">
-                    <ExportImport transactions={transactions} onImport={handleImport} />
-                </div>
-                <TransactionTable 
-                    transactions={transactions} 
-                    onEdit={handleEditClick} 
-                    onDelete={handleDelete} 
-                />
-            </div>
-            {selectedTransaction && (
-               <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Editar Transacción</DialogTitle>
-                        </DialogHeader>
-                        <EditTransactionForm 
-                            transaction={selectedTransaction} 
-                            onUpdateTransaction={handleUpdateTransaction}
-                        />
-                    </DialogContent>
-                </Dialog>
-            )}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            >
+              <div className="container mx-auto py-10">
+                  <div className="flex justify-between items-center mb-6">
+                      <div className="flex items-center gap-4">
+                          <BackButton />
+                          <h1 className="text-4xl font-bold font-headline">Transacciones</h1>
+                      </div>
+                      <Button onClick={() => setIsAddFormVisible(!isAddFormVisible)}>
+                          {isAddFormVisible ? 'Cerrar Formulario' : 'Añadir Transacción'}
+                      </Button>
+                  </div>
+                   {isAddFormVisible && (
+                      <div className="mb-6">
+                          <AddTransactionForm onAddTransaction={handleAddTransaction} />
+                      </div>
+                  )}
+                  <div className="mb-6">
+                      <ExportImport transactions={transactions} onImport={handleImport} />
+                  </div>
+                  <TransactionTable 
+                      transactions={transactions} 
+                      onEdit={handleEditClick} 
+                      onDelete={handleDelete} 
+                  />
+              </div>
+              {selectedTransaction && (
+                 <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                      <DialogContent>
+                          <DialogHeader>
+                              <DialogTitle>Editar Transacción</DialogTitle>
+                          </DialogHeader>
+                          <EditTransactionForm 
+                              transaction={selectedTransaction} 
+                              onUpdateTransaction={handleUpdateTransaction}
+                          />
+                      </DialogContent>
+                  </Dialog>
+              )}
+            </motion.div>
         </Layout>
     );
 }

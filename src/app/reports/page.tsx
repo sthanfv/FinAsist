@@ -3,6 +3,7 @@ import Layout from '@/components/layout';
 import ReportCard from '@/components/reports/ReportCard';
 import { useAppContext } from '@/context/AppContext';
 import BackButton from '@/components/BackButton';
+import { motion } from 'framer-motion';
 
 export default function ReportsPage() {
   const { transactions, loading } = useAppContext();
@@ -38,16 +39,23 @@ export default function ReportsPage() {
 
   return (
     <Layout>
-      <div className="container mx-auto py-10">
-        <div className="flex items-center gap-4 mb-8">
-            <BackButton />
-            <h1 className="text-4xl font-bold font-headline">Reportes</h1>
-        </div>
-        
-        <ReportCard title="Gastos Mensuales" data={monthlyData} />
-        <ReportCard title="Gastos por Categoría" data={categoryData} />
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
+        <div className="container mx-auto py-10">
+          <div className="flex items-center gap-4 mb-8">
+              <BackButton />
+              <h1 className="text-4xl font-bold font-headline">Reportes</h1>
+          </div>
+          
+          <ReportCard title="Gastos Mensuales" data={monthlyData} />
+          <ReportCard title="Gastos por Categoría" data={categoryData} />
 
-      </div>
+        </div>
+      </motion.div>
     </Layout>
   );
 }
