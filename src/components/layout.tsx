@@ -68,7 +68,7 @@ export default function Layout({ children }: LayoutProps) {
   );
 
   const BalanceDisplay = () => (
-    <div className="p-4 bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800 text-white rounded-lg shadow-lg">
+    <div className="p-4 bg-gradient-to-r from-primary/80 via-primary to-primary/80 text-white rounded-lg shadow-lg">
       <div className="flex justify-between items-center">
         <div>
           <p className="text-sm opacity-90">Saldo disponible</p>
@@ -195,15 +195,17 @@ export default function Layout({ children }: LayoutProps) {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         
-        {/* Header Mobile */}
-        <header className="flex items-center justify-between bg-card shadow-soft p-4 md:hidden">
-          <button onClick={() => setSidebarOpen(true)} className="text-primary text-2xl">
-            <Menu />
-          </button>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-primary font-headline">FinAssist</h1>
+        {/* Header (Móvil y Desktop) */}
+        <header className="flex items-center justify-between bg-card shadow-soft p-4">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setSidebarOpen(true)} className="text-primary text-2xl md:hidden">
+              <Menu />
+            </button>
+            <h1 className="text-xl font-bold tracking-tight text-primary font-headline hidden md:block">
+              Bienvenido
+            </h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Saldo</p>
               <p className={cn(
@@ -217,38 +219,6 @@ export default function Layout({ children }: LayoutProps) {
           </div>
         </header>
 
-        {/* Header Desktop */}
-        <div className="hidden md:flex items-center justify-between bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white p-4 shadow-lg">
-            <div className="flex items-center space-x-4">
-                <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-            </div>
-
-            <div className="flex items-center space-x-6">
-                <div className="text-center">
-                    <p className="text-blue-100 text-sm">Saldo Principal</p>
-                    <p className={cn(
-                        "text-2xl font-bold balance-animation",
-                        balanceChanged && "animate-[pulse-gentle_0.6s_ease_in_out]"
-                    )}>
-                        {formatCurrency(balance)}
-                    </p>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                    <button className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 transform hover:scale-105">
-                        <span className="text-sm font-medium">+ Añadir Transacción</span>
-                    </button>
-                    <button className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 transform hover:scale-105">
-                        <span className="text-sm font-medium">🤖 Asistente IA</span>
-                    </button>
-
-                    <div className="bg-white/20 backdrop-blur-sm rounded-lg p-1">
-                        <ThemeToggle />
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <main className="flex-1 p-6">{children}</main>
         
         <footer className="bg-card shadow-soft p-4 text-center text-muted-foreground text-sm mt-auto">
@@ -258,3 +228,5 @@ export default function Layout({ children }: LayoutProps) {
     </div>
   );
 }
+
+    
