@@ -6,14 +6,15 @@ import { AlertCard } from '@/components/dashboard/AlertCard';
 import { ChartComponent } from '@/components/dashboard/ChartComponent';
 import { useBalance } from '@/hooks/useBalance';
 import { useState } from 'react';
+import FinancialAssistant from '@/components/assistant/FinancialAssistant';
 
 export default function Dashboard() {
   const { balance } = useBalance(10000);
   const [transactions] = useState([
-    { name: 'Universidad', amount: 4000 },
-    { name: 'Ocio', amount: 1500 },
-    { name: 'Transporte', amount: 1200 },
-    { name: 'Ahorro', amount: 2000 },
+    { name: 'Universidad', amount: 4000, type: 'Gasto', category: 'Universidad' },
+    { name: 'Ocio', amount: 1500, type: 'Gasto', category: 'Ocio' },
+    { name: 'Transporte', amount: 1200, type: 'Gasto', category: 'Transporte' },
+    { name: 'Ahorro', amount: 2000, type: 'Gasto', category: 'Ahorro' },
   ]);
 
   return (
@@ -33,6 +34,8 @@ export default function Dashboard() {
         <AlertCard type="warning" message="Gasto en ocio supera el 40% de tu balance." />
         <AlertCard type="error" message="Balance restante insuficiente para cubrir próximos gastos." />
       </div>
+
+      <FinancialAssistant balance={balance} transactions={transactions} />
     </Layout>
   );
 }
