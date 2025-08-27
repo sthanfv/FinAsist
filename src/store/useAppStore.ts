@@ -144,6 +144,70 @@ export const useAppStore = create<AppState>()(
           }
           // get().calculateBalance(); // calculateBalance needs to be implemented
         },
+        updateTransaction: async (id, transactionData) => {
+          const { user } = get();
+          
+          if (user) {
+            try {
+              await updateDoc(
+                doc(db, 'users', user.uid, 'transactions', id),
+                transactionData
+              );
+            } catch (error) {
+              console.error('Error updating transaction:', error);
+              // get().addToast('Error al actualizar transacción');
+            }
+          } else {
+            set((state) => {
+              const index = state.transactions.findIndex(t => t.id === id);
+              if (index !== -1) {
+                Object.assign(state.transactions[index], transactionData);
+              }
+            });
+            // get().saveGuestData();
+          }
+          // get().calculateBalance();
+        },
+        deleteTransaction: async (id) => {
+          const { user } = get();
+          
+          if (user) {
+            try {
+              await deleteDoc(doc(db, 'users', user.uid, 'transactions', id));
+            } catch (error) {
+              console.error('Error deleting transaction:', error);
+              // get().addToast('Error al eliminar transacción');
+            }
+          } else {
+            set((state) => {
+              state.transactions = state.transactions.filter(t => t.id !== id);
+            });
+            // get().saveGuestData();
+          }
+          // get().calculateBalance();
+        },
+        setGoals: (goals) => set((state) => {
+          state.goals = goals;
+        }),
+        addGoal: async (goalData) => {
+          const { user } = get();
+          const newGoal: Goal = {
+            ...goalData,
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            createdAt: new Date().toISOString(),
+          };
+          if (user) {
+            try {
+              await setDoc(
+                doc(db, 'users', user.uid, 'goals', newGoal.id),
+                newGoal
+              );
+            } catch (error) {
+              console.error('Error adding goal:', error);
+              // get().addToast('Error al agregar meta');
+            }
+          }
+        },
       })),
       {
         name: 'finassist-storage', 
