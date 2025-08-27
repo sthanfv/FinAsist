@@ -23,7 +23,7 @@ export default function Layout({ children }: LayoutProps) {
   };
   
   const formatCurrency = (value: number) => {
-    return value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+    return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
   };
 
   const navItems = [

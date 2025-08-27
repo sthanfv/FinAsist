@@ -49,7 +49,7 @@ export default function TransactionTable({ transactions, onEdit, onDelete }: Pro
   const categories = [...new Set(transactions.map(t => t.category))];
   
   const formatCurrency = (value: number) => {
-    return value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+    return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
   };
 
   return (

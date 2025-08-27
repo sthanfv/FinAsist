@@ -15,7 +15,7 @@ type Props = {
 
 export default function ReportCard({ title, data }: Props) {
   const formatCurrency = (value: number) => {
-    return value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+    return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
   };
   
   const handleExportExcel = () => {

@@ -13,7 +13,7 @@ export default function GoalCard({ goal }: Props) {
   const progress = Math.min((goal.savedAmount / goal.targetAmount) * 100, 100);
 
   const formatCurrency = (value: number) => {
-    return value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+    return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
   };
 
   return (
