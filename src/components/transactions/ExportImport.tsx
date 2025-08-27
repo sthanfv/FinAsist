@@ -3,16 +3,9 @@
 import { utils, writeFile, read } from 'xlsx';
 import { ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
+import { Download, Upload } from 'lucide-react';
+import { Transaction } from './TransactionTable';
 
-type Transaction = {
-    id: number;
-    date: string;
-    category: string;
-    type: 'Ingreso' | 'Gasto';
-    amount: number;
-    account: string;
-    note: string;
-  };
 
 type Props = {
   transactions: Transaction[];
@@ -41,24 +34,25 @@ export default function ExportImport({ transactions, onImport }: Props) {
         onImport(json);
       } catch (error) {
         console.error("Error al importar el archivo:", error);
-        // Podrías mostrar una notificación al usuario aquí
       }
     };
     reader.readAsArrayBuffer(file);
-    // Reset file input to allow re-uploading the same file
     e.target.value = '';
   };
 
   return (
-    <div className="flex flex-wrap gap-4 mb-6">
+    <div className="flex flex-wrap gap-4">
       <Button
         onClick={handleExport}
         disabled={transactions.length === 0}
+        variant="outline"
       >
+        <Download className="mr-2 h-4 w-4" />
         Exportar a Excel
       </Button>
-      <Button asChild variant="secondary">
+      <Button asChild variant="outline">
         <label>
+            <Upload className="mr-2 h-4 w-4" />
             Importar desde Excel
             <input type="file" accept=".xlsx, .csv" onChange={handleImport} className="hidden" />
         </label>

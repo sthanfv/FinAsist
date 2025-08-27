@@ -18,7 +18,7 @@ import {
   SelectGroup,
 } from "@/components/ui/select";
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Edit } from 'lucide-react';
 
 export type Transaction = {
   id: number;
@@ -32,11 +32,11 @@ export type Transaction = {
 
 type Props = {
   transactions: Transaction[];
-  onUpdate?: (updated: Transaction) => void;
-  onDelete?: (id: number) => void;
+  onEdit: (transaction: Transaction) => void;
+  onDelete: (id: number) => void;
 };
 
-export default function TransactionTable({ transactions, onUpdate, onDelete }: Props) {
+export default function TransactionTable({ transactions, onEdit, onDelete }: Props) {
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterType, setFilterType] = useState('all');
 
@@ -108,12 +108,13 @@ export default function TransactionTable({ transactions, onUpdate, onDelete }: P
                 <TableCell>{t.account}</TableCell>
                 <TableCell>{t.note}</TableCell>
                 <TableCell className="text-right">{t.amount.toLocaleString('es-ES')} pts</TableCell>
-                <TableCell>
-                  {onDelete && (
+                <TableCell className="flex gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => onEdit(t)}>
+                      <Edit className="h-4 w-4 text-muted-foreground" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => onDelete(t.id)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
-                  )}
                 </TableCell>
               </motion.tr>
             ))}
