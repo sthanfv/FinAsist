@@ -46,7 +46,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Dashboard', icon: Home, href: '/dashboard', color: 'blue' },
     { name: 'Transacciones', icon: Wallet, href: '/transactions', color: 'green' },
     { name: 'Metas', icon: Target, href: '/goals', color: 'purple' },
-    { name: 'Reportes', icon: BarChart, href: '/reports', color: 'yellow' },
+    { name: 'Reportes', icon: BarChart, href: '/reports', color: 'indigo' },
   ];
 
   const authAction = user ? (
@@ -103,11 +103,11 @@ export default function Layout({ children }: LayoutProps) {
         iconContainer: 'bg-purple-100 dark:bg-purple-900/50 group-hover:bg-purple-200 dark:group-hover:bg-purple-900',
         icon: 'text-purple-600 dark:text-purple-400'
       },
-      yellow: {
-        text: 'hover:text-yellow-600 dark:hover:text-yellow-400',
-        bg: 'hover:bg-yellow-50 dark:hover:bg-yellow-900/20',
-        iconContainer: 'bg-yellow-100 dark:bg-yellow-900/50 group-hover:bg-yellow-200 dark:group-hover:bg-yellow-900',
-        icon: 'text-yellow-600 dark:text-yellow-400'
+      indigo: {
+        text: 'hover:text-indigo-600 dark:hover:text-indigo-400',
+        bg: 'hover:bg-indigo-50 dark:hover:bg-indigo-900/20',
+        iconContainer: 'bg-indigo-100 dark:bg-indigo-900/50 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-900',
+        icon: 'text-indigo-600 dark:text-indigo-400'
       }
     };
     const classes = colorClasses[color as keyof typeof colorClasses] || colorClasses.blue;
