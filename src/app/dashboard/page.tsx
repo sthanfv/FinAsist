@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -47,18 +48,28 @@ export default function Dashboard() {
         <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
           <h1 className="text-4xl font-bold font-headline">Dashboard</h1>
           <div className="flex gap-2">
-            <Button asChild>
-              <Link href="/transactions">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Añadir Transacción
-              </Link>
-            </Button>
+            <Link href="/transactions" passHref>
+               <button className="group relative bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-blue-500/20">
+                <div className="flex items-center space-x-2">
+                  <svg className="w-5 h-5 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span>Añadir Transacción</span>
+                </div>
+                <div className="absolute inset-0 bg-white/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </button>
+            </Link>
             <Dialog open={isAssistantOpen} onOpenChange={setIsAssistantOpen}>
               <DialogTrigger asChild>
-                <Button>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Asistente IA
-                </Button>
+                <button className="group relative bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-purple-500/20">
+                  <div className="flex items-center space-x-2">
+                    <svg className="w-5 h-5 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span>Asistente IA</span>
+                  </div>
+                  <div className="absolute inset-0 bg-white/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
