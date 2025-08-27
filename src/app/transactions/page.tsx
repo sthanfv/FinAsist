@@ -5,6 +5,7 @@ import AddTransactionForm from '@/components/transactions/AddTransactionForm';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useBalance } from '@/hooks/useBalance';
+import ExportImport from '@/components/transactions/ExportImport';
 
 const initialTransactions: Transaction[] = [
     { id: 1, date: '2025-08-01', category: 'Universidad', type: 'Gasto', amount: 4000, account: 'Principal', note: 'Pago semestre' },
@@ -37,6 +38,31 @@ export default function TransactionsPage() {
         setTransactions((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
     };
 
+    const handleImport = (imported: any[]) => {
+        const formatted = imported.map((t, index) => ({
+          id: transactions.length + index + 1,
+          date: t.date || new Date().toISOString().split('T')[0],
+          category: t.category || 'Importado',
+          type: t.type === 'Ingreso' ? 'Ingreso' : 'Gasto',
+          amount: Number(t.amount) || 0,
+          account: t.account || 'Principal',
+          note: t.note || '',
+        }));
+    
+        // Recalculate balance based on a fresh start with imported data
+        let newBalance = 0;
+        formatted.forEach(t => {
+            if (t.type === 'Ingreso') {
+                newBalance += t.amount;
+            } else {
+                newBalance -= t.amount;
+            }
+        });
+    
+        setTransactions(formatted);
+        setBalance(newBalance);
+      };
+
     return (
         <Layout>
             <div className="container mx-auto py-10">
@@ -46,11 +72,12 @@ export default function TransactionsPage() {
                         {isFormVisible ? 'Cerrar Formulario' : 'Añadir Transacción'}
                     </Button>
                 </div>
-                {isFormVisible && (
+                 {isFormVisible && (
                     <div className="mb-6">
                         <AddTransactionForm onAddTransaction={handleAddTransaction} />
                     </div>
                 )}
+                <ExportImport transactions={transactions} onImport={handleImport} />
                 <TransactionTable transactions={transactions} onUpdate={handleUpdate} />
             </div>
         </Layout>
