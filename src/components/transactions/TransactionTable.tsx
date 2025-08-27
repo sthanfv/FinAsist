@@ -15,6 +15,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 
@@ -34,13 +35,13 @@ type Props = {
 };
 
 export default function TransactionTable({ transactions, onUpdate }: Props) {
-  const [filterCategory, setFilterCategory] = useState('');
-  const [filterType, setFilterType] = useState('');
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [filterType, setFilterType] = useState('all');
 
   const filtered = transactions.filter(
     (t) =>
-      (filterCategory ? t.category === filterCategory : true) &&
-      (filterType ? t.type === filterType : true)
+      (filterCategory !== 'all' ? t.category === filterCategory : true) &&
+      (filterType !== 'all' ? t.type === filterType : true)
   );
   
   const categories = [...new Set(transactions.map(t => t.category))];
@@ -53,8 +54,10 @@ export default function TransactionTable({ transactions, onUpdate }: Props) {
             <SelectValue placeholder="Categoría" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todas las categorías</SelectItem>
-            {categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+            <SelectGroup>
+              <SelectItem value="all">Todas las categorías</SelectItem>
+              {categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+            </SelectGroup>
           </SelectContent>
         </Select>
         <Select value={filterType} onValueChange={setFilterType}>
@@ -62,9 +65,11 @@ export default function TransactionTable({ transactions, onUpdate }: Props) {
             <SelectValue placeholder="Tipo" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos los tipos</SelectItem>
-            <SelectItem value="Ingreso">Ingreso</SelectItem>
-            <SelectItem value="Gasto">Gasto</SelectItem>
+             <SelectGroup>
+              <SelectItem value="all">Todos los tipos</SelectItem>
+              <SelectItem value="Ingreso">Ingreso</SelectItem>
+              <SelectItem value="Gasto">Gasto</SelectItem>
+            </SelectGroup>
           </SelectContent>
         </Select>
       </div>
