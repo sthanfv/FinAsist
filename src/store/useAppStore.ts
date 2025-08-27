@@ -115,7 +115,7 @@ export const useAppStore = create<AppState>()(
           state.transactions = transactions;
         }),
         addTransaction: async (transactionData) => {
-          const { user } = get();
+          const { user, addToast, saveGuestData, calculateBalance } = get();
           const newTransaction: Transaction = {
             ...transactionData,
             id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -145,7 +145,7 @@ export const useAppStore = create<AppState>()(
           // get().calculateBalance(); // calculateBalance needs to be implemented
         },
         updateTransaction: async (id, transactionData) => {
-          const { user } = get();
+          const { user, addToast, saveGuestData, calculateBalance } = get();
           
           if (user) {
             try {
@@ -169,7 +169,7 @@ export const useAppStore = create<AppState>()(
           // get().calculateBalance();
         },
         deleteTransaction: async (id) => {
-          const { user } = get();
+          const { user, addToast, saveGuestData, calculateBalance } = get();
           
           if (user) {
             try {
@@ -190,7 +190,7 @@ export const useAppStore = create<AppState>()(
           state.goals = goals;
         }),
         addGoal: async (goalData) => {
-          const { user } = get();
+          const { user, addToast, saveGuestData } = get();
           const newGoal: Goal = {
             ...goalData,
             id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -207,7 +207,65 @@ export const useAppStore = create<AppState>()(
               // get().addToast('Error al agregar meta');
             }
           }
+          set((state) => {
+            state.goals.push(newGoal);
+          });
+          
+          if (!user) {
+            // get().saveGuestData();
+          }
         },
+        updateGoal: async (id, goalData) => {
+          const { user, addToast, saveGuestData } = get();
+          
+          if (user) {
+            try {
+              await updateDoc(doc(db, 'users', user.uid, 'goals', id), goalData);
+            } catch (error) {
+              console.error('Error updating goal:', error);
+              // get().addToast('Error al actualizar meta');
+            }
+          } else {
+            set((state) => {
+              const index = state.goals.findIndex(g => g.id === id);
+              if (index !== -1) {
+                Object.assign(state.goals[index], goalData);
+              }
+            });
+            // get().saveGuestData();
+          }
+        },
+        deleteGoal: async (id) => {
+          const { user, addToast, saveGuestData } = get();
+          
+          if (user) {
+            try {
+              await deleteDoc(doc(db, 'users', user.uid, 'goals', id));
+            } catch (error) {
+              console.error('Error deleting goal:', error);
+              // get().addToast('Error al eliminar meta');
+            }
+          } else {
+            set((state) => {
+              state.goals = state.goals.filter(g => g.id !== id);
+            });
+            // get().saveGuestData();
+          }
+        },
+        calculateBalance: () => set((state) => {
+          state.balance = state.transactions.reduce((acc, transaction) => {
+            return transaction.type === 'income' 
+              ? acc + transaction.amount 
+              : acc - transaction.amount;
+          }, 0);
+        }),
+        // Acciones de UI
+        toggleDarkMode: () => set((state) => {
+          state.isDarkMode = !state.isDarkMode;
+          if (typeof window !== 'undefined') {
+            document.documentElement.classList.toggle('dark', state.isDarkMode);
+          }
+        }),
       })),
       {
         name: 'finassist-storage', 
