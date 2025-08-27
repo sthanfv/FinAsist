@@ -28,14 +28,14 @@ const GoalSchema = z.object({
     deadline: z.string().describe('La fecha límite para alcanzar la meta.'),
 });
 
-export const AdvancedRecommendationInputSchema = z.object({
+const AdvancedRecommendationInputSchema = z.object({
   balance: z.number().describe('El saldo actual del usuario.'),
   transactions: z.array(TransactionSchema).describe('La lista de transacciones del usuario.'),
   goals: z.array(GoalSchema).describe('Las metas de ahorro del usuario.'),
 });
 export type AdvancedRecommendationInput = z.infer<typeof AdvancedRecommendationInputSchema>;
 
-export const AdvancedRecommendationOutputSchema = z.object({
+const AdvancedRecommendationOutputSchema = z.object({
   recommendations: z.array(z.string()).describe('La lista de recomendaciones financieras para el usuario.'),
 });
 export type AdvancedRecommendationOutput = z.infer<typeof AdvancedRecommendationOutputSchema>;
