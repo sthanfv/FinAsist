@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Menu, Home, Wallet, Goal, FileText, X, LogOut, LogIn } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 import { useRouter } from 'next/navigation';
+import { ThemeToggle } from './ThemeToggle';
 
 type LayoutProps = {
   children: ReactNode;
@@ -51,7 +52,10 @@ export default function Layout({ children }: LayoutProps) {
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex flex-col w-64 bg-card shadow-soft">
         <div className="p-6 flex flex-col h-full">
-          <h1 className="text-2xl font-semibold text-primary mb-8 font-headline">FinAssist</h1>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-2xl font-semibold text-primary font-headline">FinAssist</h1>
+            <ThemeToggle />
+          </div>
           <nav className="flex-1 space-y-2">
             {navItems.map((item) => (
               <Link
@@ -93,12 +97,15 @@ export default function Layout({ children }: LayoutProps) {
               className="fixed inset-y-0 left-0 z-50 w-64 bg-card shadow-lg md:hidden"
             >
               <div className="p-6 flex flex-col h-full">
-                <button
-                  onClick={() => setSidebarOpen(false)}
-                  className="mb-6 text-muted-foreground hover:text-foreground self-end"
-                >
-                  <X size={24} />
-                </button>
+                <div className="flex justify-between items-center mb-8">
+                    <button
+                        onClick={() => setSidebarOpen(false)}
+                        className="text-muted-foreground hover:text-foreground"
+                    >
+                        <X size={24} />
+                    </button>
+                    <ThemeToggle />
+                </div>
                 <nav className="flex-1 space-y-2">
                   {navItems.map((item) => (
                     <Link
