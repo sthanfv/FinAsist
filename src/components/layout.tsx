@@ -134,7 +134,6 @@ export default function Layout({ children }: LayoutProps) {
         <div className="p-6 flex flex-col h-full">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-2xl font-bold tracking-tight text-primary font-headline">FinAssist</h1>
-            <ThemeToggle />
           </div>
           <nav className="flex-1 p-4 space-y-2">
             {navItems.map((item) => (
@@ -142,6 +141,9 @@ export default function Layout({ children }: LayoutProps) {
             ))}
           </nav>
           <div className="mt-auto">
+             <div className="flex justify-end mb-4">
+                <ThemeToggle />
+            </div>
             {authAction}
             <BalanceDisplay />
           </div>
@@ -202,16 +204,18 @@ export default function Layout({ children }: LayoutProps) {
           </button>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold tracking-tight text-primary font-headline">FinAssist</h1>
-            <ThemeToggle />
           </div>
-          <div className="text-right">
-             <p className="text-sm text-muted-foreground">Saldo</p>
-             <p className={cn(
-                "text-lg font-semibold text-primary balance-animation",
-                balanceChanged && "animate-[pulse-gentle_0.6s_ease_in_out]"
-              )}>
-              {formatCurrency(balance)}
-            </p>
+          <div className="flex items-center gap-2">
+             <div className="text-right">
+                <p className="text-sm text-muted-foreground">Saldo</p>
+                <p className={cn(
+                    "text-lg font-semibold text-primary balance-animation",
+                    balanceChanged && "animate-[pulse-gentle_0.6s_ease_in_out]"
+                  )}>
+                  {formatCurrency(balance)}
+                </p>
+            </div>
+            <ThemeToggle />
           </div>
         </header>
 
