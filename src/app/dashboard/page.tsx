@@ -10,7 +10,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import Layout from '@/components/layout';
-import BalanceCard from '@/components/dashboard/BalanceCard';
 import { ChartComponent } from '@/components/dashboard/ChartComponent';
 import UnifiedAssistant from '@/components/assistant/UnifiedAssistant';
 import { Button } from '@/components/ui/button';
@@ -110,7 +109,27 @@ export default function Dashboard() {
               Actualizado hace un momento
             </div>
           </div>
-          <BalanceCard title="Total Ahorrado" amount={totalGoalsAmount} color="text-accent" />
+          <div className="group bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-emerald-600 dark:text-emerald-400 tracking-wide">
+                TOTAL AHORRADO
+              </h3>
+              <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
+                <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-emerald-700 dark:text-emerald-300 mb-1 tracking-tight">
+              {totalGoalsAmount.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}
+            </div>
+            <div className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center">
+              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              </svg>
+              +12% este mes
+            </div>
+          </div>
           <div className="col-span-1 md:col-span-2 lg:col-span-1 bg-card shadow-soft p-6 rounded-xl">
             <h2 className="text-lg font-semibold text-card-foreground mb-4">Gastos por categoría</h2>
             <ChartComponent data={chartData} />
