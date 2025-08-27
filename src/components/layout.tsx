@@ -4,7 +4,7 @@
 import React, { ReactNode, useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { Menu, Home, Wallet, Goal, FileText, X, LogOut, LogIn, Target, BarChart } from 'lucide-react';
+import { Menu, Home, Wallet, Target, BarChart, X, LogOut, LogIn, Cpu } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from './ThemeToggle';
 import { useAppStore } from '@/store/useAppStore';
@@ -47,6 +47,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Transacciones', icon: Wallet, href: '/transactions', color: 'green' },
     { name: 'Metas', icon: Target, href: '/goals', color: 'purple' },
     { name: 'Reportes', icon: BarChart, href: '/reports', color: 'indigo' },
+    { name: 'Calculadoras', icon: Cpu, href: '/calculators', color: 'orange' },
   ];
 
   const authAction = user ? (
@@ -108,6 +109,12 @@ export default function Layout({ children }: LayoutProps) {
         bg: 'hover:bg-indigo-50 dark:hover:bg-indigo-900/20',
         iconContainer: 'bg-indigo-100 dark:bg-indigo-900/50 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-900',
         icon: 'text-indigo-600 dark:text-indigo-400'
+      },
+      orange: {
+        text: 'hover:text-orange-600 dark:hover:text-orange-400',
+        bg: 'hover:bg-orange-50 dark:hover:bg-orange-900/20',
+        iconContainer: 'bg-orange-100 dark:bg-orange-900/50 group-hover:bg-orange-200 dark:group-hover:bg-orange-900',
+        icon: 'text-orange-600 dark:text-orange-400'
       }
     };
     const classes = colorClasses[color as keyof typeof colorClasses] || colorClasses.blue;
@@ -228,5 +235,3 @@ export default function Layout({ children }: LayoutProps) {
     </div>
   );
 }
-
-    
