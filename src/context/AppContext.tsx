@@ -5,8 +5,8 @@ import { onAuthStateChanged, User, signOut, createUserWithEmailAndPassword, sign
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
-import { Transaction } from '@/components/transactions/TransactionTable';
-import { Goal } from '@/components/goals/GoalsList';
+import type { Transaction } from '@/components/transactions/TransactionTable';
+import type { Goal } from '@/components/goals/GoalsList';
 
 const GUEST_DATA_KEY = 'finassist_guest_data';
 
