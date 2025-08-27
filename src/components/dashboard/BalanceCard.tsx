@@ -15,7 +15,7 @@ export default function BalanceCard({ title, amount, color = 'text-primary' }: P
       <p
         className={`mt-2 text-3xl font-bold ${color}`}
       >
-        {amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+        {amount.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}
       </p>
     </EnhancedCard>
   );
