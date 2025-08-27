@@ -9,14 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  SelectGroup,
-} from "@/components/ui/select";
 import { Button } from '@/components/ui/button';
 import { Trash2, Edit } from 'lucide-react';
 import { Transaction } from '@/store/useAppStore';
@@ -45,30 +37,27 @@ export default function TransactionTable({ transactions, onEdit, onDelete }: Pro
 
   return (
     <div className="bg-card shadow-soft rounded-xl p-4">
-      <div className="flex flex-wrap gap-4 mb-4">
-        <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Categoría" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="all">Todas las categorías</SelectItem>
-              {categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-        <Select value={filterType} onValueChange={setFilterType}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Tipo" />
-          </SelectTrigger>
-          <SelectContent>
-             <SelectGroup>
-              <SelectItem value="all">Todos los tipos</SelectItem>
-              <SelectItem value="income">Ingreso</SelectItem>
-              <SelectItem value="expense">Gasto</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+        <div className="flex flex-wrap gap-3">
+          <select 
+            value={filterCategory} 
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="flex-1 min-w-[140px] bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+          >
+            <option value="all">Todas las categorías</option>
+            {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+          </select>
+          
+          <select 
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="flex-1 min-w-[120px] bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+          >
+            <option value="all">Todos los tipos</option>
+            <option value="income">Ingreso</option>
+            <option value="expense">Gasto</option>
+          </select>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
