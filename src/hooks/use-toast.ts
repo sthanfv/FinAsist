@@ -1,194 +1,119 @@
-"use client"
+"use client";
+import Layout from '@/components/layout';
+import TransactionTable from '@/components/transactions/TransactionTable';
+import AddTransactionForm from '@/components/transactions/AddTransactionForm';
+import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import ExportImport from '@/components/transactions/ExportImport';
+import BackButton from '@/components/BackButton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import EditTransactionForm from '@/components/transactions/EditTransactionForm';
+import { motion } from 'framer-motion';
+import { useAppStore } from '@/store/useAppStore';
+import type { Transaction } from '@/store/useAppStore';
 
-// Inspired by react-hot-toast library
-import * as React from "react"
 
-import type {
-  ToastActionElement,
-  ToastProps,
-} from "@/components/ui/toast"
+export default function TransactionsPage() {
+    const { transactions, addTransaction, setTransactions, updateTransaction, deleteTransaction, addToast } = useAppStore();
+    const [isAddFormVisible, setIsAddFormVisible] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+    const handleAddTransaction = async (newTransaction: Omit<Transaction, 'id' | 'createdAt'>) => {
+        await addTransaction(newTransaction);
+        setIsAddFormVisible(false);
+        addToast('Transacción añadida correctamente.', 'success');
+    };
 
-type ToasterToast = ToastProps & {
-  id: string
-  title?: React.ReactNode
-  description?: React.ReactNode
-  action?: ToastActionElement
-}
+    const handleEditClick = (transaction: Transaction) => {
+        setSelectedTransaction(transaction);
+        setIsEditModalOpen(true);
+    };
 
-const actionTypes = {
-  ADD_TOAST: "ADD_TOAST",
-  UPDATE_TOAST: "UPDATE_TOAST",
-  DISMISS_TOAST: "DISMISS_TOAST",
-  REMOVE_TOAST: "REMOVE_TOAST",
-} as const
-
-let count = 0
-
-function genId() {
-  count = (count + 1) % Number.MAX_SAFE_INTEGER
-  return count.toString()
-}
-
-type ActionType = typeof actionTypes
-
-type Action =
-  | {
-      type: ActionType["ADD_TOAST"]
-      toast: ToasterToast
-    }
-  | {
-      type: ActionType["UPDATE_TOAST"]
-      toast: Partial<ToasterToast>
-    }
-  | {
-      type: ActionType["DISMISS_TOAST"]
-      toastId?: ToasterToast["id"]
-    }
-  | {
-      type: ActionType["REMOVE_TOAST"]
-      toastId?: ToasterToast["id"]
-    }
-
-interface State {
-  toasts: ToasterToast[]
-}
-
-const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
-
-const addToRemoveQueue = (toastId: string) => {
-  if (toastTimeouts.has(toastId)) {
-    return
-  }
-
-  const timeout = setTimeout(() => {
-    toastTimeouts.delete(toastId)
-    dispatch({
-      type: "REMOVE_TOAST",
-      toastId: toastId,
-    })
-  }, TOAST_REMOVE_DELAY)
-
-  toastTimeouts.set(toastId, timeout)
-}
-
-export const reducer = (state: State, action: Action): State => {
-  switch (action.type) {
-    case "ADD_TOAST":
-      return {
-        ...state,
-        toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
+    const handleUpdateTransaction = async (id: string, updatedData: Partial<Transaction>) => {
+        await updateTransaction(id, updatedData);
+        setIsEditModalOpen(false);
+        setSelectedTransaction(null);
+        addToast('Transacción actualizada correctamente.', 'success');
+    };
+    
+    const handleDelete = async (id: string) => {
+      try {
+        await deleteTransaction(id);
+        addToast('Transacción eliminada correctamente.', 'success');
+      } catch (error) {
+        addToast('No se pudo eliminar la transacción.', 'error');
       }
+    };
 
-    case "UPDATE_TOAST":
-      return {
-        ...state,
-        toasts: state.toasts.map((t) =>
-          t.id === action.toast.id ? { ...t, ...action.toast } : t
-        ),
-      }
+    const handleImport = (imported: any[]) => {
+        const formatted: Transaction[] = imported.map((t, index) => ({
+          id: `${Date.now() + index}`,
+          date: t.date || new Date().toISOString().split('T')[0],
+          category: t.category || 'Importado',
+          type: t.type === 'income' ? 'income' : 'expense',
+          amount: Number(t.amount) || 0,
+          description: t.description || '',
+          createdAt: new Date().toISOString(),
+        }));
+    
+        setTransactions(formatted);
+        addToast('Datos importados correctamente.', 'success');
+      };
 
-    case "DISMISS_TOAST": {
-      const { toastId } = action
-
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
-      if (toastId) {
-        addToRemoveQueue(toastId)
-      } else {
-        state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast.id)
-        })
-      }
-
-      return {
-        ...state,
-        toasts: state.toasts.map((t) =>
-          t.id === toastId || toastId === undefined
-            ? {
-                ...t,
-                open: false,
-              }
-            : t
-        ),
-      }
-    }
-    case "REMOVE_TOAST":
-      if (action.toastId === undefined) {
-        return {
-          ...state,
-          toasts: [],
-        }
-      }
-      return {
-        ...state,
-        toasts: state.toasts.filter((t) => t.id !== action.toastId),
-      }
-  }
+    return (
+        <Layout>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            >
+              <div className="container mx-auto py-10">
+                  <div className="flex justify-between items-center mb-6">
+                      <div className="flex items-center gap-4">
+                          <BackButton />
+                          <h1 className="text-4xl font-bold font-headline">Transacciones</h1>
+                      </div>
+                      <Button onClick={() => setIsAddFormVisible(!isAddFormVisible)}>
+                          {isAddFormVisible ? 'Cerrar Formulario' : 'Añadir Transacción'}
+                      </Button>
+                  </div>
+                   {isAddFormVisible && (
+                      <div className="mb-6">
+                          <AddTransactionForm onAddTransaction={handleAddTransaction} />
+                      </div>
+                  )}
+                  <div className="mb-6">
+                      <ExportImport transactions={transactions} onImport={handleImport} />
+                  </div>
+                   {transactions.length === 0 ? (
+                    <div className="text-center py-10 bg-card rounded-xl shadow-soft">
+                        <p className="text-muted-foreground mb-4">Aún no tienes transacciones.</p>
+                        <Button onClick={() => setIsAddFormVisible(true)}>Añadir tu primera transacción</Button>
+                    </div>
+                    ) : (
+                    <TransactionTable 
+                        transactions={transactions} 
+                        onEdit={handleEditClick} 
+                        onDelete={handleDelete} 
+                    />
+                  )}
+              </div>
+              {selectedTransaction && (
+                 <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                      <DialogContent>
+                          <DialogHeader>
+                              <DialogTitle>Editar Transacción</DialogTitle>
+                          </DialogHeader>
+                          <EditTransactionForm 
+                              transaction={selectedTransaction} 
+                              onUpdateTransaction={handleUpdateTransaction}
+                          />
+                      </DialogContent>
+                  </Dialog>
+              )}
+            </motion.div>
+        </Layout>
+    );
 }
-
-const listeners: Array<(state: State) => void> = []
-
-let memoryState: State = { toasts: [] }
-
-function dispatch(action: Action) {
-  memoryState = reducer(memoryState, action)
-  listeners.forEach((listener) => {
-    listener(memoryState)
-  })
-}
-
-type Toast = Omit<ToasterToast, "id">
-
-function toast({ ...props }: Toast) {
-  const id = genId()
-
-  const update = (props: ToasterToast) =>
-    dispatch({
-      type: "UPDATE_TOAST",
-      toast: { ...props, id },
-    })
-  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
-
-  dispatch({
-    type: "ADD_TOAST",
-    toast: {
-      ...props,
-      id,
-      open: true,
-      onOpenChange: (open) => {
-        if (!open) dismiss()
-      },
-    },
-  })
-
-  return {
-    id: id,
-    dismiss,
-    update,
-  }
-}
-
-function useToast() {
-  const [state, setState] = React.useState<State>(memoryState)
-
-  React.useEffect(() => {
-    listeners.push(setState)
-    return () => {
-      const index = listeners.indexOf(setState)
-      if (index > -1) {
-        listeners.splice(index, 1)
-      }
-    }
-  }, [state])
-
-  return {
-    ...state,
-    toast,
-    dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
-  }
-}
-
-export { useToast, toast }

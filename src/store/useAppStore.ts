@@ -118,11 +118,11 @@ export const useAppStore = create<AppState>()(
         }),
         addTransaction: async (transactionData) => {
           const { user } = get();
-          const newTransaction: Transaction = {
+          const newTransaction: Omit<Transaction, 'id'> & { id?: string } = {
             ...transactionData,
-            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             createdAt: new Date().toISOString(),
           };
+
           if (user) {
             // Usuario autenticado: guardar en Firestore
             try {
@@ -130,9 +130,7 @@ export const useAppStore = create<AppState>()(
                 collection(db, 'users', user.uid, 'transactions'),
                 newTransaction
               );
-              set((state) => {
-                state.transactions.push({ ...newTransaction, id: docRef.id });
-              });
+              // Firestore se actualizará vía onSnapshot, no es necesario pushear al estado local.
             } catch (error) {
               console.error('Error adding transaction:', error);
               get().addToast('Error al agregar transacción', 'error');
@@ -140,7 +138,7 @@ export const useAppStore = create<AppState>()(
           } else {
             // Usuario invitado: guardar en localStorage
             set((state) => {
-              state.transactions.push(newTransaction);
+              state.transactions.push({ ...newTransaction, id: `${Date.now()}` });
             });
             get().saveGuestData();
           }
@@ -200,6 +198,7 @@ export const useAppStore = create<AppState>()(
           };
           if (user) {
             try {
+              // Usamos el ID generado para consistencia
               await setDoc(
                 doc(db, 'users', user.uid, 'goals', newGoal.id),
                 newGoal
@@ -208,13 +207,11 @@ export const useAppStore = create<AppState>()(
               console.error('Error adding goal:', error);
               get().addToast('Error al agregar meta', 'error');
             }
-          }
-          set((state) => {
-            state.goals.push(newGoal);
-          });
-          
-          if (!user) {
-            get().saveGuestData();
+          } else {
+             set((state) => {
+                state.goals.push(newGoal);
+              });
+              get().saveGuestData();
           }
         },
         updateGoal: async (id, goalData) => {
@@ -264,14 +261,11 @@ export const useAppStore = create<AppState>()(
         // Acciones de UI
         toggleDarkMode: () => set((state) => {
           state.isDarkMode = !state.isDarkMode;
-          if (typeof window !== 'undefined') {
-            document.documentElement.classList.toggle('dark', state.isDarkMode);
-          }
         }),
         toggleSidebar: () => set((state) => {
           state.sidebarOpen = !state.sidebarOpen;
         }),
-        toasts: [],
+        
         addToast: (message, type = 'info', duration = 5000) => {
           const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
           const newToast: Toast = {
@@ -297,27 +291,31 @@ export const useAppStore = create<AppState>()(
         // Inicialización
         initializeApp: () => {
           const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+            const { isInitialized } = get();
+            
+            if (!isInitialized) {
+              get().setLoading(true);
+            }
+
             get().setUser(user);
-            get().setLoading(false);
             
             if (user) {
-              // Suscribirse a datos del usuario
               const unsubscribeData = get().subscribeToUserData();
-              // Guardar función de desuscripción para limpieza posterior
+              get().setLoading(false);
+              get().setInitialized(true);
               return unsubscribeData;
             } else {
-              // Cargar datos de invitado
               get().loadGuestData();
+              get().setLoading(false);
+              get().setInitialized(true);
             }
-            
-            get().setInitialized(true);
           });
           return unsubscribeAuth;
         },
         subscribeToUserData: () => {
           const { user } = get();
           if (!user) return () => {};
-          // Suscribirse a transacciones
+
           const transactionsRef = collection(db, 'users', user.uid, 'transactions');
           const transactionsQuery = query(transactionsRef);
           const unsubscribeTransactions = onSnapshot(transactionsQuery, (snapshot) => {
@@ -325,11 +323,13 @@ export const useAppStore = create<AppState>()(
               ...doc.data(),
               id: doc.id
             } as Transaction));
-            
             get().setTransactions(transactions);
             get().calculateBalance();
+          }, (error) => {
+            console.error("Error en snapshot de transacciones: ", error);
+            get().addToast("Error al cargar transacciones", "error");
           });
-          // Suscribirse a metas
+
           const goalsRef = collection(db, 'users', user.uid, 'goals');
           const goalsQuery = query(goalsRef);
           const unsubscribeGoals = onSnapshot(goalsQuery, (snapshot) => {
@@ -337,9 +337,12 @@ export const useAppStore = create<AppState>()(
               ...doc.data(),
               id: doc.id
             } as Goal));
-            
             get().setGoals(goals);
+          }, (error) => {
+            console.error("Error en snapshot de metas: ", error);
+            get().addToast("Error al cargar metas", "error");
           });
+
           return () => {
             unsubscribeTransactions();
             unsubscribeGoals();
@@ -360,6 +363,7 @@ export const useAppStore = create<AppState>()(
             }
           } catch (error) {
             console.error('Error loading guest data:', error);
+            get().addToast('Error al cargar datos locales', 'error');
           }
         },
         saveGuestData: () => {
@@ -374,6 +378,7 @@ export const useAppStore = create<AppState>()(
             }));
           } catch (error) {
             console.error('Error saving guest data:', error);
+             get().addToast('Error al guardar datos locales', 'error');
           }
         },
       })),
@@ -382,7 +387,6 @@ export const useAppStore = create<AppState>()(
         storage: createJSONStorage(() => localStorage),
         partialize: (state) => ({
           isDarkMode: state.isDarkMode,
-          sidebarOpen: state.sidebarOpen,
         }),
       }
     )

@@ -5,7 +5,6 @@ import AddTransactionForm from '@/components/transactions/AddTransactionForm';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import ExportImport from '@/components/transactions/ExportImport';
-import { useToast } from '@/hooks/use-toast';
 import BackButton from '@/components/BackButton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import EditTransactionForm from '@/components/transactions/EditTransactionForm';
@@ -15,16 +14,15 @@ import type { Transaction } from '@/store/useAppStore';
 
 
 export default function TransactionsPage() {
-    const { transactions, addTransaction, setTransactions, updateTransaction, deleteTransaction } = useAppStore();
+    const { transactions, addTransaction, setTransactions, updateTransaction, deleteTransaction, addToast } = useAppStore();
     const [isAddFormVisible, setIsAddFormVisible] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-    const { toast } = useToast();
 
-    const handleAddTransaction = (newTransaction: Omit<Transaction, 'id' | 'createdAt'>) => {
-        addTransaction(newTransaction);
+    const handleAddTransaction = async (newTransaction: Omit<Transaction, 'id' | 'createdAt'>) => {
+        await addTransaction(newTransaction);
         setIsAddFormVisible(false);
-        toast({ title: 'Éxito', description: 'Transacción añadida correctamente.' });
+        addToast('Transacción añadida correctamente.', 'success');
     };
 
     const handleEditClick = (transaction: Transaction) => {
@@ -36,15 +34,15 @@ export default function TransactionsPage() {
         await updateTransaction(id, updatedData);
         setIsEditModalOpen(false);
         setSelectedTransaction(null);
-        toast({ title: 'Éxito', description: 'Transacción actualizada correctamente.' });
+        addToast('Transacción actualizada correctamente.', 'success');
     };
     
     const handleDelete = async (id: string) => {
       try {
         await deleteTransaction(id);
-        toast({ title: 'Éxito', description: 'Transacción eliminada correctamente.' });
+        addToast('Transacción eliminada correctamente.', 'success');
       } catch (error) {
-        toast({ title: 'Error', description: 'No se pudo eliminar la transacción.', variant: 'destructive' });
+        addToast('No se pudo eliminar la transacción.', 'error');
       }
     };
 
@@ -60,7 +58,7 @@ export default function TransactionsPage() {
         }));
     
         setTransactions(formatted);
-        toast({ title: 'Éxito', description: 'Datos importados correctamente.' });
+        addToast('Datos importados correctamente.', 'success');
       };
 
     return (

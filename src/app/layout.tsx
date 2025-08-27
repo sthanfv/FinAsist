@@ -2,10 +2,10 @@
 import { Inter } from 'next/font/google';
 import { useEffect } from 'react';
 import { useAppStore } from '@/store/useAppStore';
-import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/ThemeProvider';
-import './globals.css';
 import LoadingSpinner from '@/components/ui/loading-spinner';
+import { ToastContainer } from '@/components/ui/toast-system';
+import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -14,13 +14,11 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { initializeApp, isInitialized, isLoading } = useAppStore();
+  const { initializeApp, isInitialized, isLoading, toasts, removeToast } = useAppStore();
 
   useEffect(() => {
     const unsubscribe = initializeApp();
     
-    // The returned function from initializeApp is the auth state change unsubscriber.
-    // We must return it from useEffect to clean up the subscription on unmount.
     return () => {
       if (unsubscribe) {
         unsubscribe();
@@ -51,7 +49,7 @@ export default function RootLayout({
           ) : (
             children
           )}
-          <Toaster />
+          <ToastContainer toasts={toasts} onRemove={removeToast} />
         </ThemeProvider>
       </body>
     </html>
