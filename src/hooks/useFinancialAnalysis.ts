@@ -12,6 +12,7 @@ export const useFinancialAnalysis = () => {
   
   const analysis = useMemo(() => {
     // Llama al método estático directamente, pasando los datos
+    if (transactions.length === 0) return null;
     return FinancialEngine.runCompleteAnalysis(transactions, goals, balance);
   }, [transactions, goals, balance]);
 

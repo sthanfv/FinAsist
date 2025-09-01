@@ -4,7 +4,7 @@
 import React, { ReactNode, useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { Menu, Home, Wallet, Target, BarChart, X, LogOut, LogIn, Cpu } from 'lucide-react';
+import { Menu, Home, Wallet, Target, BarChart, X, LogOut, LogIn, Cpu, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from './ThemeToggle';
 import { useAppStore } from '@/store/useAppStore';
@@ -50,6 +50,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Metas', icon: Target, href: '/goals', color: 'purple' },
     { name: 'Reportes', icon: BarChart, href: '/reports', color: 'indigo' },
     { name: 'Calculadoras', icon: Cpu, href: '/calculators', color: 'orange' },
+    { name: 'Optimización IA', icon: Zap, href: '/optimization', color: 'yellow' },
   ];
 
   const authAction = user ? (
@@ -117,6 +118,12 @@ export default function Layout({ children }: LayoutProps) {
         bg: 'hover:bg-orange-50 dark:hover:bg-orange-900/20',
         iconContainer: 'bg-orange-100 dark:bg-orange-900/50 group-hover:bg-orange-200 dark:group-hover:bg-orange-900',
         icon: 'text-orange-600 dark:text-orange-400'
+      },
+      yellow: {
+        text: 'hover:text-yellow-600 dark:hover:text-yellow-400',
+        bg: 'hover:bg-yellow-50 dark:hover:bg-yellow-900/20',
+        iconContainer: 'bg-yellow-100 dark:bg-yellow-900/50 group-hover:bg-yellow-200 dark:group-hover:bg-yellow-900',
+        icon: 'text-yellow-600 dark:text-yellow-400'
       }
     };
     const classes = colorClasses[color as keyof typeof colorClasses] || colorClasses.blue;

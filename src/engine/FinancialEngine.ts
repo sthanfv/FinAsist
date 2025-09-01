@@ -528,11 +528,6 @@ export class FinancialEngine {
   }
 
   // ============== MÉTODOS AVANZADOS =================
-  // Estos son los nuevos métodos estáticos que has proporcionado.
-  // NOTA: Se asume que los métodos auxiliares que llaman (ej. calculatePearsonCorrelation)
-  // están definidos dentro de esta clase o se implementarán.
-  // Por ahora, se han añadido como stubs para evitar errores de compilación.
-
   static analyzeCategoryCorrelations(transactions: Transaction[]): CategoryCorrelation[] {
     const categories = [...new Set(transactions.filter(t => t.type === 'expense').map(t => t.category))];
     const correlations: CategoryCorrelation[] = [];
@@ -565,6 +560,8 @@ export class FinancialEngine {
     targetMonth: string
   ): SpendingPrediction {
     const monthlyData = this.groupTransactionsByMonth(transactions);
+    if(monthlyData.length < 2) return { predictedAmount: 0, confidence: 0, factors: [], recommendation: 'No hay suficientes datos.' };
+
     const features = monthlyData.map(month => [
       month.totalExpenses,
       month.transactionCount,
@@ -573,8 +570,6 @@ export class FinancialEngine {
     ]);
     
     const targets = monthlyData.map(m => m.totalExpenses);
-    if(features.length < 2 || targets.length < 2) return { predictedAmount: 0, confidence: 0, factors: [], recommendation: 'No hay suficientes datos.' };
-
     
     // Regresión lineal múltiple simplificada
     const coefficients = this.multipleLinearRegression(features, targets);
@@ -649,10 +644,13 @@ export class FinancialEngine {
         timeline: this.estimateImplementationTime(category)
       });
     });
+
+    const potentialSavingsRate = currentMetrics.averageMonthlyIncome > 0 ? (currentMetrics.netFlow + potentialSavings) / currentMetrics.averageMonthlyIncome : 0;
+
     return {
       currentSavingsRate: currentMetrics.savingsRate,
       targetSavingsRate,
-      potentialSavingsRate: currentMetrics.averageMonthlyIncome > 0 ? (currentMetrics.averageMonthlyIncome - currentMetrics.averageMonthlyExpenses + potentialSavings) / currentMetrics.averageMonthlyIncome : 0,
+      potentialSavingsRate,
       optimizations,
       expectedTimeToGoals: this.calculateOptimizedTimeToGoals(goals, potentialSavings, currentMetrics),
       priorityActions: this.prioritizeOptimizations(optimizations)
