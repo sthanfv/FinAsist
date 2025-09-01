@@ -9,7 +9,6 @@ import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
 import type { Goal } from '@/store/useAppStore';
 
-
 export default function GoalsPage() {
     const { goals, addGoal } = useAppStore();
     const [isFormVisible, setIsFormVisible] = useState(false);

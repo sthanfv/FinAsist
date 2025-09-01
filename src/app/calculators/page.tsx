@@ -7,6 +7,7 @@ import { LoanCalculator } from '@/components/calculators/LoanCalculator';
 import { CreditCardCalculator } from '@/components/calculators/CreditCardCalculator';
 import { InvestmentCalculator } from '@/components/calculators/InvestmentCalculator';
 import { FinancialFreedomCalculator } from '@/components/calculators/FinancialFreedomCalculator';
+
 type CalculatorType = 'cdt' | 'loan' | 'credit-card' | 'investment' | 'freedom' | null;
 const calculatorOptions = [
   {

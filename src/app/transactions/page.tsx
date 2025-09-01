@@ -1,3 +1,4 @@
+
 "use client";
 import Layout from '@/components/layout';
 import TransactionTable from '@/components/transactions/TransactionTable';
@@ -13,7 +14,6 @@ import { useAppStore } from '@/store/useAppStore';
 import type { Transaction } from '@/store/useAppStore';
 import { useRouter } from 'next/navigation';
 import { NotificationSystem } from '@/components/ui/toast-system';
-
 
 export default function TransactionsPage() {
     const { transactions, addTransaction, setTransactions, updateTransaction, deleteTransaction } = useAppStore();

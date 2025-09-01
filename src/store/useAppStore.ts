@@ -15,8 +15,7 @@ import {
   setDoc,
   getDoc
 } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { db } from '@/lib/firebase';
 import { NotificationSystem } from '@/components/ui/toast-system';
 
 // Interfaces
@@ -39,167 +38,177 @@ export interface Goal {
   createdAt: string;
 }
 
-// Slices
-const createAuthSlice = (set, get) => ({
-  user: null,
-  isLoading: true,
-  isInitialized: false,
-  setUser: (user) => set({ user }, false, 'setUser'),
-  setLoading: (loading) => set({ isLoading: loading }, false, 'setLoading'),
-  setInitialized: (initialized) => set({ isInitialized: initialized }, false, 'setInitialized'),
-});
+// State interface
+interface AppState {
+  user: User | null;
+  isLoading: boolean;
+  isInitialized: boolean;
+  transactions: Transaction[];
+  goals: Goal[];
+  balance: number;
+  isDarkMode: boolean;
 
-const createDataSlice = (set, get) => ({
-  transactions: [],
-  goals: [],
-  balance: 0,
-  setTransactions: (transactions) => set({ transactions }, false, 'setTransactions'),
-  setGoals: (goals) => set({ goals }, false, 'setGoals'),
-  calculateBalance: () => set((state) => {
-    state.balance = state.transactions.reduce((acc, transaction) => {
-      return transaction.type === 'income' 
-        ? acc + transaction.amount 
-        : acc - transaction.amount;
-    }, 0);
-  }, false, 'calculateBalance'),
-  addTransaction: async (transactionData) => {
-    const { user, saveGuestData, calculateBalance } = get();
-    const newTransaction = { ...transactionData, createdAt: new Date().toISOString() };
-    if (user) {
-      try {
-        await addDoc(collection(db, 'users', user.uid, 'transactions'), newTransaction);
-      } catch (error) {
-        console.error('Error adding transaction:', error);
-        NotificationSystem.error('Error al agregar transacción');
-      }
-    } else {
-      set((state) => {
-        state.transactions.push({ ...newTransaction, id: `${Date.now()}` });
-      }, false, 'addTransaction/local');
-      saveGuestData();
-    }
-    calculateBalance();
-  },
-  updateTransaction: async (id, transactionData) => {
-    const { user, saveGuestData, calculateBalance } = get();
-    if (user) {
-      try {
-        await updateDoc(doc(db, 'users', user.uid, 'transactions', id), transactionData);
-      } catch (error) {
-        console.error('Error updating transaction:', error);
-        NotificationSystem.error('Error al actualizar transacción');
-      }
-    } else {
-      set((state) => {
-        const index = state.transactions.findIndex(t => t.id === id);
-        if (index !== -1) Object.assign(state.transactions[index], transactionData);
-      }, false, 'updateTransaction/local');
-      saveGuestData();
-    }
-    calculateBalance();
-  },
-  deleteTransaction: async (id) => {
-    const { user, saveGuestData, calculateBalance } = get();
-    if (user) {
-      try {
-        await deleteDoc(doc(db, 'users', user.uid, 'transactions', id));
-      } catch (error) {
-        console.error('Error deleting transaction:', error);
-        NotificationSystem.error('Error al eliminar transacción');
-      }
-    } else {
-      set((state) => {
-        state.transactions = state.transactions.filter(t => t.id !== id);
-      }, false, 'deleteTransaction/local');
-      saveGuestData();
-    }
-    calculateBalance();
-  },
-  addGoal: async (goalData) => {
-    const { user, saveGuestData } = get();
-    const newGoal = { ...goalData, id: `${Date.now()}`, createdAt: new Date().toISOString() };
-    if (user) {
-      try {
-        await setDoc(doc(db, 'users', user.uid, 'goals', newGoal.id), newGoal);
-      } catch (error) {
-        console.error('Error adding goal:', error);
-        NotificationSystem.error('Error al agregar meta');
-      }
-    } else {
-      set((state) => {
-        state.goals.push(newGoal);
-      }, false, 'addGoal/local');
-      saveGuestData();
-    }
-  },
-  updateGoal: async (id, goalData) => {
-    const { user, saveGuestData } = get();
-    if (user) {
-      try {
-        await updateDoc(doc(db, 'users', user.uid, 'goals', id), goalData);
-      } catch (error) {
-        console.error('Error updating goal:', error);
-        NotificationSystem.error('Error al actualizar meta');
-      }
-    } else {
-      set((state) => {
-        const index = state.goals.findIndex(g => g.id === id);
-        if (index !== -1) Object.assign(state.goals[index], goalData);
-      }, false, 'updateGoal/local');
-      saveGuestData();
-    }
-  },
-  deleteGoal: async (id) => {
-    const { user, saveGuestData } = get();
-    if (user) {
-      try {
-        await deleteDoc(doc(db, 'users', user.uid, 'goals', id));
-      } catch (error) {
-        console.error('Error deleting goal:', error);
-        NotificationSystem.error('Error al eliminar meta');
-      }
-    } else {
-      set((state) => {
-        state.goals = state.goals.filter(g => g.id !== id);
-      }, false, 'deleteGoal/local');
-      saveGuestData();
-    }
-  },
-});
+  setUser: (user: User | null) => void;
+  setLoading: (loading: boolean) => void;
+  setInitialized: (initialized: boolean) => void;
+  setTransactions: (transactions: Transaction[]) => void;
+  setGoals: (goals: Goal[]) => void;
+  calculateBalance: () => void;
+  addTransaction: (transactionData: Omit<Transaction, 'id' | 'createdAt'>) => Promise<void>;
+  updateTransaction: (id: string, transactionData: Partial<Transaction>) => Promise<void>;
+  deleteTransaction: (id: string) => Promise<void>;
+  addGoal: (goalData: Omit<Goal, 'id' | 'createdAt'>) => Promise<void>;
+  updateGoal: (id: string, goalData: Partial<Goal>) => Promise<void>;
+  deleteGoal: (id: string) => Promise<void>;
+  toggleDarkMode: () => void;
+  subscribeToUserData: () => () => void;
+  loadGuestData: () => void;
+  saveGuestData: () => void;
+}
 
-const createUISlice = (set, get) => ({
-  isDarkMode: false,
-  toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode }), false, 'toggleDarkMode'),
-});
 
 const GUEST_DATA_KEY = 'finassist_guest_data';
 
-export const useAppStore = create(
+export const useAppStore = create<AppState>()(
   subscribeWithSelector(
     persist(
       immer((set, get) => ({
-        ...createAuthSlice(set, get),
-        ...createDataSlice(set, get),
-        ...createUISlice(set, get),
+        // Auth state
+        user: null,
+        isLoading: true,
+        isInitialized: false,
+        
+        // Data state
+        transactions: [],
+        goals: [],
+        balance: 0,
+        
+        // UI state
+        isDarkMode: false,
 
-        initializeApp: () => {
-          const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-            if (!get().isInitialized) get().setLoading(true);
-            get().setUser(user);
-            if (user) {
-              const unsubscribeData = get().subscribeToUserData();
-              get().setLoading(false);
-              get().setInitialized(true);
-              return unsubscribeData;
-            } else {
-              get().loadGuestData();
-              get().setLoading(false);
-              get().setInitialized(true);
+        // Auth actions
+        setUser: (user) => set({ user }, false, 'setUser'),
+        setLoading: (loading) => set({ isLoading: loading }, false, 'setLoading'),
+        setInitialized: (initialized) => set({ isInitialized: initialized }, false, 'setInitialized'),
+
+        // Data actions
+        setTransactions: (transactions) => set({ transactions }, false, 'setTransactions'),
+        setGoals: (goals) => set({ goals }, false, 'setGoals'),
+        calculateBalance: () => set((state) => {
+          state.balance = state.transactions.reduce((acc, transaction) => {
+            return transaction.type === 'income' 
+              ? acc + transaction.amount 
+              : acc - transaction.amount;
+          }, 0);
+        }, false, 'calculateBalance'),
+        addTransaction: async (transactionData) => {
+          const { user, saveGuestData, calculateBalance } = get();
+          const newTransaction = { ...transactionData, createdAt: new Date().toISOString() };
+          if (user) {
+            try {
+              await addDoc(collection(db, 'users', user.uid, 'transactions'), newTransaction);
+            } catch (error) {
+              console.error('Error adding transaction:', error);
+              NotificationSystem.error('Error al agregar transacción');
             }
-          });
-          return unsubscribeAuth;
+          } else {
+            set((state) => {
+              state.transactions.push({ ...newTransaction, id: `${Date.now()}` });
+            }, false, 'addTransaction/local');
+            saveGuestData();
+          }
+          calculateBalance();
+        },
+        updateTransaction: async (id, transactionData) => {
+          const { user, saveGuestData, calculateBalance } = get();
+          if (user) {
+            try {
+              await updateDoc(doc(db, 'users', user.uid, 'transactions', id), transactionData);
+            } catch (error) {
+              console.error('Error updating transaction:', error);
+              NotificationSystem.error('Error al actualizar transacción');
+            }
+          } else {
+            set((state) => {
+              const index = state.transactions.findIndex(t => t.id === id);
+              if (index !== -1) Object.assign(state.transactions[index], transactionData);
+            }, false, 'updateTransaction/local');
+            saveGuestData();
+          }
+          calculateBalance();
+        },
+        deleteTransaction: async (id) => {
+          const { user, saveGuestData, calculateBalance } = get();
+          if (user) {
+            try {
+              await deleteDoc(doc(db, 'users', user.uid, 'transactions', id));
+            } catch (error) {
+              console.error('Error deleting transaction:', error);
+              NotificationSystem.error('Error al eliminar transacción');
+            }
+          } else {
+            set((state) => {
+              state.transactions = state.transactions.filter(t => t.id !== id);
+            }, false, 'deleteTransaction/local');
+            saveGuestData();
+          }
+          calculateBalance();
+        },
+        addGoal: async (goalData) => {
+          const { user, saveGuestData } = get();
+          const newGoal = { ...goalData, id: `${Date.now()}`, createdAt: new Date().toISOString() };
+          if (user) {
+            try {
+              await setDoc(doc(db, 'users', user.uid, 'goals', newGoal.id), newGoal);
+            } catch (error) {
+              console.error('Error adding goal:', error);
+              NotificationSystem.error('Error al agregar meta');
+            }
+          } else {
+            set((state) => {
+              state.goals.push(newGoal);
+            }, false, 'addGoal/local');
+            saveGuestData();
+          }
+        },
+        updateGoal: async (id, goalData) => {
+          const { user, saveGuestData } = get();
+          if (user) {
+            try {
+              await updateDoc(doc(db, 'users', user.uid, 'goals', id), goalData);
+            } catch (error) {
+              console.error('Error updating goal:', error);
+              NotificationSystem.error('Error al actualizar meta');
+            }
+          } else {
+            set((state) => {
+              const index = state.goals.findIndex(g => g.id === id);
+              if (index !== -1) Object.assign(state.goals[index], goalData);
+            }, false, 'updateGoal/local');
+            saveGuestData();
+          }
+        },
+        deleteGoal: async (id) => {
+          const { user, saveGuestData } = get();
+          if (user) {
+            try {
+              await deleteDoc(doc(db, 'users', user.uid, 'goals', id));
+            } catch (error) {
+              console.error('Error deleting goal:', error);
+              NotificationSystem.error('Error al eliminar meta');
+            }
+          } else {
+            set((state) => {
+              state.goals = state.goals.filter(g => g.id !== id);
+            }, false, 'deleteGoal/local');
+            saveGuestData();
+          }
         },
 
+        // UI actions
+        toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode }), false, 'toggleDarkMode'),
+        
+        // Subscription and data handling
         subscribeToUserData: () => {
           const { user, setTransactions, setGoals, calculateBalance } = get();
           if (!user) return () => {};
