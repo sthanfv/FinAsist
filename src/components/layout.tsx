@@ -45,11 +45,11 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   const navItems = [
-    { name: 'Calculadoras', icon: Cpu, href: '/calculators', color: 'orange' },
-    { name: 'Metas', icon: Target, href: '/goals', color: 'purple' },
     { name: 'Principal', icon: Home, href: '/dashboard', color: 'blue' },
-    { name: 'Reportes', icon: BarChart, href: '/reports', color: 'indigo' },
     { name: 'Transacciones', icon: Wallet, href: '/transactions', color: 'green' },
+    { name: 'Metas', icon: Target, href: '/goals', color: 'purple' },
+    { name: 'Reportes', icon: BarChart, href: '/reports', color: 'indigo' },
+    { name: 'Calculadoras', icon: Cpu, href: '/calculators', color: 'orange' },
   ];
 
   const authAction = user ? (
