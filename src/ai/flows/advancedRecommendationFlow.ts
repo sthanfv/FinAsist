@@ -11,20 +11,19 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
 const TransactionSchema = z.object({
-  id: z.number(),
+  id: z.string(),
   date: z.string(),
   category: z.string().describe('La categoría de la transacción (ej: Ocio, Comida, etc.).'),
   amount: z.number().describe('El monto de la transacción.'),
-  type: z.enum(['Ingreso', 'Gasto']).describe('El tipo de transacción.'),
-  account: z.string(),
-  note: z.string().optional(),
+  type: z.enum(['income', 'expense']).describe('El tipo de transacción.'),
+  description: z.string().optional(),
 });
 
 const GoalSchema = z.object({
-    id: z.number(),
-    title: z.string().describe('El título de la meta de ahorro.'),
+    id: z.string(),
+    name: z.string().describe('El título de la meta de ahorro.'),
     targetAmount: z.number().describe('La cantidad objetivo a ahorrar.'),
-    savedAmount: z.number().describe('La cantidad que ya se ha ahorrado.'),
+    currentAmount: z.number().describe('La cantidad que ya se ha ahorrado.'),
     deadline: z.string().describe('La fecha límite para alcanzar la meta.'),
 });
 
@@ -60,7 +59,7 @@ Transacciones:
 
 Metas de Ahorro:
 {{#each goals}}
-- Meta: "{{{title}}}", Objetivo: {{{targetAmount}}}, Ahorrado: {{{savedAmount}}}, Fecha Límite: {{{deadline}}}
+- Meta: "{{{name}}}", Objetivo: {{{targetAmount}}}, Ahorrado: {{{currentAmount}}}, Fecha Límite: {{{deadline}}}
 {{/each}}
 
 Genera una lista de 2 a 4 recomendaciones clave.

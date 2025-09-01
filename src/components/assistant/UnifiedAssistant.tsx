@@ -45,14 +45,8 @@ export default function UnifiedAssistant({ balance, transactions, goals, isGloba
     try {
         const input: AdvancedRecommendationInput = { 
           balance, 
-          transactions: transactions.slice(-20).map(t => ({...t, type: t.type === 'income' ? 'Ingreso' : 'Gasto'})), 
-          goals: goals.map(g => ({
-            id: g.id,
-            title: g.name,
-            targetAmount: g.targetAmount,
-            savedAmount: g.currentAmount,
-            deadline: g.deadline,
-          }))
+          transactions: transactions.slice(-20), 
+          goals,
         };
         const result = await getAdvancedRecommendation(input);
         setAdvancedRecommendations(result.recommendations);
