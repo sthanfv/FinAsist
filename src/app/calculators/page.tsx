@@ -7,6 +7,7 @@ import { LoanCalculator } from '@/components/calculators/LoanCalculator';
 import { CreditCardCalculator } from '@/components/calculators/CreditCardCalculator';
 import { InvestmentCalculator } from '@/components/calculators/InvestmentCalculator';
 import { FinancialFreedomCalculator } from '@/components/calculators/FinancialFreedomCalculator';
+import BackButton from '@/components/BackButton';
 
 type CalculatorType = 'cdt' | 'loan' | 'credit-card' | 'investment' | 'freedom' | null;
 const calculatorOptions = [
@@ -83,9 +84,12 @@ export default function CalculatorsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            🏦 Simulador Bancario
-          </h1>
+          <div className="flex items-center justify-center gap-4 mb-4">
+              <BackButton />
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+                🏦 Simulador Bancario
+              </h1>
+          </div>
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             Herramientas financieras profesionales para simular productos bancarios reales
           </p>
