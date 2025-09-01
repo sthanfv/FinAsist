@@ -481,13 +481,13 @@ export class FinancialEngine {
   }
 
   private static getMonthlyAggregates(transactions: Transaction[]) {
-    const monthlyMap = new Map<string, { income: number; expenses: number; date: Date }>();
+    const monthlyMap = new Map<string, { income: number; expenses: number; date: Date, month: string }>();
     transactions.forEach(t => {
       const date = new Date(t.date);
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       
       if (!monthlyMap.has(key)) {
-        monthlyMap.set(key, { income: 0, expenses: 0, date: new Date(date.getFullYear(), date.getMonth(), 1) });
+        monthlyMap.set(key, { income: 0, expenses: 0, date: new Date(date.getFullYear(), date.getMonth(), 1), month: key });
       }
       const data = monthlyMap.get(key)!;
       if (t.type === 'income') {
@@ -535,138 +535,7 @@ export class FinancialEngine {
   }
 
   // ============== MÉTODOS AVANZADOS =================
-  static analyzeCategoryCorrelations(transactions: Transaction[]): CategoryCorrelation[] {
-    const categories = [...new Set(transactions.filter(t => t.type === 'expense').map(t => t.category))];
-    const correlations: CategoryCorrelation[] = [];
-    
-    for (let i = 0; i < categories.length; i++) {
-      for (let j = i + 1; j < categories.length; j++) {
-        const cat1 = categories[i];
-        const cat2 = categories[j];
-        
-        const correlation = this.calculatePearsonCorrelation(
-          this.getCategorySpendingByMonth(transactions, cat1),
-          this.getCategorySpendingByMonth(transactions, cat2)
-        );
-        
-        if (Math.abs(correlation) > 0.3) { // Solo correlaciones significativas
-          correlations.push({
-            category1: cat1,
-            category2: cat2,
-            correlation,
-            insight: this.interpretCorrelation(cat1, cat2, correlation)
-          });
-        }
-      }
-    }
-    return correlations;
-  }
-
-  static predictMonthlySpending(
-    transactions: Transaction[], 
-    targetMonth: string
-  ): SpendingPrediction {
-    const monthlyData = this.groupTransactionsByMonth(transactions);
-    if(monthlyData.length < 2) return { predictedAmount: 0, confidence: 0, factors: [], recommendation: 'No hay suficientes datos.' };
-
-    const features = monthlyData.map(month => [
-      month.totalExpenses,
-      month.transactionCount,
-      new Date(month.month).getMonth(), // Factor estacional
-      month.categories.length // Diversidad de gastos
-    ]);
-    
-    const targets = monthlyData.map(m => m.totalExpenses);
-    
-    // Regresión lineal múltiple simplificada
-    const coefficients = this.multipleLinearRegression(features, targets);
-    const targetDate = new Date(targetMonth);
-    const prediction = this.applyRegression(coefficients, [
-      targets[targets.length - 1], // Último mes como baseline
-      monthlyData[monthlyData.length - 1].transactionCount,
-      targetDate.getMonth(),
-      monthlyData[monthlyData.length - 1].categories.length
-    ]);
-    return {
-      predictedAmount: prediction,
-      confidence: this.calculatePredictionConfidence(monthlyData),
-      factors: this.identifySpendingFactors(monthlyData),
-      recommendation: this.generateSpendingRecommendation(prediction, targets)
-    };
-  }
-
-  static analyzeCategoryEfficiency(transactions: Transaction[]): CategoryEfficiency[] {
-    const categoryData = this.groupTransactionsByCategory(transactions);
-    
-    return Object.entries(categoryData).map(([category, data]) => {
-      const frequency = data.transactions.length;
-      const totalSpent = data.totalAmount;
-      const avgTransaction = totalSpent / frequency;
-      const monthlyTrend = this.calculateCategoryTrend(data.transactions);
-      
-      // Índice de eficiencia (gastos necesarios vs opcionales)
-      const efficiencyScore = this.calculateCategoryEfficiencyScore(category, data);
-      
-      return {
-        category,
-        totalSpent,
-        frequency,
-        avgTransaction,
-        monthlyTrend,
-        efficiencyScore,
-        recommendations: this.getCategoryRecommendations(category, efficiencyScore, monthlyTrend)
-      };
-    }).sort((a, b) => b.totalSpent - a.totalSpent);
-  }
-
-  static generateOptimizationPlan(
-    transactions: Transaction[],
-    goals: Goal[],
-    balance: number,
-    targetSavingsRate: number = 0.2
-  ): OptimizationPlan {
-    const currentMetrics = this.calculateFinancialMetrics(transactions, balance);
-    const categoryEfficiency = this.analyzeCategoryEfficiency(transactions);
-    
-    const optimizations: Optimization[] = [];
-    
-    // Identificar categorías con mayor potencial de ahorro
-    const inefficientCategories = categoryEfficiency
-      .filter(cat => cat.efficiencyScore < 0.6)
-      .sort((a, b) => b.totalSpent - a.totalSpent);
-    
-    let potentialSavings = 0;
-    
-    inefficientCategories.forEach(category => {
-      const reduction = category.totalSpent * (1 - category.efficiencyScore) * 0.3;
-      potentialSavings += reduction;
-      
-      optimizations.push({
-        type: 'reduce_spending',
-        category: category.category,
-        currentAmount: category.totalSpent,
-        targetAmount: category.totalSpent - reduction,
-        potentialSaving: reduction,
-        difficulty: this.assessOptimizationDifficulty(category),
-        timeline: this.estimateImplementationTime(category)
-      });
-    });
-
-    const potentialMonthlyNetFlow = currentMetrics.netFlow + potentialSavings;
-    const potentialSavingsRate = currentMetrics.averageMonthlyIncome > 0 
-      ? potentialMonthlyNetFlow / currentMetrics.averageMonthlyIncome 
-      : 0;
-
-    return {
-      currentSavingsRate: currentMetrics.savingsRate,
-      targetSavingsRate,
-      potentialSavingsRate,
-      optimizations,
-      expectedTimeToGoals: this.calculateOptimizedTimeToGoals(goals, potentialSavings, currentMetrics),
-      priorityActions: this.prioritizeOptimizations(optimizations)
-    };
-  }
-
+  
   static simulateFinancialScenarios(
     transactions: Transaction[],
     scenarios: FinancialScenario[]
@@ -690,40 +559,189 @@ export class FinancialEngine {
       };
     });
   }
-
-  // --- STUBS PARA MÉTODOS AUXILIARES FALTANTES ---
-
-  private static getCategorySpendingByMonth(transactions: Transaction[], category: string): number[] { return [1,2,3]; }
-  private static calculatePearsonCorrelation(arr1: number[], arr2: number[]): number { return 0.5; }
-  private static interpretCorrelation(cat1: string, cat2: string, correlation: number): string { return `Cuando gastas en ${cat1}, tiendes a gastar en ${cat2}.`; }
-  private static groupTransactionsByMonth(transactions: Transaction[]): any[] { return [{month: '2023-01', totalExpenses: 100, transactionCount: 5, categories: ['a','b']}] }
-  private static multipleLinearRegression(features: number[][], targets: number[]): number[] { return [0.1, 0.2, 0.3]; }
-  private static applyRegression(coeffs: number[], features: number[]): number { return 120; }
-  private static calculatePredictionConfidence(data: any[]): number { return 0.85; }
-  private static identifySpendingFactors(data: any[]): SpendingFactor[] {
-    return [
-      { name: 'Estacionalidad', impact: 0.4, trend: 0.1 },
-      { name: 'Gastos únicos', impact: 0.2, trend: -0.2 },
-      { name: 'Frecuencia de compras', impact: 0.3, trend: 0.05 },
-    ];
-  }
-  private static generateSpendingRecommendation(prediction: number, targets: number[]): string { 
-    const avg = targets.reduce((a, b) => a + b, 0) / targets.length;
-    if (prediction > avg * 1.1) {
-      return "Se proyecta un gasto mayor al promedio. Revisa tus suscripciones.";
-    }
-    return "Tu gasto proyectado se mantiene estable. ¡Buen trabajo!";
-  }
-  private static groupTransactionsByCategory(transactions: Transaction[]): Record<string, any> { return {'Comida': { transactions, totalAmount: 1000 }}; }
-  private static calculateCategoryTrend(transactions: Transaction[]): number { return 0.1; }
-  private static calculateCategoryEfficiencyScore(category: string, data: any): number { return 0.7; }
-  private static getCategoryRecommendations(category: string, score: number, trend: number): string[] { return ['Revisa suscripciones.']; }
-  private static assessOptimizationDifficulty(category: any): 'EASY' | 'MEDIUM' | 'HARD' { return 'MEDIUM'; }
-  private static estimateImplementationTime(category: any): string { return "1 mes"; }
-  private static calculateOptimizedTimeToGoals(goals: Goal[], savings: number, metrics: FinancialMetrics): Record<string, number> { return {'Viaje': 12}; }
-  private static prioritizeOptimizations(opts: Optimization[]): Optimization[] { return opts; }
+  
   private static applyScenarioToTransactions(transactions: Transaction[], scenario: FinancialScenario): Transaction[] { return transactions; }
   private static assessScenarioRisk(scenario: FinancialScenario, metrics: FinancialMetrics): 'low' | 'medium' | 'high' { return 'low'; }
   private static assessScenarioFeasibility(scenario: FinancialScenario, metrics: FinancialMetrics): 'HIGH' | 'MEDIUM' | 'LOW' { return 'HIGH'; }
 
+
+  // NUEVO: Análisis de correlación entre categorías
+  static analyzeCategoryCorrelations(transactions: Transaction[]): CategoryCorrelation[] {
+    if (transactions.length < 10) return []; // Necesitamos datos suficientes
+    
+    const categories = [...new Set(transactions.filter(t => t.type === 'expense').map(t => t.category))];
+    const correlations: CategoryCorrelation[] = [];
+    
+    for (let i = 0; i < categories.length; i++) {
+      for (let j = i + 1; j < categories.length; j++) {
+        const cat1 = categories[i];
+        const cat2 = categories[j];
+        
+        const cat1Spending = this.getCategorySpendingByMonth(transactions, cat1);
+        const cat2Spending = this.getCategorySpendingByMonth(transactions, cat2);
+        
+        if (cat1Spending.length > 1 && cat2Spending.length > 1) {
+          const correlation = this.calculatePearsonCorrelation(cat1Spending, cat2Spending);
+          
+          if (Math.abs(correlation) > 0.3) {
+            correlations.push({
+              category1: cat1,
+              category2: cat2,
+              correlation,
+              insight: this.interpretCorrelation(cat1, cat2, correlation)
+            });
+          }
+        }
+      }
+    }
+    return correlations;
+  }
+  // NUEVO: Predicción de gastos
+  static predictMonthlySpending(transactions: Transaction[], targetMonth: string): SpendingPrediction {
+    const monthlyData = this.getMonthlyAggregates(transactions);
+    if (monthlyData.length < 2) {
+      return {
+        predictedAmount: monthlyData[0]?.expenses || 0,
+        confidence: 0.1,
+        factors: [],
+        recommendation: 'Necesitamos más datos para hacer predicciones precisas.'
+      };
+    }
+    const expenseAmounts = monthlyData.map(m => m.expenses);
+    const avgExpenses = expenseAmounts.reduce((a, b) => a + b, 0) / expenseAmounts.length;
+    const trend = this.calculateGrowthRate(expenseAmounts);
+    
+    const prediction = avgExpenses * (1 + trend);
+    const confidence = Math.max(0.1, Math.min(0.9, 1 - this.calculateVolatility(expenseAmounts)));
+    return {
+      predictedAmount: Math.max(0, prediction),
+      confidence,
+      factors: [
+        { name: 'Tendencia histórica', impact: Math.abs(trend), trend },
+        { name: 'Promedio mensual', impact: 0.7, trend: 0 }
+      ],
+      recommendation: trend > 0.1 ? 
+        'Tus gastos están creciendo. Considera revisar tu presupuesto.' :
+        'Tus gastos se mantienen estables. ¡Buen control!'
+    };
+  }
+  // NUEVO: Análisis de eficiencia por categoría
+  static analyzeCategoryEfficiency(transactions: Transaction[]): CategoryEfficiency[] {
+    const expenseTransactions = transactions.filter(t => t.type === 'expense');
+    const categoryData = this.groupTransactionsByCategory(expenseTransactions);
+    
+    return Object.entries(categoryData).map(([category, data]) => {
+      const frequency = data.length;
+      const totalSpent = data.reduce((sum, t) => sum + t.amount, 0);
+      const avgTransaction = totalSpent / frequency;
+      
+      // Score simple basado en esencialidad de la categoría
+      const essentialCategories = ['Alimentación', 'Salud', 'Servicios', 'Transporte'];
+      const baseScore = essentialCategories.includes(category) ? 0.7 : 0.4;
+      
+      return {
+        category,
+        totalSpent,
+        frequency,
+        avgTransaction,
+        monthlyTrend: 0, // Simplificado por ahora
+        efficiencyScore: baseScore,
+        recommendations: frequency > 20 ? 
+          [`Muchas transacciones en ${category}. Considera consolidar compras.`] :
+          [`Buen control en ${category}.`]
+      };
+    }).sort((a, b) => b.totalSpent - a.totalSpent);
+  }
+  // NUEVO: Plan de optimización
+  static generateOptimizationPlan(
+    transactions: Transaction[], 
+    goals: Goal[], 
+    balance: number,
+    targetSavingsRate: number = 0.2
+  ): OptimizationPlan {
+    const metrics = this.calculateFinancialMetrics(transactions, balance);
+    const categoryEfficiency = this.analyzeCategoryEfficiency(transactions);
+    
+    const optimizations: Optimization[] = [];
+    
+    // Buscar categorías con mayor gasto y menor eficiencia
+    const inefficientCategories = categoryEfficiency
+      .filter(cat => cat.efficiencyScore < 0.6)
+      .slice(0, 3); // Top 3
+    
+    let potentialSavings = 0;
+    
+    inefficientCategories.forEach(category => {
+      const reduction = category.totalSpent * 0.15; // 15% de reducción
+      potentialSavings += reduction;
+      
+      optimizations.push({
+        type: 'reduce_spending',
+        category: category.category,
+        currentAmount: category.totalSpent,
+        targetAmount: category.totalSpent - reduction,
+        potentialSaving: reduction,
+        difficulty: category.totalSpent > 500000 ? 'HARD' : 'MEDIUM',
+        timeline: '3 meses'
+      });
+    });
+    const currentSavingsRate = metrics.savingsRate;
+    const newMonthlyIncome = metrics.averageMonthlyIncome;
+    const potentialMonthlySavings = (metrics.averageMonthlyIncome - metrics.averageMonthlyExpenses) + (potentialSavings / inefficientCategories.length > 0 ? 3 : 1);
+    const potentialSavingsRate = newMonthlyIncome > 0 ? 
+      potentialMonthlySavings / newMonthlyIncome : 0;
+      
+    return {
+      currentSavingsRate,
+      targetSavingsRate,
+      potentialSavingsRate,
+      optimizations,
+      expectedTimeToGoals: {},
+      priorityActions: optimizations.sort((a, b) => b.potentialSaving - a.potentialSaving)
+    };
+  }
+  // MÉTODOS AUXILIARES NECESARIOS
+  private static getCategorySpendingByMonth(transactions: Transaction[], category: string): number[] {
+    const monthlyData = this.getMonthlyAggregates(transactions);
+    return monthlyData.map(month => {
+      const categoryTransactions = transactions.filter(t => 
+        t.category === category && 
+        t.date.startsWith(month.month) && 
+        t.type === 'expense'
+      );
+      return categoryTransactions.reduce((sum, t) => sum + t.amount, 0);
+    });
+  }
+  private static calculatePearsonCorrelation(x: number[], y: number[]): number {
+    if (x.length !== y.length || x.length === 0) return 0;
+    
+    const n = x.length;
+    const sumX = x.reduce((a, b) => a + b, 0);
+    const sumY = y.reduce((a, b) => a + b, 0);
+    const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
+    const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
+    const sumY2 = y.reduce((sum, yi) => sum + yi * yi, 0);
+    
+    const numerator = n * sumXY - sumX * sumY;
+    const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+    
+    return denominator === 0 ? 0 : numerator / denominator;
+  }
+  private static interpretCorrelation(cat1: string, cat2: string, correlation: number): string {
+    const absCorr = Math.abs(correlation);
+    if (absCorr > 0.7) {
+      return `Fuerte relación: cuando gastas más en ${cat1}, también gastas ${correlation > 0 ? 'más' : 'menos'} en ${cat2}`;
+    } else if (absCorr > 0.4) {
+      return `Relación moderada entre ${cat1} y ${cat2}`;
+    }
+    return `Relación débil entre ${cat1} y ${cat2}`;
+  }
+  private static groupTransactionsByCategory(transactions: Transaction[]): Record<string, Transaction[]> {
+    return transactions.reduce((groups, transaction) => {
+      const category = transaction.category;
+      if (!groups[category]) groups[category] = [];
+      groups[category].push(transaction);
+      return groups;
+    }, {} as Record<string, Transaction[]>);
+  }
 }
