@@ -564,7 +564,6 @@ export class FinancialEngine {
   private static assessScenarioRisk(scenario: FinancialScenario, metrics: FinancialMetrics): 'low' | 'medium' | 'high' { return 'low'; }
   private static assessScenarioFeasibility(scenario: FinancialScenario, metrics: FinancialMetrics): 'HIGH' | 'MEDIUM' | 'LOW' { return 'HIGH'; }
 
-
   // NUEVO: Análisis de correlación entre categorías
   static analyzeCategoryCorrelations(transactions: Transaction[]): CategoryCorrelation[] {
     if (transactions.length < 10) return []; // Necesitamos datos suficientes
@@ -655,7 +654,7 @@ export class FinancialEngine {
   // NUEVO: Plan de optimización
   static generateOptimizationPlan(
     transactions: Transaction[], 
-    goals: Goal[], 
+    goals: Goal[],
     balance: number,
     targetSavingsRate: number = 0.2
   ): OptimizationPlan {
@@ -687,14 +686,13 @@ export class FinancialEngine {
     });
     const currentSavingsRate = metrics.savingsRate;
     const newMonthlyIncome = metrics.averageMonthlyIncome;
-    const potentialMonthlySavings = (metrics.averageMonthlyIncome - metrics.averageMonthlyExpenses) + (potentialSavings / inefficientCategories.length > 0 ? 3 : 1);
+    const potentialMonthlySavings = (metrics.averageMonthlyIncome - metrics.averageMonthlyExpenses) + (potentialSavings / 3);
     const potentialSavingsRate = newMonthlyIncome > 0 ? 
       potentialMonthlySavings / newMonthlyIncome : 0;
-      
     return {
       currentSavingsRate,
       targetSavingsRate,
-      potentialSavingsRate,
+      potentialSavingsRate: Math.max(0, potentialSavingsRate),
       optimizations,
       expectedTimeToGoals: {},
       priorityActions: optimizations.sort((a, b) => b.potentialSaving - a.potentialSaving)
