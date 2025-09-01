@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google';
 import { useEffect } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { ThemeProvider } from '@/components/ThemeProvider';
-import LoadingSpinner from '@/components/ui/loading-spinner';
+import { DashboardLoader } from '@/components/ui/professional-loading';
 import { Toaster } from 'sonner';
 import './globals.css';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -53,7 +53,7 @@ export default function RootLayout({
         </head>
         <body className={`${inter.className} font-body antialiased`}>
           <div className="min-h-screen bg-white dark:bg-background flex items-center justify-center">
-            <LoadingSpinner />
+            <DashboardLoader />
           </div>
         </body>
       </html>

@@ -53,7 +53,7 @@ interface AppState {
   setInitialized: (initialized: boolean) => void;
   setTransactions: (transactions: Transaction[]) => void;
   setGoals: (goals: Goal[]) => void;
-  calculateBalance: () => void;
+  calculateBalance: () => number;
   addTransaction: (transactionData: Omit<Transaction, 'id' | 'createdAt'>) => Promise<void>;
   updateTransaction: (id: string, transactionData: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
@@ -64,10 +64,24 @@ interface AppState {
   subscribeToUserData: () => () => void;
   loadGuestData: () => void;
   saveGuestData: () => void;
+  
+  // Cache y optimizaciones
+  _balanceCache: number | null;
+  _lastCalculated: number;
 }
 
 
 const GUEST_DATA_KEY = 'finassist_guest_data';
+
+// Utility function
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
+  let timeout: NodeJS.Timeout;
+  return ((...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  }) as T;
+}
+
 
 export const useAppStore = create<AppState>()(
   subscribeWithSelector(
@@ -85,6 +99,8 @@ export const useAppStore = create<AppState>()(
         
         // UI state
         isDarkMode: false,
+        _balanceCache: null,
+        _lastCalculated: 0,
 
         // Auth actions
         setUser: (user) => set({ user }, false, 'setUser'),
@@ -92,16 +108,29 @@ export const useAppStore = create<AppState>()(
         setInitialized: (initialized) => set({ isInitialized: initialized }, false, 'setInitialized'),
 
         // Data actions
-        setTransactions: (transactions) => set({ transactions }, false, 'setTransactions'),
+        setTransactions: (transactions) => set({ transactions, _balanceCache: null }, false, 'setTransactions'), // Invalida caché
         setGoals: (goals) => set({ goals }, false, 'setGoals'),
-        calculateBalance: () => set((state) => {
-          state.balance = state.transactions.reduce((acc, transaction) => {
-            return transaction.type === 'income' 
-              ? acc + transaction.amount 
-              : acc - transaction.amount;
-          }, 0);
-        }, false, 'calculateBalance'),
-        addTransaction: async (transactionData) => {
+        
+        calculateBalance: () => {
+          const now = Date.now();
+          if (get()._balanceCache !== null && now - get()._lastCalculated < 1000) { // Cache por 1 segundo
+            return get()._balanceCache as number;
+          }
+          
+          const { transactions } = get();
+          const balance = transactions.reduce((sum, t) => 
+            sum + (t.type === 'income' ? t.amount : -t.amount), 0
+          );
+          
+          set({ 
+            balance, 
+            _balanceCache: balance, 
+            _lastCalculated: now 
+          });
+          return balance;
+        },
+        
+        addTransaction: debounce(async (transactionData: Omit<Transaction, 'id' | 'createdAt'>) => {
           const { user, saveGuestData, calculateBalance } = get();
           const newTransaction = { ...transactionData, createdAt: new Date().toISOString() };
           if (user) {
@@ -114,11 +143,13 @@ export const useAppStore = create<AppState>()(
           } else {
             set((state) => {
               state.transactions.push({ ...newTransaction, id: `${Date.now()}` });
+              state._balanceCache = null; // Invalida caché
             }, false, 'addTransaction/local');
             saveGuestData();
           }
           calculateBalance();
-        },
+        }, 300),
+
         updateTransaction: async (id, transactionData) => {
           const { user, saveGuestData, calculateBalance } = get();
           if (user) {
@@ -132,6 +163,7 @@ export const useAppStore = create<AppState>()(
             set((state) => {
               const index = state.transactions.findIndex(t => t.id === id);
               if (index !== -1) Object.assign(state.transactions[index], transactionData);
+              state._balanceCache = null; // Invalida caché
             }, false, 'updateTransaction/local');
             saveGuestData();
           }
@@ -149,6 +181,7 @@ export const useAppStore = create<AppState>()(
           } else {
             set((state) => {
               state.transactions = state.transactions.filter(t => t.id !== id);
+              state._balanceCache = null; // Invalida caché
             }, false, 'deleteTransaction/local');
             saveGuestData();
           }
@@ -264,9 +297,14 @@ export const useAppStore = create<AppState>()(
         },
       })),
       {
-        name: 'finassist-settings',
+        name: 'finassist-store',
         storage: createJSONStorage(() => localStorage),
-        partialize: (state) => ({ isDarkMode: state.isDarkMode }),
+        partialize: (state) => ({
+          transactions: state.transactions,
+          goals: state.goals,
+          user: state.user,
+          isDarkMode: state.isDarkMode
+        }),
       }
     )
   )

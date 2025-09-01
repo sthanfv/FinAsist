@@ -11,12 +11,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import EditTransactionForm from '@/components/transactions/EditTransactionForm';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
+import { useTransactions } from '@/store/selectors';
 import type { Transaction } from '@/store/useAppStore';
 import { useRouter } from 'next/navigation';
 import { NotificationSystem } from '@/components/ui/toast-system';
 
 export default function TransactionsPage() {
-    const { transactions, addTransaction, setTransactions, updateTransaction, deleteTransaction } = useAppStore();
+    const transactions = useTransactions();
+    const { addTransaction, setTransactions, updateTransaction, deleteTransaction } = useAppStore(
+      (state) => ({
+        addTransaction: state.addTransaction,
+        setTransactions: state.setTransactions,
+        updateTransaction: state.updateTransaction,
+        deleteTransaction: state.deleteTransaction,
+      })
+    );
+
     const [isAddFormVisible, setIsAddFormVisible] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);

@@ -17,16 +17,21 @@ import UnifiedAssistant from '@/components/assistant/UnifiedAssistant';
 import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useAppStore } from '@/store/useAppStore';
 import Link from 'next/link';
 import { useFinancialAnalysis } from '@/hooks/useFinancialAnalysis';
 import { AlertCard } from '@/components/dashboard/AlertCard';
-import { TransactionSkeleton } from '@/components/ui/loading-spinner';
+import { TransactionLoader } from '@/components/ui/professional-loading';
 import { NotificationSystem } from '@/components/ui/toast-system';
 import type { FinancialAlert } from '@/engine/FinancialEngine';
+import { useAppStore } from '@/store/useAppStore';
+import { useBalance, useTransactions, useGoals } from '@/store/selectors';
+import { FinancialErrorBoundary } from '@/components/error/financial-error-boundary';
 
 export default function Dashboard() {
-  const { balance, transactions, goals, isLoading } = useAppStore();
+  const isLoading = useAppStore(state => state.isLoading);
+  const balance = useBalance();
+  const transactions = useTransactions();
+  const goals = useGoals();
   const analysis = useFinancialAnalysis();
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [lastShownAlertId, setLastShownAlertId] = useState<string | null>(null);
@@ -69,6 +74,7 @@ export default function Dashboard() {
         exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
+        <FinancialErrorBoundary>
         {isLoading ? (
           <div className="space-y-4">
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -76,7 +82,7 @@ export default function Dashboard() {
                 <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse"></div>
                 <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse"></div>
             </div>
-            <TransactionSkeleton />
+            <TransactionLoader />
           </div>
         ) : (
           <>
@@ -189,6 +195,7 @@ export default function Dashboard() {
             </div>
           </>
         )}
+        </FinancialErrorBoundary>
       </motion.div>
     </Layout>
   );

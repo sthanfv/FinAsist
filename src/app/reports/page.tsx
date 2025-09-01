@@ -4,14 +4,14 @@ import Layout from '@/components/layout';
 import ReportCard from '@/components/reports/ReportCard';
 import BackButton from '@/components/BackButton';
 import { motion } from 'framer-motion';
-import { useAppStore } from '@/store/useAppStore';
+import { useTransactions } from '@/store/selectors';
 import { useFinancialAnalysis } from '@/hooks/useFinancialAnalysis';
 import { ChartComponent } from '@/components/dashboard/ChartComponent';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 
 export default function ReportsPage() {
-  const { transactions } = useAppStore();
+  const transactions = useTransactions();
   const analysis = useFinancialAnalysis();
 
   const monthlyData = Array.from(transactions.reduce((acc, t) => {

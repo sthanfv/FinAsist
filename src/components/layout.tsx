@@ -8,6 +8,7 @@ import { Menu, Home, Wallet, Target, BarChart, X, LogOut, LogIn, Cpu } from 'luc
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from './ThemeToggle';
 import { useAppStore } from '@/store/useAppStore';
+import { useBalance } from '@/store/selectors';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
@@ -18,7 +19,8 @@ type LayoutProps = {
 
 export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { balance, user } = useAppStore();
+  const user = useAppStore(state => state.user);
+  const balance = useBalance();
   const router = useRouter();
 
   const [balanceChanged, setBalanceChanged] = useState(false);
@@ -43,7 +45,7 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   const navItems = [
-    { name: 'Dashboard', icon: Home, href: '/dashboard', color: 'blue' },
+    { name: 'Principal', icon: Home, href: '/dashboard', color: 'blue' },
     { name: 'Transacciones', icon: Wallet, href: '/transactions', color: 'green' },
     { name: 'Metas', icon: Target, href: '/goals', color: 'purple' },
     { name: 'Reportes', icon: BarChart, href: '/reports', color: 'indigo' },
