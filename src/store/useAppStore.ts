@@ -38,6 +38,29 @@ export interface Goal {
   createdAt: string;
 }
 
+export interface Budget {
+  id: string;
+  category: string;
+  limitAmount: number;
+  spentAmount: number;
+  period: 'monthly' | 'weekly' | 'yearly';
+  startDate: string;
+  endDate: string;
+  alertThreshold: number; // Porcentaje para alertas (ej: 80%)
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface BudgetAlert {
+  budgetId: string;
+  category: string;
+  currentSpent: number;
+  limitAmount: number;
+  percentage: number;
+  type: 'warning' | 'exceeded';
+}
+
+
 // State interface
 interface AppState {
   user: User | null;
@@ -45,6 +68,8 @@ interface AppState {
   isInitialized: boolean;
   transactions: Transaction[];
   goals: Goal[];
+  budgets: Budget[];
+  budgetAlerts: BudgetAlert[];
   balance: number;
   isDarkMode: boolean;
 
@@ -63,6 +88,12 @@ interface AppState {
   subscribeToUserData: () => () => void;
   loadGuestData: () => void;
   saveGuestData: () => void;
+  
+  addBudget: (budget: Omit<Budget, 'id' | 'createdAt' | 'spentAmount'>) => Promise<void>;
+  updateBudget: (budgetId: string, updates: Partial<Budget>) => Promise<void>;
+  deleteBudget: (budgetId: string) => Promise<void>;
+  calculateBudgetStatus: () => void;
+  getBudgetUsage: (category: string) => number;
 }
 
 
@@ -90,6 +121,8 @@ export const useAppStore = create<AppState>()(
         // Data state
         transactions: [],
         goals: [],
+        budgets: [],
+        budgetAlerts: [],
         balance: 0,
         
         // UI state
@@ -220,6 +253,118 @@ export const useAppStore = create<AppState>()(
           }
         },
 
+        // Budget actions
+        addBudget: async (budgetData) => {
+          const { user, saveGuestData, calculateBudgetStatus } = get();
+          const newBudget: Budget = {
+            ...budgetData,
+            id: `budget_${Date.now()}`,
+            spentAmount: 0,
+            createdAt: new Date().toISOString()
+          };
+          if (user) {
+            try {
+              await addDoc(collection(db, 'users', user.uid, 'budgets'), newBudget);
+            } catch (error) {
+              console.error('Error adding budget:', error);
+            }
+          } else {
+            set((state) => {
+              state.budgets.push(newBudget);
+            });
+            saveGuestData();
+          }
+          calculateBudgetStatus();
+        },
+        updateBudget: async (budgetId, updates) => {
+          const { user, saveGuestData, calculateBudgetStatus } = get();
+          if (user) {
+            try {
+              const budgetRef = doc(db, 'users', user.uid, 'budgets', budgetId);
+              await updateDoc(budgetRef, updates);
+            } catch (error) {
+              console.error('Error updating budget:', error);
+            }
+          } else {
+            set((state) => {
+              const index = state.budgets.findIndex(b => b.id === budgetId);
+              if (index !== -1) {
+                Object.assign(state.budgets[index], updates);
+              }
+            });
+            saveGuestData();
+          }
+          calculateBudgetStatus();
+        },
+        deleteBudget: async (budgetId) => {
+            const { user, saveGuestData } = get();
+            if (user) {
+              try {
+                await deleteDoc(doc(db, 'users', user.uid, 'budgets', budgetId));
+              } catch (error) {
+                console.error('Error deleting budget:', error);
+                NotificationSystem.error('Error al eliminar presupuesto');
+              }
+            } else {
+              set((state) => {
+                state.budgets = state.budgets.filter(b => b.id !== budgetId);
+              });
+              saveGuestData();
+            }
+          },
+        calculateBudgetStatus: () => {
+          const { budgets, transactions } = get();
+          const alerts: BudgetAlert[] = [];
+          
+          const updatedBudgets = budgets.map(budget => {
+            if (!budget.isActive) return { ...budget, spentAmount: 0 };
+            
+            const periodTransactions = transactions.filter(t => {
+              const transactionDate = new Date(t.date);
+              return (
+                t.type === 'expense' &&
+                t.category === budget.category &&
+                transactionDate >= new Date(budget.startDate) &&
+                transactionDate <= new Date(budget.endDate)
+              );
+            });
+            
+            const spentAmount = periodTransactions.reduce((sum, t) => sum + t.amount, 0);
+            const percentage = budget.limitAmount > 0 ? (spentAmount / budget.limitAmount) * 100 : 0;
+            
+            if (percentage >= 100) {
+              alerts.push({
+                budgetId: budget.id,
+                category: budget.category,
+                currentSpent: spentAmount,
+                limitAmount: budget.limitAmount,
+                percentage,
+                type: 'exceeded'
+              });
+            } else if (percentage >= budget.alertThreshold) {
+              alerts.push({
+                budgetId: budget.id,
+                category: budget.category,
+                currentSpent: spentAmount,
+                limitAmount: budget.limitAmount,
+                percentage,
+                type: 'warning'
+              });
+            }
+            
+            return { ...budget, spentAmount };
+          });
+          
+          set({ budgets: updatedBudgets, budgetAlerts: alerts }, false, 'calculateBudgetStatus');
+        },
+        getBudgetUsage: (category: string) => {
+          const { budgets } = get();
+          const budget = budgets.find(b => b.category === category && b.isActive);
+          if (!budget || budget.limitAmount === 0) return 0;
+          return (budget.spentAmount / budget.limitAmount) * 100;
+        },
+
+
         // UI actions
         toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode }), false, 'toggleDarkMode'),
         
@@ -231,6 +376,7 @@ export const useAppStore = create<AppState>()(
           const unsubTransactions = onSnapshot(query(collection(db, 'users', user.uid, 'transactions')), (snapshot) => {
             const transactions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }) as Transaction);
             setTransactions(transactions);
+            get().calculateBudgetStatus(); 
           }, (error) => {
             console.error("Error en snapshot de transacciones: ", error);
             NotificationSystem.error("Error al cargar transacciones");
@@ -244,9 +390,19 @@ export const useAppStore = create<AppState>()(
             NotificationSystem.error("Error al cargar metas");
           });
 
+          const unsubBudgets = onSnapshot(query(collection(db, 'users', user.uid, 'budgets')), (snapshot) => {
+            const budgets = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }) as Budget);
+            set({ budgets });
+            get().calculateBudgetStatus();
+          }, (error) => {
+            console.error("Error en snapshot de presupuestos: ", error);
+            NotificationSystem.error("Error al cargar presupuestos");
+          });
+
           return () => {
             unsubTransactions();
             unsubGoals();
+            unsubBudgets();
           };
         },
 
@@ -255,9 +411,11 @@ export const useAppStore = create<AppState>()(
           try {
             const saved = localStorage.getItem(GUEST_DATA_KEY);
             if (saved) {
-              const { transactions = [], goals = [] } = JSON.parse(saved);
+              const { transactions = [], goals = [], budgets = [] } = JSON.parse(saved);
               get().setTransactions(transactions);
               get().setGoals(goals);
+              set({ budgets });
+              get().calculateBudgetStatus();
             }
           } catch (error) {
             console.error('Error loading guest data:', error);
@@ -268,8 +426,8 @@ export const useAppStore = create<AppState>()(
         saveGuestData: () => {
           if (typeof window === 'undefined') return;
           try {
-            const { transactions, goals } = get();
-            localStorage.setItem(GUEST_DATA_KEY, JSON.stringify({ transactions, goals }));
+            const { transactions, goals, budgets } = get();
+            localStorage.setItem(GUEST_DATA_KEY, JSON.stringify({ transactions, goals, budgets }));
           } catch (error) {
             console.error('Error saving guest data:', error);
             NotificationSystem.error('Error al guardar datos locales');
@@ -282,6 +440,7 @@ export const useAppStore = create<AppState>()(
         partialize: (state) => ({
           transactions: state.transactions,
           goals: state.goals,
+          budgets: state.budgets,
           user: state.user,
           isDarkMode: state.isDarkMode
         }),
