@@ -2,7 +2,7 @@
 'use client';
 import { useMemo } from 'react';
 import { useAppStore } from '@/store/useAppStore';
-import { financialEngine } from '@/engine/FinancialEngine';
+import { FinancialEngine } from '@/engine/FinancialEngine';
 import { useTransactions, useGoals, useBalance } from '@/store/selectors';
 
 export const useFinancialAnalysis = () => {
@@ -11,11 +11,8 @@ export const useFinancialAnalysis = () => {
   const balance = useBalance();
   
   const analysis = useMemo(() => {
-    // Update engine data before running analysis
-    financialEngine.updateData(transactions, goals, balance);
-
-    return financialEngine.runCompleteAnalysis();
-
+    // Llama al método estático directamente, pasando los datos
+    return FinancialEngine.runCompleteAnalysis(transactions, goals, balance);
   }, [transactions, goals, balance]);
 
   return analysis;

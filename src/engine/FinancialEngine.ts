@@ -64,41 +64,84 @@ export interface FinancialAlert {
     category: 'spending' | 'goals' | 'investment' | 'general';
 }
 
+// Interfaces para métodos avanzados
+export interface CategoryCorrelation {
+  category1: string;
+  category2: string;
+  correlation: number;
+  insight: string;
+}
+export interface SpendingPrediction {
+  predictedAmount: number;
+  confidence: number;
+  factors: string[];
+  recommendation: string;
+}
+export interface CategoryEfficiency {
+  category: string;
+  totalSpent: number;
+  frequency: number;
+  avgTransaction: number;
+  monthlyTrend: number;
+  efficiencyScore: number;
+  recommendations: string[];
+}
+export interface Optimization {
+  type: 'reduce_spending' | 'increase_income';
+  category?: string;
+  currentAmount: number;
+  targetAmount: number;
+  potentialSaving: number;
+  difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  timeline: string;
+}
+export interface OptimizationPlan {
+  currentSavingsRate: number;
+  targetSavingsRate: number;
+  potentialSavingsRate: number;
+  optimizations: Optimization[];
+  expectedTimeToGoals: Record<string, number>;
+  priorityActions: Optimization[];
+}
+export interface FinancialScenario {
+  name: string;
+  type: 'income_change' | 'expense_change' | 'one_time_expense';
+  amount: number;
+  duration: number; // en meses
+  category?: string;
+}
+export interface ScenarioResult {
+  scenario: string;
+  impact: {
+    savingsRateChange: number;
+    burnRateChange: number;
+    balanceChange: number;
+  };
+  riskAssessment: string;
+  timeline: number;
+  feasibility: 'HIGH' | 'MEDIUM' | 'LOW';
+}
 
-class FinancialEngine {
-  private transactions: Transaction[];
-  private goals: Goal[];
-  private currentBalance: number;
 
-  constructor() {
-    this.transactions = [];
-    this.goals = [];
-    this.currentBalance = 0;
-  }
-
-  // Actualizar datos del motor
-  updateData(transactions: Transaction[], goals: Goal[], balance: number) {
-    this.transactions = [...transactions].sort((a, b) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
-    this.goals = [...goals];
-    this.currentBalance = balance;
-  }
+export class FinancialEngine {
 
   // FUNCIÓN PRINCIPAL: Análisis completo
-  runCompleteAnalysis() {
-    if (this.transactions.length === 0) {
+  static runCompleteAnalysis(transactions: Transaction[], goals: Goal[], balance: number) {
+    if (transactions.length === 0) {
       return null;
     }
+    const sortedTransactions = [...transactions].sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
 
-    const metrics = this.calculateFinancialMetrics();
-    const trends = this.analyzeTrends();
-    const risk = this.assessRiskProfile(metrics, trends);
-    const projections = this.generateProjections(metrics, trends);
-    const cashFlowProjection = this.calculateCashFlowProjection(metrics);
-    const anomalousTransactions = this.detectAnomalousTransactions();
-    const seasonality = this.analyzeSeasonality();
-    const alerts = this.generateAlerts(anomalousTransactions, metrics, risk);
+    const metrics = this.calculateFinancialMetrics(sortedTransactions, balance);
+    const trends = this.analyzeTrends(sortedTransactions);
+    const risk = this.assessRiskProfile(sortedTransactions, metrics, trends);
+    const projections = this.generateProjections(sortedTransactions, goals, balance, metrics, trends);
+    const cashFlowProjection = this.calculateCashFlowProjection(sortedTransactions, metrics);
+    const anomalousTransactions = this.detectAnomalousTransactions(sortedTransactions);
+    const seasonality = this.analyzeSeasonality(sortedTransactions);
+    const alerts = this.generateAlerts(anomalousTransactions, goals, metrics, risk);
 
 
     return {
@@ -113,7 +156,7 @@ class FinancialEngine {
     };
   }
 
-  private generateAlerts(anomalousTransactions: Transaction[], metrics: FinancialMetrics, risk: RiskProfile): FinancialAlert[] {
+  private static generateAlerts(anomalousTransactions: Transaction[], goals: Goal[], metrics: FinancialMetrics, risk: RiskProfile): FinancialAlert[] {
     const alerts: FinancialAlert[] = [];
 
     // Alerta por gasto inusual
@@ -130,7 +173,7 @@ class FinancialEngine {
     }
 
     // Alerta por meta en riesgo
-    const riskyGoals = this.goals.filter(goal => {
+    const riskyGoals = goals.filter(goal => {
       const timeLeft = new Date(goal.deadline).getTime() - Date.now();
       if(timeLeft <= 0) return true; // Si ya pasó la fecha, está en riesgo.
 
@@ -170,16 +213,16 @@ class FinancialEngine {
   }
 
   // Métricas básicas pero poderosas
-  private calculateFinancialMetrics(): FinancialMetrics {
-    const totalIncome = this.transactions
+  private static calculateFinancialMetrics(transactions: Transaction[], balance: number): FinancialMetrics {
+    const totalIncome = transactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + t.amount, 0);
-    const totalExpenses = this.transactions
+    const totalExpenses = transactions
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0);
     const netFlow = totalIncome - totalExpenses;
     
-    const monthlyAggregates = this.getMonthlyAggregates();
+    const monthlyAggregates = this.getMonthlyAggregates(transactions);
     const monthsWithData = monthlyAggregates.length || 1;
 
     const averageMonthlyIncome = totalIncome / monthsWithData;
@@ -188,7 +231,7 @@ class FinancialEngine {
     const savingsRate = totalIncome > 0 ? (averageMonthlyIncome - averageMonthlyExpenses) / averageMonthlyIncome : 0;
     
     const burnRate = averageMonthlyExpenses > 0 ? 
-      Math.max(0, this.currentBalance / averageMonthlyExpenses) : Infinity;
+      Math.max(0, balance / averageMonthlyExpenses) : Infinity;
     
     const efficiency = totalIncome > 0 ? netFlow / totalIncome : 0;
 
@@ -209,8 +252,8 @@ class FinancialEngine {
   }
 
   // Análisis de tendencias con matemáticas avanzadas
-  private analyzeTrends(): TrendAnalysis {
-    const monthlyData = this.getMonthlyAggregates();
+  private static analyzeTrends(transactions: Transaction[]): TrendAnalysis {
+    const monthlyData = this.getMonthlyAggregates(transactions);
     
     if (monthlyData.length < 2) {
       return {
@@ -262,7 +305,7 @@ class FinancialEngine {
   }
 
   // Sistema de puntuación de riesgo financiero
-  private assessRiskProfile(metrics: FinancialMetrics, trends: TrendAnalysis): RiskProfile {
+  private static assessRiskProfile(transactions: Transaction[], metrics: FinancialMetrics, trends: TrendAnalysis): RiskProfile {
     let score = 100;
     const recommendations: string[] = [];
     // Factor 1: Tasa de ahorro (40% del score)
@@ -292,7 +335,7 @@ class FinancialEngine {
     }
 
     // Detectar gastos anómalos
-    const anomalous = this.detectAnomalousTransactions();
+    const anomalous = this.detectAnomalousTransactions(transactions);
     if(anomalous.length > 0) {
         recommendations.push(`Hemos detectado ${anomalous.length} transacción(es) inusualmente alta(s). Revísalas para asegurar que todo esté en orden.`);
     }
@@ -313,19 +356,19 @@ class FinancialEngine {
   }
 
   // Proyecciones financieras inteligentes
-  private generateProjections(metrics: FinancialMetrics, trends: TrendAnalysis): FinancialProjection[] {
+  private static generateProjections(transactions: Transaction[], goals: Goal[], balance: number, metrics: FinancialMetrics, trends: TrendAnalysis): FinancialProjection[] {
     const projections: FinancialProjection[] = [];
     // Proyecciones para diferentes timeframes
     const timeframes = [3, 6, 12, 24];
     timeframes.forEach(months => {
       const monthlyNetFlow = metrics.averageMonthlyIncome - trends.predictedNextMonthExpenses;
-      const projectedBalance = this.currentBalance + (monthlyNetFlow * months);
-      const projectedSavings = Math.max(0, projectedBalance - this.currentBalance);
+      const projectedBalance = balance + (monthlyNetFlow * months);
+      const projectedSavings = Math.max(0, projectedBalance - balance);
       // Calcular probabilidad de logro de meta principal
       let goalAchievementProbability = 0;
       let requiredMonthlySavings = 0;
-      if (this.goals.length > 0) {
-        const primaryGoal = this.goals[0]; // Meta más importante
+      if (goals.length > 0) {
+        const primaryGoal = goals[0]; // Meta más importante
         const remainingAmount = primaryGoal.targetAmount - primaryGoal.currentAmount;
         requiredMonthlySavings = remainingAmount > 0 && months > 0 ? remainingAmount / months : 0;
         
@@ -349,9 +392,9 @@ class FinancialEngine {
   }
   
     // Método para calcular proyecciones de flujo de caja
-    private calculateCashFlowProjection(metrics: FinancialMetrics, months: number = 12): CashFlowProjection[] {
-      if(this.transactions.length === 0) return [];
-      const monthlyData = this.getMonthlyAggregates();
+    private static calculateCashFlowProjection(transactions: Transaction[], metrics: FinancialMetrics, months: number = 12): CashFlowProjection[] {
+      if(transactions.length === 0) return [];
+      const monthlyData = this.getMonthlyAggregates(transactions);
       
       return Array.from({ length: months }, (_, i) => {
         const projectedDate = new Date();
@@ -368,9 +411,9 @@ class FinancialEngine {
     }
 
     // Detector de gastos anómalos usando desviación estándar
-    private detectAnomalousTransactions(): Transaction[] {
-      if (this.transactions.length < 5) return [];
-      const expenseAmounts = this.transactions
+    private static detectAnomalousTransactions(transactions: Transaction[]): Transaction[] {
+      if (transactions.length < 5) return [];
+      const expenseAmounts = transactions
         .filter(t => t.type === 'expense')
         .map(t => t.amount);
       
@@ -379,17 +422,17 @@ class FinancialEngine {
       const stdDev = Math.sqrt(variance);
       const threshold = mean + (2 * stdDev); // 2 desviaciones estándar
       
-      return this.transactions.filter(t => 
+      return transactions.filter(t => 
         t.type === 'expense' && t.amount > threshold
       );
     }
 
     // Análisis de estacionalidad de gastos
-    private analyzeSeasonality(): SeasonalityAnalysis[] {
-      if (this.transactions.length === 0) return [];
+    private static analyzeSeasonality(transactions: Transaction[]): SeasonalityAnalysis[] {
+      if (transactions.length === 0) return [];
       const monthlyTotals: Record<number, number[]> = {};
 
-      this.transactions
+      transactions
         .filter(t => t.type === 'expense')
         .forEach(t => {
             const month = new Date(t.date).getMonth();
@@ -414,25 +457,25 @@ class FinancialEngine {
       });
     }
   
-    private calculateConfidence(dataPoints: number, projectionIndex: number): number {
+    private static calculateConfidence(dataPoints: number, projectionIndex: number): number {
       const baseConfidence = 1 / (1 + Math.log10(dataPoints + 1));
       const decay = Math.exp(-0.1 * projectionIndex);
       return Math.round(baseConfidence * decay * 100);
   }
 
   // FUNCIONES MATEMÁTICAS AUXILIARES
-  private getUniqueMonths(): string[] {
+  private static getUniqueMonths(transactions: Transaction[]): string[] {
     const months = new Set<string>();
-    this.transactions.forEach(t => {
+    transactions.forEach(t => {
       const date = new Date(t.date);
       months.add(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
     });
     return Array.from(months);
   }
 
-  private getMonthlyAggregates() {
+  private static getMonthlyAggregates(transactions: Transaction[]) {
     const monthlyMap = new Map<string, { income: number; expenses: number; date: Date }>();
-    this.transactions.forEach(t => {
+    transactions.forEach(t => {
       const date = new Date(t.date);
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       
@@ -450,7 +493,7 @@ class FinancialEngine {
     return Array.from(monthlyMap.values()).sort((a,b) => a.date.getTime() - b.date.getTime());
   }
 
-  private calculateGrowthRate(values: number[]): number {
+  private static calculateGrowthRate(values: number[]): number {
     if (values.length < 2) return 0;
     let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
     const n = values.length;
@@ -466,7 +509,7 @@ class FinancialEngine {
     return avgY !== 0 ? (slope / Math.abs(avgY)) : 0; // Porcentaje de crecimiento relativo
   }
 
-  private calculateVolatility(values: number[]): number {
+  private static calculateVolatility(values: number[]): number {
     if (values.length < 2) return 0;
     const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
     if (mean === 0) return 0;
@@ -475,7 +518,7 @@ class FinancialEngine {
     return stdDev / mean; // Coeficiente de variación
   }
 
-  private predictNextValue(values: number[]): number {
+  private static predictNextValue(values: number[]): number {
     if (values.length === 0) return 0;
     if (values.length < 2) return values[0];
     const trendRate = this.calculateGrowthRate(values);
@@ -483,7 +526,185 @@ class FinancialEngine {
     
     return lastValue * (1 + trendRate);
   }
-}
 
-// Singleton del motor
-export const financialEngine = new FinancialEngine();
+  // ============== MÉTODOS AVANZADOS =================
+  // Estos son los nuevos métodos estáticos que has proporcionado.
+  // NOTA: Se asume que los métodos auxiliares que llaman (ej. calculatePearsonCorrelation)
+  // están definidos dentro de esta clase o se implementarán.
+  // Por ahora, se han añadido como stubs para evitar errores de compilación.
+
+  static analyzeCategoryCorrelations(transactions: Transaction[]): CategoryCorrelation[] {
+    const categories = [...new Set(transactions.filter(t => t.type === 'expense').map(t => t.category))];
+    const correlations: CategoryCorrelation[] = [];
+    
+    for (let i = 0; i < categories.length; i++) {
+      for (let j = i + 1; j < categories.length; j++) {
+        const cat1 = categories[i];
+        const cat2 = categories[j];
+        
+        const correlation = this.calculatePearsonCorrelation(
+          this.getCategorySpendingByMonth(transactions, cat1),
+          this.getCategorySpendingByMonth(transactions, cat2)
+        );
+        
+        if (Math.abs(correlation) > 0.3) { // Solo correlaciones significativas
+          correlations.push({
+            category1: cat1,
+            category2: cat2,
+            correlation,
+            insight: this.interpretCorrelation(cat1, cat2, correlation)
+          });
+        }
+      }
+    }
+    return correlations;
+  }
+
+  static predictMonthlySpending(
+    transactions: Transaction[], 
+    targetMonth: string
+  ): SpendingPrediction {
+    const monthlyData = this.groupTransactionsByMonth(transactions);
+    const features = monthlyData.map(month => [
+      month.totalExpenses,
+      month.transactionCount,
+      new Date(month.month).getMonth(), // Factor estacional
+      month.categories.length // Diversidad de gastos
+    ]);
+    
+    const targets = monthlyData.map(m => m.totalExpenses);
+    if(features.length < 2 || targets.length < 2) return { predictedAmount: 0, confidence: 0, factors: [], recommendation: 'No hay suficientes datos.' };
+
+    
+    // Regresión lineal múltiple simplificada
+    const coefficients = this.multipleLinearRegression(features, targets);
+    const targetDate = new Date(targetMonth);
+    const prediction = this.applyRegression(coefficients, [
+      targets[targets.length - 1], // Último mes como baseline
+      monthlyData[monthlyData.length - 1].transactionCount,
+      targetDate.getMonth(),
+      monthlyData[monthlyData.length - 1].categories.length
+    ]);
+    return {
+      predictedAmount: prediction,
+      confidence: this.calculatePredictionConfidence(monthlyData),
+      factors: this.identifySpendingFactors(monthlyData),
+      recommendation: this.generateSpendingRecommendation(prediction, targets)
+    };
+  }
+
+  static analyzeCategoryEfficiency(transactions: Transaction[]): CategoryEfficiency[] {
+    const categoryData = this.groupTransactionsByCategory(transactions);
+    
+    return Object.entries(categoryData).map(([category, data]) => {
+      const frequency = data.transactions.length;
+      const totalSpent = data.totalAmount;
+      const avgTransaction = totalSpent / frequency;
+      const monthlyTrend = this.calculateCategoryTrend(data.transactions);
+      
+      // Índice de eficiencia (gastos necesarios vs opcionales)
+      const efficiencyScore = this.calculateCategoryEfficiencyScore(category, data);
+      
+      return {
+        category,
+        totalSpent,
+        frequency,
+        avgTransaction,
+        monthlyTrend,
+        efficiencyScore,
+        recommendations: this.getCategoryRecommendations(category, efficiencyScore, monthlyTrend)
+      };
+    }).sort((a, b) => b.totalSpent - a.totalSpent);
+  }
+
+  static generateOptimizationPlan(
+    transactions: Transaction[],
+    goals: Goal[],
+    balance: number,
+    targetSavingsRate: number = 0.2
+  ): OptimizationPlan {
+    const currentMetrics = this.calculateFinancialMetrics(transactions, balance);
+    const categoryEfficiency = this.analyzeCategoryEfficiency(transactions);
+    
+    const optimizations: Optimization[] = [];
+    
+    // Identificar categorías con mayor potencial de ahorro
+    const inefficientCategories = categoryEfficiency
+      .filter(cat => cat.efficiencyScore < 0.6)
+      .sort((a, b) => b.totalSpent - a.totalSpent);
+    
+    let potentialSavings = 0;
+    
+    inefficientCategories.forEach(category => {
+      const reduction = category.totalSpent * (1 - category.efficiencyScore) * 0.3;
+      potentialSavings += reduction;
+      
+      optimizations.push({
+        type: 'reduce_spending',
+        category: category.category,
+        currentAmount: category.totalSpent,
+        targetAmount: category.totalSpent - reduction,
+        potentialSaving: reduction,
+        difficulty: this.assessOptimizationDifficulty(category),
+        timeline: this.estimateImplementationTime(category)
+      });
+    });
+    return {
+      currentSavingsRate: currentMetrics.savingsRate,
+      targetSavingsRate,
+      potentialSavingsRate: currentMetrics.averageMonthlyIncome > 0 ? (currentMetrics.averageMonthlyIncome - currentMetrics.averageMonthlyExpenses + potentialSavings) / currentMetrics.averageMonthlyIncome : 0,
+      optimizations,
+      expectedTimeToGoals: this.calculateOptimizedTimeToGoals(goals, potentialSavings, currentMetrics),
+      priorityActions: this.prioritizeOptimizations(optimizations)
+    };
+  }
+
+  static simulateFinancialScenarios(
+    transactions: Transaction[],
+    balance: number,
+    scenarios: FinancialScenario[]
+  ): ScenarioResult[] {
+    const baseMetrics = this.calculateFinancialMetrics(transactions, balance);
+    
+    return scenarios.map(scenario => {
+      const modifiedTransactions = this.applyScenarioToTransactions(transactions, scenario);
+      const newMetrics = this.calculateFinancialMetrics(modifiedTransactions, balance);
+      
+      return {
+        scenario: scenario.name,
+        impact: {
+          savingsRateChange: newMetrics.savingsRate - baseMetrics.savingsRate,
+          burnRateChange: newMetrics.burnRate - baseMetrics.burnRate,
+          balanceChange: newMetrics.netFlow - baseMetrics.netFlow
+        },
+        riskAssessment: this.assessScenarioRisk(scenario, newMetrics),
+        timeline: scenario.duration,
+        feasibility: this.assessScenarioFeasibility(scenario, baseMetrics)
+      };
+    });
+  }
+
+  // --- STUBS PARA MÉTODOS AUXILIARES FALTANTES ---
+
+  private static getCategorySpendingByMonth(transactions: Transaction[], category: string): number[] { return [1,2,3]; }
+  private static calculatePearsonCorrelation(arr1: number[], arr2: number[]): number { return 0.5; }
+  private static interpretCorrelation(cat1: string, cat2: string, correlation: number): string { return `Cuando gastas en ${cat1}, tiendes a gastar en ${cat2}.`; }
+  private static groupTransactionsByMonth(transactions: Transaction[]): any[] { return [{month: '2023-01', totalExpenses: 100, transactionCount: 5, categories: ['a','b']}] }
+  private static multipleLinearRegression(features: number[][], targets: number[]): number[] { return [0.1, 0.2, 0.3]; }
+  private static applyRegression(coeffs: number[], features: number[]): number { return 120; }
+  private static calculatePredictionConfidence(data: any[]): number { return 85; }
+  private static identifySpendingFactors(data: any[]): string[] { return ['Estacionalidad', 'Número de compras']; }
+  private static generateSpendingRecommendation(prediction: number, targets: number[]): string { return "Intenta mantener tus gastos por debajo de X."; }
+  private static groupTransactionsByCategory(transactions: Transaction[]): Record<string, any> { return {'Comida': { transactions, totalAmount: 1000 }}; }
+  private static calculateCategoryTrend(transactions: Transaction[]): number { return 0.1; }
+  private static calculateCategoryEfficiencyScore(category: string, data: any): number { return 0.7; }
+  private static getCategoryRecommendations(category: string, score: number, trend: number): string[] { return ['Revisa suscripciones.']; }
+  private static assessOptimizationDifficulty(category: any): 'EASY' | 'MEDIUM' | 'HARD' { return 'MEDIUM'; }
+  private static estimateImplementationTime(category: any): string { return "1 mes"; }
+  private static calculateOptimizedTimeToGoals(goals: Goal[], savings: number, metrics: FinancialMetrics): Record<string, number> { return {'Viaje': 12}; }
+  private static prioritizeOptimizations(opts: Optimization[]): Optimization[] { return opts; }
+  private static applyScenarioToTransactions(transactions: Transaction[], scenario: FinancialScenario): Transaction[] { return transactions; }
+  private static assessScenarioRisk(scenario: FinancialScenario, metrics: FinancialMetrics): string { return 'Bajo'; }
+  private static assessScenarioFeasibility(scenario: FinancialScenario, metrics: FinancialMetrics): 'HIGH' | 'MEDIUM' | 'LOW' { return 'HIGH'; }
+
+}
