@@ -6,7 +6,10 @@ let nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  compress: true,
   images: {
+    formats: ['image/webp', 'image/avif'],
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 días
     remotePatterns: [
       {
         protocol: 'https',
@@ -23,7 +26,34 @@ let nextConfig = {
     ],
   },
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn']
+    } : false,
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          }
+        ],
+      },
+    ];
   },
 };
 
@@ -35,3 +65,5 @@ if (process.env.ANALYZE === 'true') {
 }
 
 module.exports = nextConfig;
+
+    
