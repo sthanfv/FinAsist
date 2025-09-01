@@ -1,5 +1,4 @@
 
-
 import { Transaction, Goal } from '@/store/useAppStore';
 
 // Interfaces del motor
@@ -653,7 +652,10 @@ export class FinancialEngine {
       });
     });
 
-    const potentialSavingsRate = currentMetrics.averageMonthlyIncome > 0 ? (currentMetrics.netFlow + potentialSavings) / currentMetrics.averageMonthlyIncome : 0;
+    const potentialMonthlyNetFlow = currentMetrics.netFlow + potentialSavings;
+    const potentialSavingsRate = currentMetrics.averageMonthlyIncome > 0 
+      ? potentialMonthlyNetFlow / currentMetrics.averageMonthlyIncome 
+      : 0;
 
     return {
       currentSavingsRate: currentMetrics.savingsRate,
