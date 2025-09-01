@@ -1,38 +1,39 @@
-
 # Informe Técnico del Proyecto: FinAssist
 
 ## 1. Descripción General
 
-**FinAssist** es una aplicación web moderna e inteligente para la gestión de finanzas personales. Su objetivo es empoderar a los usuarios para que tomen el control de su bienestar financiero a través de un conjunto de herramientas intuitivas y potentes.
+**FinAssist** es una aplicación web moderna e inteligente para la gestión de finanzas personales. Su objetivo es empoderar a los usuarios para que tomen el control de su bienestar financiero a través de un conjunto de herramientas intuitivas, potentes y optimizadas para un rendimiento excepcional.
 
-El proyecto está diseñado para ser funcional tanto para **usuarios registrados** (con persistencia de datos en la nube a través de Firebase) como para **usuarios invitados** (con persistencia de datos en el `localStorage` del navegador), ofreciendo una experiencia fluida desde la primera visita.
+El proyecto está diseñado para ser funcional tanto para **usuarios registrados** (con persistencia de datos en la nube a través de Firebase) como para **usuarios invitados** (con persistencia de datos en el `localStorage` del navegador), ofreciendo una experiencia fluida y reactiva desde la primera visita.
 
 ### 1.1. Características Principales
 
-*   **Gestión de Transacciones**: Registro, edición y eliminación de ingresos y gastos.
+*   **Gestión de Transacciones**: Registro, edición y eliminación de ingresos y gastos, con una interfaz virtualizada para manejar grandes volúmenes de datos sin pérdida de rendimiento.
 *   **Metas de Ahorro**: Creación y seguimiento de objetivos financieros.
-*   **Asistente con IA**: Recomendaciones financieras personalizadas (simples y avanzadas) basadas en los datos del usuario.
-*   **Dashboard Interactivo**: Visualización rápida del balance, gastos por categoría y estado de las metas.
+*   **Asistente con IA Avanzado**: Recomendaciones financieras personalizadas y contextuales, con un sistema de caché inteligente para respuestas rápidas y eficientes.
+*   **Sistema de Alertas Proactivo**: Detecta gastos anómalos, metas en riesgo y oportunidades de inversión, notificando al usuario a través de alertas en el dashboard y notificaciones toast.
+*   **Dashboard Interactivo**: Visualización rápida del balance, gastos por categoría y estado de las metas, enriquecido con componentes animados y de carga profesional.
 *   **Simulador Bancario**: Un conjunto de calculadoras profesionales para simular productos como CDTs, préstamos, tarjetas de crédito e inversiones.
 *   **Modo Invitado**: Funcionalidad completa sin necesidad de registro, ideal para la primera experiencia.
 *   **Autenticación Segura**: Sistema de registro e inicio de sesión con Firebase.
-*   **Interfaz Moderna**: Diseño limpio, responsivo y con modo oscuro/claro, construido con las mejores prácticas de UI/UX.
+*   **Interfaz Moderna y Optimizada**: Diseño limpio, responsivo y con modo oscuro/claro, construido con las mejores prácticas de UI/UX, animaciones fluidas y optimización de rendimiento.
 
 ---
 
 ## 2. Arquitectura Tecnológica
 
-| Categoría              | Tecnología                                                               | Propósito                                                 |
-| ---------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------- |
-| **Framework Principal**  | [Next.js 15 (App Router)](https://nextjs.org/)                             | Renderizado híbrido, optimización y estructura de rutas.  |
-| **Lenguaje**           | [TypeScript](https://www.typescriptlang.org/)                            | Tipado estático para robustez y escalabilidad.          |
-| **Estilos**            | [Tailwind CSS](https://tailwindcss.com/)                                 | Framework CSS utility-first para diseño rápido.           |
-| **Componentes de UI**    | [shadcn/ui](https://ui.shadcn.com/)                                      | Componentes accesibles, personalizables y reutilizables.  |
-| **Animaciones**        | [Framer Motion](https://www.framer.com/motion/)                          | Animaciones fluidas para una mejor experiencia de usuario.  |
-| **Backend & Base de Datos** | [Firebase (Firestore & Authentication)](https://firebase.google.com/) | Autenticación de usuarios y base de datos NoSQL en tiempo real. |
-| **Inteligencia Artificial** | [Genkit (Google AI)](https://firebase.google.com/docs/genkit)      | Orquestación de flujos de IA generativa.                  |
-| **Gestión de Estado**    | [Zustand](https://github.com/pmndrs/zustand)                             | Gestor de estado global simple, rápido y escalable.       |
-| **Lógica de Negocio**  | **Motores Propios (`BankingEngine`, `FinancialEngine`)**                 | Encapsulación de cálculos complejos y análisis.         |
+| Categoría                 | Tecnología                                                               | Propósito                                                          |
+| ------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| **Framework Principal**     | [Next.js 15 (App Router)](https://nextjs.org/)                             | Renderizado híbrido, optimización (Turbopack) y estructura de rutas. |
+| **Lenguaje**              | [TypeScript](https://www.typescriptlang.org/)                            | Tipado estático para robustez y escalabilidad.                   |
+| **Estilos**               | [Tailwind CSS](https://tailwindcss.com/)                                 | Framework CSS utility-first para diseño rápido.                    |
+| **Componentes de UI**       | [shadcn/ui](https://ui.shadcn.com/)                                      | Componentes accesibles, personalizables y reutilizables.           |
+| **Animaciones**           | [Framer Motion](https://www.framer.com/motion/)                          | Animaciones fluidas para una mejor experiencia de usuario.         |
+| **Backend & Base de Datos** | [Firebase (Firestore & Authentication)](https://firebase.google.com/) | Autenticación de usuarios y base de datos NoSQL en tiempo real.  |
+| **Inteligencia Artificial** | [Genkit (Google AI)](https://firebase.google.com/docs/genkit)      | Orquestación de flujos de IA generativa con sistema de caché.        |
+| **Gestión de Estado**       | [Zustand](https://github.com/pmndrs/zustand)                             | Gestor de estado global optimizado con selectores `shallow`.       |
+| **Lógica de Negocio**     | **Motor Financiero (`FinancialEngine`)**                                 | Encapsulación de cálculos complejos, proyecciones y alertas.     |
+| **Optimización Frontend** | **`@tanstack/react-virtual` & `React.memo`**                             | Virtualización de listas y memoización para alto rendimiento.    |
 
 ---
 
@@ -46,19 +47,18 @@ graph TD
         A[Interactúa con la UI]
     end
     subgraph "Frontend (React / Next.js)"
-        B(Componentes de UI)
-        C{useAppStore (Zustand)}
+        B(Componentes de UI Optimizados)
+        C{useAppStore (Zustand) con Selectores}
         D[Layout / Páginas]
     end
     subgraph "Lógica de Negocio"
-        E[BankingEngine.ts]
         F[FinancialEngine.ts]
         G[Acciones de Zustand]
     end
     subgraph "Backend & Servicios"
         H(Firebase Auth)
         I(Firestore DB)
-        J(Genkit Flows / Google AI)
+        J(Genkit Flows / Google AI con Caché)
         K[LocalStorage]
     end
     A --> B
@@ -68,10 +68,8 @@ graph TD
     D --> B
     G -- Llama a --> J
     J -- Devuelve a --> B
-    G -- Llama a --> E
-    G -- Llama a --> F
-    E -- Devuelve a --> B
-    F -- Devuelve a --> B
+    G -- Dispara Análisis --> F
+    F -- Actualiza --> B
     subgraph "Persistencia de Datos"
         G -- Si usuario está logueado --> I
         G -- Si usuario es invitado --> K
@@ -94,121 +92,75 @@ graph TD
 src/
 ├── app/                  # Rutas de la aplicación (App Router)
 │   ├── dashboard/
-│   ├── calculators/      # Nueva sección de calculadoras
+│   ├── calculators/      # Sección de calculadoras
 │   └── (otras rutas...)
 ├── components/           # Componentes reutilizables
 │   ├── auth/
 │   ├── assistant/
-│   ├── calculators/      # Componentes para cada calculadora
+│   ├── dashboard/        # Componentes del dashboard principal
 │   └── ui/               # Componentes base de shadcn/ui
 ├── store/                # Gestor de estado global
-│   └── useAppStore.ts    # Hook y lógica de Zustand
+│   ├── useAppStore.ts    # Hook y lógica de Zustand optimizada
+│   └── selectors.ts      # Selectores con `shallow` para evitar re-renders
 ├── engine/               # Lógica de negocio pura (sin dependencias de UI)
-│   ├── BankingEngine.ts  # Cálculos para productos bancarios
-│   └── FinancialEngine.ts# Análisis y proyecciones financieras
+│   └── FinancialEngine.ts# Análisis, proyecciones, alertas y métricas
+├── hooks/                # Hooks reutilizables
+│   └── useFinancialAnalysis.ts # Hook para consumir el motor financiero
 ├── ai/                   # Lógica de IA (Genkit)
-│   ├── flows/            # Flujos que interactúan con LLMs
+│   ├── flows/            # Flujos que interactúan con LLMs (con caché)
 │   └── genkit.ts         # Configuración de Genkit
 └── lib/                  # Utilidades y configuración de servicios
     ├── firebase.ts
     └── utils.ts
 ```
 
-### 4.2. Gestión de Estado Global (`useAppStore` con Zustand)
+### 4.2. Gestión de Estado Global Optimizada (`useAppStore` y `selectors`)
 
-El estado global de la aplicación se gestiona de manera centralizada en `src/store/useAppStore.ts`. Zustand fue elegido por su simplicidad y rendimiento. El *store* es el corazón de la lógica de la aplicación.
+El estado global, gestionado con Zustand, ha sido **críticamente optimizado** para evitar re-renders innecesarios, que es uno de los mayores cuellos de botella en aplicaciones React complejas.
 
-**Responsabilidades Clave:**
+**Estrategias de Optimización Clave:**
 
-1.  **Fuente Única de Verdad**: Mantiene el estado de `user`, `transactions`, `goals` y `balance`.
-2.  **Abstracción de Persistencia**: Contiene toda la lógica para decidir si los datos se guardan en **Firestore** (para usuarios registrados) o en **LocalStorage** (para invitados). Esto es transparente para los componentes de la UI.
-3.  **Acciones de Datos**: Proporciona funciones asíncronas (`addTransaction`, `addGoal`, etc.) que los componentes llaman para modificar el estado. Estas funciones manejan la comunicación con el backend.
-4.  **Sincronización en Tiempo Real**: Utiliza `onSnapshot` de Firebase para escuchar cambios en la base de datos y actualizar el estado de Zustand automáticamente, lo que a su vez actualiza la UI de forma reactiva.
-5.  **Inicialización de la App**: Maneja el flujo de carga inicial, comprobando el estado de autenticación y cargando los datos correspondientes antes de renderizar la aplicación principal.
+1.  **Selectores con `shallow`**: En `src/store/selectors.ts`, hemos creado hooks específicos como `useTransactions` o `useGoals`. Estos hooks utilizan el comparador `shallow` de Zustand. Esto significa que un componente que use `useTransactions` solo se volverá a renderizar si el array de transacciones en sí cambia (se añade o elimina un elemento), pero no si cambia otra parte del estado como `user` o `goals`.
+2.  **Cálculo Derivado y Centralizado**: El balance del usuario ya no se almacena como un estado separado. En su lugar, el hook `useBalance` lo calcula dinámicamente (`deriva`) a partir de la lista de transacciones. Esto elimina la necesidad de sincronizar el balance y previene errores de estado inconsistente.
+3.  **Acciones con `debounce`**: Las acciones que modifican datos, como `addTransaction`, están envueltas en una función `debounce`. Esto agrupa múltiples llamadas rápidas en una sola ejecución, previniendo escrituras excesivas a la base de datos y mejorando la performance percibida.
 
-**Fragmento clave de `useAppStore.ts`:**
-
+**Ejemplo de Selector (`selectors.ts`):**
 ```typescript
-// src/store/useAppStore.ts
-export const useAppStore = create<AppState>()(
-  subscribeWithSelector(
-    persist(
-      immer((set, get) => ({
-        // ... estado inicial ...
-        
-        addTransaction: async (transactionData) => {
-          const { user } = get();
-          // ...
-          if (user) {
-            // Lógica para guardar en Firestore
-            await addDoc(collection(db, 'users', user.uid, 'transactions'), newTransaction);
-          } else {
-            // Lógica para guardar en el estado y luego en LocalStorage
-            set((state) => {
-              state.transactions.push({ ...newTransaction, id: `${Date.now()}` });
-            });
-            get().saveGuestData();
-          }
-          get().calculateBalance();
-        },
+// src/store/selectors.ts
+import { useAppStore } from './useAppStore';
+import { shallow } from 'zustand/shallow';
 
-        initializeApp: () => {
-          const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-            get().setUser(user);
-            if (user) {
-              // Si hay usuario, nos suscribimos a los datos de Firestore
-              const unsubscribeData = get().subscribeToUserData();
-              // ...
-            } else {
-              // Si no, cargamos del LocalStorage
-              get().loadGuestData();
-              // ...
-            }
-          });
-          return unsubscribeAuth;
-        },
+// Este selector solo notificará al componente si el array de transacciones cambia.
+export const useTransactions = () => 
+  useAppStore(state => state.transactions, shallow);
 
-        // ... otras acciones y lógica ...
-      })),
-      // ... configuración de persistencia ...
-    )
-  )
-);
+// Este selector deriva el estado, es eficiente y siempre está actualizado.
+export const useBalance = () => 
+  useAppStore(state => state.transactions.reduce((sum, t) => 
+    sum + (t.type === 'income' ? t.amount : -t.amount), 0
+  ));
 ```
 
-### 4.3. Sistema de Componentes y UI
+### 4.3. Optimización de Renderizado en la UI
 
-*   **Base**: `shadcn/ui` proporciona un conjunto de componentes base (Botones, Inputs, Cards, etc.) que son accesibles y totalmente personalizables. No se importan como una librería, sino que el código de cada componente reside en `src/components/ui`, permitiendo una modificación directa.
-*   **Estilo y Tema**:
-    *   **Variables CSS**: El archivo `src/app/globals.css` define las variables de color HSL para los modos claro y oscuro. La personalización del tema se realiza aquí.
-    *   **Tailwind CSS**: Se utiliza para todo el estilizado. Las clases de utilidad permiten construir interfaces complejas de forma rápida y mantenible.
-    *   **Sombras y Bordes**: Se utilizan sombras suaves (`shadow-soft`) y bordes redondeados (`rounded-xl`) de manera consistente para dar a la UI un aspecto moderno y limpio.
-*   **Componentes Reutilizables**: Componentes como `TransactionTable` o `GoalCard` se han diseñado para ser modulares y recibir datos a través de props, desacoplándolos de la lógica de obtención de datos.
-*   **Layout Principal (`layout.tsx`)**: Es el componente que envuelve todas las páginas. Contiene la barra lateral de navegación (sidebar), la cabecera superior (header) y gestiona su visibilidad y comportamiento en dispositivos móviles y de escritorio.
+*   **Virtualización de Listas (`@tanstack/react-virtual`)**: Para la tabla de transacciones, que puede crecer indefinidamente, se implementó la virtualización. En lugar de renderizar miles de filas en el DOM, solo se renderizan las que son visibles en pantalla (más un pequeño buffer). Esto mantiene la aplicación fluida y rápida, incluso con un historial de transacciones enorme.
+*   **Memoización (`React.memo` y `useMemo`)**: Componentes costosos como los gráficos (`ChartComponent`) están envueltos en `React.memo`. Esto le dice a React que no vuelva a renderizar el componente si sus propiedades (props) no han cambiado. Además, los cálculos complejos dentro de los componentes se envuelven en el hook `useMemo` para cachear sus resultados.
+*   **Estados de Carga Profesionales**: Se han reemplazado los spinners genéricos por componentes de esqueleto (`Skeleton`) que imitan la forma de la UI final. Esto mejora la experiencia de carga percibida por el usuario.
+*   **Error Boundaries**: El Dashboard está envuelto en un `ErrorBoundary` personalizado. Si ocurre un error de renderizado en uno de los componentes hijos, la aplicación no se bloquea. En su lugar, muestra un mensaje de error amigable con la opción de reintentar, aumentando la robustez de la aplicación.
 
 ---
 
-## 5. Lógica de Negocio: Los Motores Financieros
+## 5. Lógica de Negocio: El Motor Financiero (`FinancialEngine`)
 
-Para mantener el código limpio y separar las responsabilidades, toda la lógica de cálculo y análisis financiero complejo se ha encapsulado en "motores" de TypeScript. Son clases puras, sin dependencias de React o de la UI.
+Toda la inteligencia financiera de la aplicación está encapsulada en `src/engine/FinancialEngine.ts`. Es una clase pura de TypeScript, sin dependencias de UI, que se encarga de analizar los datos del usuario.
 
-### 5.1. `BankingEngine.ts`
+**Responsabilidades Clave:**
 
-Este motor contiene toda la matemática financiera necesaria para las calculadoras. Proporciona métodos para simular productos bancarios complejos.
-
-*   `calculateCDT()`: Calcula el rendimiento de un CDT, incluyendo la tasa efectiva anual.
-*   `calculateLoan()`: No solo calcula la cuota mensual de un préstamo, sino que genera una **tabla de amortización completa** (sistema francés), detallando qué parte de cada pago va a capital e interés.
-*   `simulateCreditCard()`: Compara **tres escenarios de pago** (mínimo, personalizado y completo) para demostrar el impacto devastador de los intereses y el beneficio de pagar más del mínimo.
-*   `calculateInvestment()`: Proyecta el crecimiento de una inversión con aportes mensuales, mostrando el poder del **interés compuesto** año a año.
-*   `calculateFinancialFreedom()`: Utiliza la **"Regla del 4%"** para estimar el capital necesario para la independencia financiera y el tiempo que tomará alcanzarlo.
-
-### 5.2. `FinancialEngine.ts`
-
-Este motor se enfoca en analizar los datos propios del usuario (transacciones y metas) para ofrecer información valiosa. *Actualmente está definido pero su integración completa es un próximo paso.*
-
-*   `calculateFinancialMetrics()`: Calcula KPIs como el flujo neto, la tasa de ahorro y el "burn rate" (meses de supervivencia con los ahorros actuales).
-*   `analyzeTrends()`: Utiliza **regresión lineal** para detectar si los ingresos o gastos están creciendo y calcula la volatilidad de los gastos.
-*   `assessRiskProfile()`: Genera un **puntaje de salud financiera (0-100)** y un nivel de riesgo (Bajo, Medio, Alto, Crítico) basado en la tasa de ahorro y el fondo de emergencia.
+*   **`calculateFinancialMetrics()`**: Calcula KPIs esenciales como el flujo neto, la tasa de ahorro y el **"burn rate"** (meses de supervivencia con los ahorros actuales).
+*   **`analyzeTrends()`**: Utiliza regresión lineal simple para detectar si los ingresos o gastos tienen una tendencia al alza o a la baja y calcula la **volatilidad** de los gastos.
+*   **`assessRiskProfile()`**: Genera un **puntaje de salud financiera (0-100)** y un nivel de riesgo (Bajo, Medio, Alto, Crítico) basado en la tasa de ahorro y el fondo de emergencia.
+*   **`detectAnomalousTransactions()`**: Utiliza la desviación estándar para identificar transacciones de gastos que son inusualmente altas en comparación con el patrón normal del usuario.
+*   **`generateAlerts()`**: Basado en todas las métricas, genera un array de alertas proactivas (ej. "Gasto Inusual Detectado", "Meta en Riesgo", "Oportunidad de Inversión") que se muestran en el Dashboard.
 
 ---
 
@@ -217,67 +169,48 @@ Este motor se enfoca en analizar los datos propios del usuario (transacciones y 
 ### 6.1. Firebase
 
 *   **Authentication**: Gestiona el registro e inicio de sesión de usuarios con correo y contraseña.
-*   **Firestore**: Es la base de datos NoSQL. La estructura de datos es escalable y eficiente:
-    *   `users/{userId}/transactions`: Subcolección con las transacciones del usuario.
-    *   `users/{userId}/goals`: Subcolección con las metas de ahorro.
+*   **Firestore**: Base de datos NoSQL con una estructura escalable y reglas de seguridad robustas que garantizan que un usuario solo puede acceder a sus propios datos.
 
-### 6.2. Inteligencia Artificial con Genkit
+### 6.2. IA con Genkit y Caché Inteligente
 
-La IA se gestiona a través de Genkit, que orquesta las llamadas a los modelos de Google AI.
+El asistente de IA se ha optimizado para ser más potente y eficiente.
 
-*   **`src/ai/genkit.ts`**: Configura e inicializa Genkit, especificando el modelo a usar (ej. `gemini-2.5-flash`).
-*   **`src/ai/flows/*.ts`**: Cada archivo define un "flujo", que es una función del lado del servidor invocada desde el cliente como una Server Action.
-    *   **`recommendationFlow.ts`**: Genera un consejo rápido y conciso.
-    *   **`advancedRecommendationFlow.ts`**: Toma transacciones, metas y balance para generar un análisis más profundo y una lista de recomendaciones.
+*   **`src/ai/flows/advancedRecommendationFlow.ts`**: Este flujo de Genkit ahora recibe un contexto mucho más rico, incluyendo las métricas y el perfil de riesgo del `FinancialEngine`. El prompt enviado al LLM es mucho más detallado, lo que resulta en recomendaciones más profundas y personalizadas.
+*   **Sistema de Caché**: Se ha implementado un **caché en memoria** para las recomendaciones de IA.
+    1.  Se genera una clave de caché (`cacheKey`) a partir de un resumen del estado financiero del usuario (conteo de transacciones, progreso de metas, etc.).
+    2.  Si la clave existe en el caché y no ha expirado (30 minutos), se devuelve la recomendación guardada **sin llamar al LLM**.
+    3.  Si no, se genera una nueva recomendación, se guarda en el caché y se devuelve al usuario.
+    
+    Esta estrategia reduce costos de API, disminuye la latencia y mejora significativamente la velocidad de respuesta del asistente.
 
-**Ejemplo de un flujo (`recommendationFlow.ts`):**
+**Ejemplo del prompt avanzado:**
+```handlebars
+Eres un asistente financiero experto. Analiza los datos y da una lista de recomendaciones cortas y útiles.
 
-```typescript
-'use server';
-// ... (imports y schemas de Zod)
+Saldo actual: {{{balance}}}
 
-export async function getFinancialRecommendation(input: RecommendationInput): Promise<RecommendationOutput> {
-  return recommendationFlow(input);
-}
+Transacciones Recientes:
+{{#each transactions}}
+- Categoría: {{{category}}}, Monto: {{{amount}}}, Tipo: {{{type}}}
+{{/each}}
 
-// Define el prompt que se enviará al LLM
-const prompt = ai.definePrompt({
-  name: 'recommendationPrompt',
-  input: { schema: RecommendationInputSchema },
-  output: { schema: RecommendationOutputSchema },
-  prompt: `Eres un asistente financiero experto. Analiza los datos y da una recomendación corta.
-  Saldo: {{{balance}}}
-  Transacciones:
-  {{#each transactions}}
-  - Categoría: {{{category}}}, Monto: {{{amount}}}, Tipo: {{{type}}}
-  {{/each}}
-  `,
-});
+Metas de Ahorro:
+{{#each goals}}
+- Meta: "{{{name}}}", Progreso: {{progress}}%
+{{/each}}
 
-// Define el flujo que se ejecuta en el servidor
-const recommendationFlow = ai.defineFlow(
-  {
-    name: 'recommendationFlow',
-    inputSchema: RecommendationInputSchema,
-    outputSchema: RecommendationOutputSchema,
-  },
-  async (input) => {
-    const { output } = await prompt(input);
-    return output!;
-  }
-);
+Tu análisis inicial indica una tasa de ahorro del {{analysis.metrics.savingsRate}}% y un nivel de riesgo {{analysis.riskProfile.level}}.
+
+Basado en TODO esto, genera una lista de 2 a 4 recomendaciones clave.
 ```
 
 ---
 
 ## 7. Próximos Pasos y Mejoras
 
-*   **Integrar `FinancialEngine`**: Conectar el motor de análisis a un nuevo componente en el Dashboard para mostrar el score de salud financiera y las proyecciones.
 *   **Expandir Asistente de IA**:
-    *   **Categorización automática**: Sugerir una categoría al crear una transacción.
-    *   **Chatbot conversacional**: Permitir al usuario hacer preguntas en lenguaje natural sobre sus finanzas.
-*   **Reportes Avanzados**: Añadir más gráficos (líneas de tiempo, tendencias) y filtros por rangos de fechas.
-*   **Pruebas (Testing)**: Implementar tests unitarios (con Jest) para los motores y componentes, y tests E2E (con Playwright) para los flujos críticos.
-*   **Notificaciones**: Utilizar Firebase Cloud Messaging para alertar sobre facturas próximas o hitos de metas.
-
-    
+    *   **Categorización automática**: Sugerir una categoría al crear una transacción usando un flujo de Genkit.
+    *   **Chatbot conversacional**: Permitir al usuario hacer preguntas en lenguaje natural sobre sus finanzas ("¿Cuánto gasté en comida el mes pasado?").
+*   **Notificaciones Push**: Utilizar Firebase Cloud Messaging para enviar alertas importantes (facturas próximas, metas alcanzadas) incluso cuando el usuario no está en la aplicación.
+*   **Pruebas (Testing)**: Implementar tests unitarios (con Jest/Vitest) para el `FinancialEngine` y tests E2E (con Playwright/Cypress) para los flujos críticos de la aplicación.
+*   **Internacionalización (i18n)**: Adaptar la aplicación para soportar múltiples idiomas y monedas.
