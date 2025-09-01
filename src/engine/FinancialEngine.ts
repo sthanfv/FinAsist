@@ -1,4 +1,5 @@
 import { Transaction, Goal } from '@/store/useAppStore';
+
 // Interfaces del motor
 export interface FinancialMetrics {
   totalIncome: number;
@@ -9,6 +10,7 @@ export interface FinancialMetrics {
   savingsRate: number;
   burnRate: number; // Cuánto tiempo durarían los ahorros
 }
+
 export interface TrendAnalysis {
   incomeGrowthRate: number;
   expenseGrowthRate: number;
@@ -17,6 +19,7 @@ export interface TrendAnalysis {
   predictedNextMonthExpenses: number;
   predictedNextMonthIncome: number;
 }
+
 export interface RiskProfile {
   financialHealthScore: number; // 0-100
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
@@ -24,6 +27,7 @@ export interface RiskProfile {
   debtToIncomeRatio: number;
   recommendations: string[];
 }
+
 export interface FinancialProjection {
   timeframe: number; // meses
   projectedBalance: number;
@@ -31,15 +35,32 @@ export interface FinancialProjection {
   goalAchievementProbability: number;
   requiredMonthlySavings: number;
 }
+
+export interface CashFlowProjection {
+  month: string;
+  projectedIncome: number;
+  projectedExpenses: number;
+  projectedBalance: number;
+  confidenceLevel: number;
+}
+
+export interface SeasonalityAnalysis {
+  month: string;
+  amount: number;
+  variance: number;
+}
+
 class FinancialEngine {
   private transactions: Transaction[];
   private goals: Goal[];
   private currentBalance: number;
+
   constructor() {
     this.transactions = [];
     this.goals = [];
     this.currentBalance = 0;
   }
+
   // Actualizar datos del motor
   updateData(transactions: Transaction[], goals: Goal[], balance: number) {
     this.transactions = [...transactions].sort((a, b) => 
@@ -48,20 +69,28 @@ class FinancialEngine {
     this.goals = [...goals];
     this.currentBalance = balance;
   }
+
   // FUNCIÓN PRINCIPAL: Análisis completo
   runCompleteAnalysis(): {
     metrics: FinancialMetrics;
     trends: TrendAnalysis;
     risk: RiskProfile;
     projections: FinancialProjection[];
+    cashFlowProjection: CashFlowProjection[];
+    anomalousTransactions: Transaction[];
+    seasonality: SeasonalityAnalysis[];
   } {
     return {
       metrics: this.calculateFinancialMetrics(),
       trends: this.analyzeTrends(),
       risk: this.assessRiskProfile(),
       projections: this.generateProjections(),
+      cashFlowProjection: this.calculateCashFlowProjection(),
+      anomalousTransactions: this.detectAnomalousTransactions(),
+      seasonality: this.analyzeSeasonality(),
     };
   }
+
   // Métricas básicas pero poderosas
   private calculateFinancialMetrics(): FinancialMetrics {
     const totalIncome = this.transactions
@@ -90,6 +119,7 @@ class FinancialEngine {
       burnRate,
     };
   }
+
   // Análisis de tendencias con matemáticas avanzadas
   private analyzeTrends(): TrendAnalysis {
     const monthlyData = this.getMonthlyAggregates();
@@ -135,6 +165,7 @@ class FinancialEngine {
       predictedNextMonthIncome,
     };
   }
+
   // Sistema de puntuación de riesgo financiero
   private assessRiskProfile(): RiskProfile {
     const metrics = this.calculateFinancialMetrics();
@@ -180,6 +211,7 @@ class FinancialEngine {
       recommendations,
     };
   }
+
   // Proyecciones financieras inteligentes
   private generateProjections(): FinancialProjection[] {
     const metrics = this.calculateFinancialMetrics();
@@ -217,6 +249,82 @@ class FinancialEngine {
     });
     return projections;
   }
+  
+    // Método para calcular proyecciones de flujo de caja
+    private calculateCashFlowProjection(months: number = 12): CashFlowProjection[] {
+      if(this.transactions.length === 0) return [];
+      const monthlyData = this.getMonthlyAggregates();
+      const avgIncome = this.calculateFinancialMetrics().averageMonthlyIncome;
+      const avgExpenses = this.calculateFinancialMetrics().averageMonthlyExpenses;
+      
+      return Array.from({ length: months }, (_, i) => {
+        const projectedDate = new Date();
+        projectedDate.setMonth(projectedDate.getMonth() + i + 1);
+        
+        return {
+          month: projectedDate.toISOString().slice(0, 7),
+          projectedIncome: avgIncome,
+          projectedExpenses: avgExpenses,
+          projectedBalance: avgIncome - avgExpenses,
+          confidenceLevel: this.calculateConfidence(monthlyData.length, i)
+        };
+      });
+    }
+
+    // Detector de gastos anómalos usando desviación estándar
+    private detectAnomalousTransactions(): Transaction[] {
+      if (this.transactions.length < 5) return [];
+      const expenseAmounts = this.transactions
+        .filter(t => t.type === 'expense')
+        .map(t => t.amount);
+      
+      const mean = expenseAmounts.reduce((a, b) => a + b, 0) / expenseAmounts.length;
+      const variance = expenseAmounts.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / expenseAmounts.length;
+      const stdDev = Math.sqrt(variance);
+      const threshold = mean + (2 * stdDev); // 2 desviaciones estándar
+      
+      return this.transactions.filter(t => 
+        t.type === 'expense' && t.amount > threshold
+      );
+    }
+
+    // Análisis de estacionalidad de gastos
+    private analyzeSeasonality(): SeasonalityAnalysis[] {
+      if (this.transactions.length === 0) return [];
+      const monthlyTotals: Record<number, number[]> = {};
+
+      this.transactions
+        .filter(t => t.type === 'expense')
+        .forEach(t => {
+            const month = new Date(t.date).getMonth();
+            if (!monthlyTotals[month]) {
+                monthlyTotals[month] = [];
+            }
+            monthlyTotals[month].push(t.amount);
+        });
+
+      const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 
+                     'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      
+      return months.map((name, index) => {
+          const amounts = monthlyTotals[index] || [0];
+          const totalAmount = amounts.reduce((sum, val) => sum + val, 0);
+          const averageAmount = totalAmount / amounts.length;
+          
+          return {
+              month: name,
+              amount: totalAmount,
+              variance: this.calculateVolatility(amounts)
+          };
+      });
+    }
+  
+    private calculateConfidence(dataPoints: number, projectionIndex: number): number {
+      const baseConfidence = 1 / (1 + Math.log10(dataPoints + 1));
+      const decay = Math.exp(-0.1 * projectionIndex);
+      return Math.round(baseConfidence * decay * 100);
+  }
+
   // FUNCIONES MATEMÁTICAS AUXILIARES
   private getUniqueMonths(): string[] {
     const months = new Set<string>();
@@ -226,6 +334,7 @@ class FinancialEngine {
     });
     return Array.from(months);
   }
+
   private getMonthlyAggregates() {
     const monthlyMap = new Map<string, { income: number; expenses: number }>();
     this.transactions.forEach(t => {
@@ -244,6 +353,7 @@ class FinancialEngine {
     });
     return Array.from(monthlyMap.values());
   }
+
   private calculateGrowthRate(values: number[]): number {
     if (values.length < 2) return 0;
     let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
@@ -259,6 +369,7 @@ class FinancialEngine {
     
     return avgY > 0 ? (slope / avgY) * 100 : 0; // Porcentaje de crecimiento
   }
+
   private calculateVolatility(values: number[]): number {
     if (values.length < 2) return 0;
     const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
@@ -266,6 +377,7 @@ class FinancialEngine {
     const stdDev = Math.sqrt(variance);
     return mean > 0 ? stdDev / mean : 0; // Coeficiente de variación
   }
+
   private predictNextValue(values: number[]): number {
     if (values.length < 2) return values[0] || 0;
     const trend = this.calculateGrowthRate(values);
@@ -274,5 +386,6 @@ class FinancialEngine {
     return lastValue * (1 + trend / 100);
   }
 }
+
 // Singleton del motor
 export const financialEngine = new FinancialEngine();
