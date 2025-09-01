@@ -86,14 +86,7 @@ export default function TransactionsPage() {
               <div className="bg-gradient-to-r from-green-600 via-green-700 to-emerald-700 text-white p-6 rounded-b-2xl shadow-xl mb-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <button 
-                      onClick={() => router.back()}
-                      className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-all duration-200"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                    </button>
+                    <BackButton />
                     <div>
                       <h1 className="text-2xl font-bold tracking-tight">Transacciones</h1>
                       <p className="text-green-100 text-sm">Gestiona tus ingresos y gastos</p>
