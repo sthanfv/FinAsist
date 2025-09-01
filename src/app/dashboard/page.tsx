@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -27,17 +27,20 @@ export default function Dashboard() {
   const analysis = useFinancialAnalysis();
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
 
-  const chartData = transactions
-    .filter(t => t.type === 'expense')
-    .reduce((acc, t) => {
-        const existing = acc.find(item => item.name === t.category);
-        if (existing) {
-            existing.amount += t.amount;
-        } else {
-            acc.push({ name: t.category, amount: t.amount });
-        }
-        return acc;
-    }, [] as { name: string; amount: number }[]);
+  const chartData = useMemo(() => {
+    return transactions
+      .filter(t => t.type === 'expense')
+      .reduce((acc, t) => {
+          const existing = acc.find(item => item.name === t.category);
+          if (existing) {
+              existing.amount += t.amount;
+          } else {
+              acc.push({ name: t.category, amount: t.amount });
+          }
+          return acc;
+      }, [] as { name: string; amount: number }[]);
+  }, [transactions]);
+
 
   const totalGoalsAmount = goals.reduce((sum, g) => sum + g.targetAmount, 0);
   const totalGoalsSaved = goals.reduce((sum, g) => sum + g.currentAmount, 0);

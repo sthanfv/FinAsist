@@ -1,5 +1,7 @@
 
+
 "use client"
+import React, { memo } from "react"
 import { Bar, BarChart, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
 
@@ -11,7 +13,7 @@ type ChartProps = {
   config?: any;
 };
 
-export function ChartComponent({ data, dataKey, xAxisKey, type, config }: ChartProps) {
+const ChartComponentInternal = ({ data, dataKey, xAxisKey, type, config }: ChartProps) => {
   const chartConfig = config || {
     [dataKey]: {
       label: dataKey.charAt(0).toUpperCase() + dataKey.slice(1),
@@ -103,3 +105,5 @@ export function ChartComponent({ data, dataKey, xAxisKey, type, config }: ChartP
     </ChartContainer>
   );
 }
+
+export const ChartComponent = memo(ChartComponentInternal);

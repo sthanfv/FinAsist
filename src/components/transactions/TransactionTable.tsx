@@ -1,6 +1,7 @@
 "use client";
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   Table,
   TableBody,
@@ -19,6 +20,32 @@ type Props = {
   onDelete: (id: string) => void;
 };
 
+const TransactionRow = ({ transaction, onEdit, onDelete, style }: { transaction: Transaction; onEdit: (transaction: Transaction) => void; onDelete: (id: string) => void, style: React.CSSProperties }) => {
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  };
+  
+  return (
+    <TableRow style={style} className="flex items-center">
+      <TableCell className="w-1/6">{transaction.date}</TableCell>
+      <TableCell className="w-1/6">{transaction.category}</TableCell>
+      <TableCell className={`w-1/6 ${transaction.type === 'expense' ? 'text-destructive' : 'text-accent'}`}>
+        {transaction.type === 'expense' ? 'Gasto' : 'Ingreso'}
+      </TableCell>
+      <TableCell className="w-2/6 truncate">{transaction.description}</TableCell>
+      <TableCell className="w-1/6 text-right">{formatCurrency(transaction.amount)}</TableCell>
+      <TableCell className="w-1/6 flex justify-end gap-2">
+        <Button variant="ghost" size="icon" onClick={() => onEdit(transaction)}>
+          <Edit className="h-4 w-4 text-muted-foreground" />
+        </Button>
+        <Button variant="ghost" size="icon" onClick={() => onDelete(transaction.id)}>
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
+      </TableCell>
+    </TableRow>
+  )
+}
+
 export default function TransactionTable({ transactions, onEdit, onDelete }: Props) {
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterType, setFilterType] = useState('all');
@@ -31,9 +58,15 @@ export default function TransactionTable({ transactions, onEdit, onDelete }: Pro
   
   const categories = [...new Set(transactions.map(t => t.category))];
   
-  const formatCurrency = (value: number) => {
-    return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-  };
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const rowVirtualizer = useVirtualizer({
+    count: filtered.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 57, // Ajusta este valor a la altura de tus filas
+    overscan: 5,
+  });
+
 
   return (
     <div className="bg-card shadow-soft rounded-xl p-4">
@@ -60,46 +93,38 @@ export default function TransactionTable({ transactions, onEdit, onDelete }: Pro
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div ref={parentRef} className="h-[600px] overflow-auto relative">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Fecha</TableHead>
-              <TableHead>Categoría</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Nota</TableHead>
-              <TableHead className="text-right">Monto</TableHead>
-              <TableHead>Acciones</TableHead>
+          <TableHeader className="sticky top-0 bg-card z-10">
+            <TableRow className="flex items-center">
+              <TableHead className="w-1/6">Fecha</TableHead>
+              <TableHead className="w-1/6">Categoría</TableHead>
+              <TableHead className="w-1/6">Tipo</TableHead>
+              <TableHead className="w-2/6">Nota</TableHead>
+              <TableHead className="w-1/6 text-right">Monto</TableHead>
+              <TableHead className="w-1/6 text-right pr-8">Acciones</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
-            {filtered.map((t) => (
-              <motion.tr
-                key={t.id}
-                className="border-b hover:bg-muted/50 transition-colors"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                layout
-              >
-                <TableCell>{t.date}</TableCell>
-                <TableCell>{t.category}</TableCell>
-                <TableCell
-                  className={t.type === 'expense' ? 'text-destructive' : 'text-accent'}
-                >
-                  {t.type === 'expense' ? 'Gasto' : 'Ingreso'}
-                </TableCell>
-                <TableCell>{t.description}</TableCell>
-                <TableCell className="text-right">{formatCurrency(t.amount)}</TableCell>
-                <TableCell className="flex gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => onEdit(t)}>
-                      <Edit className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => onDelete(t.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                </TableCell>
-              </motion.tr>
-            ))}
+          <TableBody style={{ height: `${rowVirtualizer.getTotalSize()}px` }} className="relative">
+            {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+              const transaction = filtered[virtualItem.index];
+              return (
+                <TransactionRow
+                  key={virtualItem.key}
+                  transaction={transaction}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: `${virtualItem.size}px`,
+                    transform: `translateY(${virtualItem.start}px)`,
+                  }}
+                />
+              );
+            })}
           </TableBody>
         </Table>
       </div>
