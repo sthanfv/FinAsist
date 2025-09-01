@@ -17,7 +17,7 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import type { Toast } from '@/components/ui/toast-system';
+import { NotificationSystem } from '@/components/ui/toast-system';
 
 // Interfaces
 export interface Transaction {
@@ -63,14 +63,14 @@ const createDataSlice = (set, get) => ({
     }, 0);
   }, false, 'calculateBalance'),
   addTransaction: async (transactionData) => {
-    const { user, addToast, saveGuestData, calculateBalance } = get();
+    const { user, saveGuestData, calculateBalance } = get();
     const newTransaction = { ...transactionData, createdAt: new Date().toISOString() };
     if (user) {
       try {
         await addDoc(collection(db, 'users', user.uid, 'transactions'), newTransaction);
       } catch (error) {
         console.error('Error adding transaction:', error);
-        addToast('Error al agregar transacción', 'error');
+        NotificationSystem.error('Error al agregar transacción');
       }
     } else {
       set((state) => {
@@ -81,13 +81,13 @@ const createDataSlice = (set, get) => ({
     calculateBalance();
   },
   updateTransaction: async (id, transactionData) => {
-    const { user, addToast, saveGuestData, calculateBalance } = get();
+    const { user, saveGuestData, calculateBalance } = get();
     if (user) {
       try {
         await updateDoc(doc(db, 'users', user.uid, 'transactions', id), transactionData);
       } catch (error) {
         console.error('Error updating transaction:', error);
-        addToast('Error al actualizar transacción', 'error');
+        NotificationSystem.error('Error al actualizar transacción');
       }
     } else {
       set((state) => {
@@ -99,13 +99,13 @@ const createDataSlice = (set, get) => ({
     calculateBalance();
   },
   deleteTransaction: async (id) => {
-    const { user, addToast, saveGuestData, calculateBalance } = get();
+    const { user, saveGuestData, calculateBalance } = get();
     if (user) {
       try {
         await deleteDoc(doc(db, 'users', user.uid, 'transactions', id));
       } catch (error) {
         console.error('Error deleting transaction:', error);
-        addToast('Error al eliminar transacción', 'error');
+        NotificationSystem.error('Error al eliminar transacción');
       }
     } else {
       set((state) => {
@@ -116,14 +116,14 @@ const createDataSlice = (set, get) => ({
     calculateBalance();
   },
   addGoal: async (goalData) => {
-    const { user, addToast, saveGuestData } = get();
+    const { user, saveGuestData } = get();
     const newGoal = { ...goalData, id: `${Date.now()}`, createdAt: new Date().toISOString() };
     if (user) {
       try {
         await setDoc(doc(db, 'users', user.uid, 'goals', newGoal.id), newGoal);
       } catch (error) {
         console.error('Error adding goal:', error);
-        addToast('Error al agregar meta', 'error');
+        NotificationSystem.error('Error al agregar meta');
       }
     } else {
       set((state) => {
@@ -133,13 +133,13 @@ const createDataSlice = (set, get) => ({
     }
   },
   updateGoal: async (id, goalData) => {
-    const { user, addToast, saveGuestData } = get();
+    const { user, saveGuestData } = get();
     if (user) {
       try {
         await updateDoc(doc(db, 'users', user.uid, 'goals', id), goalData);
       } catch (error) {
         console.error('Error updating goal:', error);
-        addToast('Error al actualizar meta', 'error');
+        NotificationSystem.error('Error al actualizar meta');
       }
     } else {
       set((state) => {
@@ -150,13 +150,13 @@ const createDataSlice = (set, get) => ({
     }
   },
   deleteGoal: async (id) => {
-    const { user, addToast, saveGuestData } = get();
+    const { user, saveGuestData } = get();
     if (user) {
       try {
         await deleteDoc(doc(db, 'users', user.uid, 'goals', id));
       } catch (error) {
         console.error('Error deleting goal:', error);
-        addToast('Error al eliminar meta', 'error');
+        NotificationSystem.error('Error al eliminar meta');
       }
     } else {
       set((state) => {
@@ -169,15 +169,7 @@ const createDataSlice = (set, get) => ({
 
 const createUISlice = (set, get) => ({
   isDarkMode: false,
-  toasts: [],
   toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode }), false, 'toggleDarkMode'),
-  addToast: (message, type = 'info', duration = 5000) => {
-    const id = `toast-${Date.now()}`;
-    set((state) => ({ toasts: [...state.toasts, { id, message, type, duration }] }), false, 'addToast');
-    return id;
-  },
-  removeToast: (id) => set((state) => ({ toasts: state.toasts.filter(t => t.id !== id) }), false, 'removeToast'),
-  clearAllToasts: () => set({ toasts: [] }, false, 'clearAllToasts'),
 });
 
 const GUEST_DATA_KEY = 'finassist_guest_data';
@@ -209,7 +201,7 @@ export const useAppStore = create(
         },
 
         subscribeToUserData: () => {
-          const { user, setTransactions, setGoals, calculateBalance, addToast } = get();
+          const { user, setTransactions, setGoals, calculateBalance } = get();
           if (!user) return () => {};
 
           const unsubTransactions = onSnapshot(query(collection(db, 'users', user.uid, 'transactions')), (snapshot) => {
@@ -218,7 +210,7 @@ export const useAppStore = create(
             calculateBalance();
           }, (error) => {
             console.error("Error en snapshot de transacciones: ", error);
-            addToast("Error al cargar transacciones", "error");
+            NotificationSystem.error("Error al cargar transacciones");
           });
 
           const unsubGoals = onSnapshot(query(collection(db, 'users', user.uid, 'goals')), (snapshot) => {
@@ -226,7 +218,7 @@ export const useAppStore = create(
             setGoals(goals);
           }, (error) => {
             console.error("Error en snapshot de metas: ", error);
-            addToast("Error al cargar metas", "error");
+            NotificationSystem.error("Error al cargar metas");
           });
 
           return () => {
@@ -247,7 +239,7 @@ export const useAppStore = create(
             }
           } catch (error) {
             console.error('Error loading guest data:', error);
-            get().addToast('Error al cargar datos locales', 'error');
+            NotificationSystem.error('Error al cargar datos locales');
           }
         },
 
@@ -258,7 +250,7 @@ export const useAppStore = create(
             localStorage.setItem(GUEST_DATA_KEY, JSON.stringify({ transactions, goals }));
           } catch (error) {
             console.error('Error saving guest data:', error);
-            get().addToast('Error al guardar datos locales', 'error');
+            NotificationSystem.error('Error al guardar datos locales');
           }
         },
       })),

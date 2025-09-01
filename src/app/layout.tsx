@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import LoadingSpinner from '@/components/ui/loading-spinner';
-import { ToastContainer } from '@/components/ui/toast-system';
+import { Toaster } from 'sonner';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -14,7 +14,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { initializeApp, isInitialized, toasts, removeToast } = useAppStore();
+  const { initializeApp, isInitialized } = useAppStore();
 
   useEffect(() => {
     const unsubscribe = initializeApp();
@@ -36,7 +36,9 @@ export default function RootLayout({
           <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
         </head>
         <body className={`${inter.className} font-body antialiased`}>
-          <div className="min-h-screen bg-white dark:bg-background"></div>
+          <div className="min-h-screen bg-white dark:bg-background flex items-center justify-center">
+            <LoadingSpinner />
+          </div>
         </body>
       </html>
     );
@@ -59,7 +61,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
           {children}
-          <ToastContainer toasts={toasts} onRemove={removeToast} />
+          <Toaster richColors />
         </ThemeProvider>
       </body>
     </html>

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
+import { NotificationSystem } from '@/components/ui/toast-system';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
@@ -14,23 +14,22 @@ import { auth } from '@/lib/firebase';
 export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { toast } = useToast();
   const router = useRouter();
   const { isLoading, setLoading } = useAppStore();
 
 
   const handleRegister = async () => {
     if (!email || !password) {
-        toast({ title: 'Error', description: 'Por favor, completa todos los campos.', variant: 'destructive' });
+        NotificationSystem.error('Error', 'Por favor, completa todos los campos.');
         return;
     }
     setLoading(true);
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      toast({ title: 'Éxito', description: 'Tu cuenta ha sido creada.' });
+      NotificationSystem.success('Éxito', 'Tu cuenta ha sido creada.');
       router.push('/dashboard');
     } catch (err: any) {
-      toast({ title: 'Error de registro', description: err.message, variant: 'destructive' });
+      NotificationSystem.error('Error de registro', err.message);
     } finally {
         setLoading(false);
     }

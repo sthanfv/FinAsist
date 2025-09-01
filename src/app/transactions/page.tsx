@@ -12,10 +12,11 @@ import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
 import type { Transaction } from '@/store/useAppStore';
 import { useRouter } from 'next/navigation';
+import { NotificationSystem } from '@/components/ui/toast-system';
 
 
 export default function TransactionsPage() {
-    const { transactions, addTransaction, setTransactions, updateTransaction, deleteTransaction, addToast } = useAppStore();
+    const { transactions, addTransaction, setTransactions, updateTransaction, deleteTransaction } = useAppStore();
     const [isAddFormVisible, setIsAddFormVisible] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -24,7 +25,7 @@ export default function TransactionsPage() {
     const handleAddTransaction = async (newTransaction: Omit<Transaction, 'id' | 'createdAt'>) => {
         await addTransaction(newTransaction);
         setIsAddFormVisible(false);
-        addToast('Transacción añadida correctamente.', 'success');
+        NotificationSystem.success('Transacción añadida correctamente.');
     };
 
     const handleEditClick = (transaction: Transaction) => {
@@ -36,15 +37,15 @@ export default function TransactionsPage() {
         await updateTransaction(id, updatedData);
         setIsEditModalOpen(false);
         setSelectedTransaction(null);
-        addToast('Transacción actualizada correctamente.', 'success');
+        NotificationSystem.success('Transacción actualizada correctamente.');
     };
     
     const handleDelete = async (id: string) => {
       try {
         await deleteTransaction(id);
-        addToast('Transacción eliminada correctamente.', 'success');
+        NotificationSystem.success('Transacción eliminada correctamente.');
       } catch (error) {
-        addToast('No se pudo eliminar la transacción.', 'error');
+        NotificationSystem.error('No se pudo eliminar la transacción.');
       }
     };
 
@@ -60,7 +61,7 @@ export default function TransactionsPage() {
         }));
     
         setTransactions(formatted);
-        addToast('Datos importados correctamente.', 'success');
+        NotificationSystem.success('Datos importados correctamente.');
       };
 
     return (
