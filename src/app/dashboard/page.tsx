@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -22,11 +22,14 @@ import Link from 'next/link';
 import { useFinancialAnalysis } from '@/hooks/useFinancialAnalysis';
 import { AlertCard } from '@/components/dashboard/AlertCard';
 import { TransactionSkeleton } from '@/components/ui/loading-spinner';
+import { NotificationSystem } from '@/components/ui/toast-system';
+import type { FinancialAlert } from '@/engine/FinancialEngine';
 
 export default function Dashboard() {
   const { balance, transactions, goals, isLoading } = useAppStore();
   const analysis = useFinancialAnalysis();
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+  const [lastShownAlertId, setLastShownAlertId] = useState<string | null>(null);
 
   const chartData = useMemo(() => {
     return transactions
@@ -42,11 +45,21 @@ export default function Dashboard() {
       }, [] as { name: string; amount: number }[]);
   }, [transactions]);
 
-
   const totalGoalsAmount = goals.reduce((sum, g) => sum + g.targetAmount, 0);
   const totalGoalsSaved = goals.reduce((sum, g) => sum + g.currentAmount, 0);
   
-  const mainAlert = analysis?.alerts?.[0];
+  const mainAlert: FinancialAlert | undefined = analysis?.alerts?.[0];
+
+  useEffect(() => {
+    // Si hay una nueva alerta y no es la que ya mostramos, la lanzamos como toast.
+    if (mainAlert && mainAlert.id !== lastShownAlertId) {
+      if (mainAlert.type === 'error' || mainAlert.type === 'warning') {
+        NotificationSystem[mainAlert.type](mainAlert.title, mainAlert.message);
+      }
+      setLastShownAlertId(mainAlert.id);
+    }
+  }, [mainAlert, lastShownAlertId]);
+
 
   return (
     <Layout>
