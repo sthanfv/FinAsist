@@ -81,7 +81,6 @@ export default function Dashboard() {
         ) : (
           <>
             <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-              <h1 className="text-4xl font-bold font-headline">Dashboard</h1>
               <div className="flex gap-2">
                 <Link href="/transactions" passHref>
                    <button className="group relative bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-blue-500/20">
