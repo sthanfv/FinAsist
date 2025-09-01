@@ -4,6 +4,7 @@ import Layout from '@/components/layout';
 import BackButton from '@/components/BackButton';
 import { motion } from 'framer-motion';
 import { OptimizationDashboard } from '@/components/optimization/OptimizationDashboard';
+import { ScenarioSimulator } from '@/components/scenarios/ScenarioSimulator';
 
 export default function OptimizationPage() {
   return (
@@ -19,7 +20,10 @@ export default function OptimizationPage() {
               <BackButton />
               <h1 className="text-4xl font-bold font-headline">Panel de Optimización IA</h1>
           </div>
-          <OptimizationDashboard />
+          <div className="space-y-8">
+            <OptimizationDashboard />
+            <ScenarioSimulator />
+          </div>
         </div>
       </motion.div>
     </Layout>

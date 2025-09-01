@@ -106,11 +106,13 @@ export interface OptimizationPlan {
 }
 export interface FinancialScenario {
   name: string;
-  type: 'income_change' | 'expense_change' | 'one_time_expense';
-  amount: number;
+  type: 'reduce_spending' | 'increase_income' | 'optimize_spending';
+  category: string;
+  percentageChange: number;
   duration: number; // en meses
-  category?: string;
+  id?: string;
 }
+
 export interface ScenarioResult {
   scenario: string;
   impact: {
@@ -660,14 +662,13 @@ export class FinancialEngine {
 
   static simulateFinancialScenarios(
     transactions: Transaction[],
-    balance: number,
     scenarios: FinancialScenario[]
   ): ScenarioResult[] {
-    const baseMetrics = this.calculateFinancialMetrics(transactions, balance);
+    const baseMetrics = this.calculateFinancialMetrics(transactions, 0); // Balance 0 for base simulation
     
     return scenarios.map(scenario => {
       const modifiedTransactions = this.applyScenarioToTransactions(transactions, scenario);
-      const newMetrics = this.calculateFinancialMetrics(modifiedTransactions, balance);
+      const newMetrics = this.calculateFinancialMetrics(modifiedTransactions, 0);
       
       return {
         scenario: scenario.name,
@@ -703,7 +704,7 @@ export class FinancialEngine {
   private static calculateOptimizedTimeToGoals(goals: Goal[], savings: number, metrics: FinancialMetrics): Record<string, number> { return {'Viaje': 12}; }
   private static prioritizeOptimizations(opts: Optimization[]): Optimization[] { return opts; }
   private static applyScenarioToTransactions(transactions: Transaction[], scenario: FinancialScenario): Transaction[] { return transactions; }
-  private static assessScenarioRisk(scenario: FinancialScenario, metrics: FinancialMetrics): string { return 'Bajo'; }
+  private static assessScenarioRisk(scenario: FinancialScenario, metrics: FinancialMetrics): 'low' | 'medium' | 'high' { return 'low'; }
   private static assessScenarioFeasibility(scenario: FinancialScenario, metrics: FinancialMetrics): 'HIGH' | 'MEDIUM' | 'LOW' { return 'HIGH'; }
 
 }
