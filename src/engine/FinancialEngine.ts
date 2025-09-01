@@ -11,6 +11,7 @@ export interface FinancialMetrics {
   savingsRate: number;
   burnRate: number; // Cuánto tiempo durarían los ahorros
   efficiency: number;
+  savingsGrowth: number;
 }
 
 export interface TrendAnalysis {
@@ -53,6 +54,17 @@ export interface SeasonalityAnalysis {
   variance: number;
 }
 
+export interface FinancialAlert {
+    id: string;
+    type: 'warning' | 'error' | 'success' | 'info';
+    title: string;
+    message: string;
+    amount?: number;
+    actionable: boolean;
+    category: 'spending' | 'goals' | 'investment' | 'general';
+}
+
+
 class FinancialEngine {
   private transactions: Transaction[];
   private goals: Goal[];
@@ -74,27 +86,87 @@ class FinancialEngine {
   }
 
   // FUNCIÓN PRINCIPAL: Análisis completo
-  runCompleteAnalysis(): {
-    metrics: FinancialMetrics;
-    trends: TrendAnalysis;
-    risk: RiskProfile;
-    projections: FinancialProjection[];
-    cashFlowProjection: CashFlowProjection[];
-    anomalousTransactions: Transaction[];
-    seasonality: SeasonalityAnalysis[];
-  } | null {
+  runCompleteAnalysis() {
     if (this.transactions.length === 0) {
       return null;
     }
+
+    const metrics = this.calculateFinancialMetrics();
+    const trends = this.analyzeTrends();
+    const risk = this.assessRiskProfile(metrics, trends);
+    const projections = this.generateProjections(metrics, trends);
+    const cashFlowProjection = this.calculateCashFlowProjection(metrics);
+    const anomalousTransactions = this.detectAnomalousTransactions();
+    const seasonality = this.analyzeSeasonality();
+    const alerts = this.generateAlerts(anomalousTransactions, metrics, risk);
+
+
     return {
-      metrics: this.calculateFinancialMetrics(),
-      trends: this.analyzeTrends(),
-      risk: this.assessRiskProfile(),
-      projections: this.generateProjections(),
-      cashFlowProjection: this.calculateCashFlowProjection(),
-      anomalousTransactions: this.detectAnomalousTransactions(),
-      seasonality: this.analyzeSeasonality(),
+      metrics,
+      trends,
+      risk,
+      projections,
+      cashFlowProjection,
+      anomalousTransactions,
+      seasonality,
+      alerts
     };
+  }
+
+  private generateAlerts(anomalousTransactions: Transaction[], metrics: FinancialMetrics, risk: RiskProfile): FinancialAlert[] {
+    const alerts: FinancialAlert[] = [];
+
+    // Alerta por gasto inusual
+    if (anomalousTransactions.length > 0) {
+      alerts.push({
+        id: 'anomalous-spending',
+        type: 'warning',
+        title: 'Gasto Inusual Detectado',
+        message: `Detectamos ${anomalousTransactions.length} transacciones fuera de tu patrón normal de gastos.`,
+        amount: anomalousTransactions.reduce((sum, t) => sum + t.amount, 0),
+        actionable: true,
+        category: 'spending'
+      });
+    }
+
+    // Alerta por meta en riesgo
+    const riskyGoals = this.goals.filter(goal => {
+      const timeLeft = new Date(goal.deadline).getTime() - Date.now();
+      if(timeLeft <= 0) return true; // Si ya pasó la fecha, está en riesgo.
+
+      const daysLeft = timeLeft / (1000 * 60 * 60 * 24);
+      if(daysLeft <=0) return true;
+      
+      const requiredDailyContribution = (goal.targetAmount - goal.currentAmount) / daysLeft;
+      const avgDailySavings = (metrics.averageMonthlyIncome - metrics.averageMonthlyExpenses) / 30;
+      
+      return requiredDailyContribution > Math.max(0, avgDailySavings);
+    });
+
+    if (riskyGoals.length > 0) {
+      alerts.push({
+        id: 'goals-at-risk',
+        type: 'error',
+        title: 'Metas en Riesgo',
+        message: `${riskyGoals.length} de tus metas podrían no cumplirse con tu ritmo actual de ahorro.`,
+        actionable: true,
+        category: 'goals'
+      });
+    }
+
+    // Alerta por oportunidad de ahorro/inversión
+    if (metrics.savingsRate > 0.25 && risk.financialHealthScore > 70) {
+      alerts.push({
+        id: 'investment-opportunity',
+        type: 'success',
+        title: '¡Oportunidad de Inversión!',
+        message: `Con tu excelente tasa de ahorro del ${(metrics.savingsRate * 100).toFixed(0)}%, considera invertir parte de tus ahorros para que tu dinero crezca.`,
+        actionable: true,
+        category: 'investment'
+      });
+    }
+    
+    return alerts;
   }
 
   // Métricas básicas pero poderosas
@@ -106,17 +178,22 @@ class FinancialEngine {
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0);
     const netFlow = totalIncome - totalExpenses;
-    // Cálculo de promedios mensuales
-    const monthsWithData = this.getUniqueMonths().length || 1;
+    
+    const monthlyAggregates = this.getMonthlyAggregates();
+    const monthsWithData = monthlyAggregates.length || 1;
+
     const averageMonthlyIncome = totalIncome / monthsWithData;
     const averageMonthlyExpenses = totalExpenses / monthsWithData;
-    // Tasa de ahorro
-    const savingsRate = totalIncome > 0 ? (netFlow / totalIncome) : 0;
-    // Burn rate (cuántos meses puede sobrevivir sin ingresos)
+    
+    const savingsRate = totalIncome > 0 ? (averageMonthlyIncome - averageMonthlyExpenses) / averageMonthlyIncome : 0;
+    
     const burnRate = averageMonthlyExpenses > 0 ? 
       Math.max(0, this.currentBalance / averageMonthlyExpenses) : Infinity;
-    // Efficiency
+    
     const efficiency = totalIncome > 0 ? netFlow / totalIncome : 0;
+
+    const savingsGrowth = this.calculateGrowthRate(monthlyAggregates.map(m => m.income - m.expenses));
+
 
     return {
       totalIncome,
@@ -127,6 +204,7 @@ class FinancialEngine {
       savingsRate,
       burnRate,
       efficiency,
+      savingsGrowth
     };
   }
 
@@ -184,8 +262,7 @@ class FinancialEngine {
   }
 
   // Sistema de puntuación de riesgo financiero
-  private assessRiskProfile(): RiskProfile {
-    const metrics = this.calculateFinancialMetrics();
+  private assessRiskProfile(metrics: FinancialMetrics, trends: TrendAnalysis): RiskProfile {
     let score = 100;
     const recommendations: string[] = [];
     // Factor 1: Tasa de ahorro (40% del score)
@@ -206,7 +283,6 @@ class FinancialEngine {
       recommendations.push('Excelente progreso. Intenta ampliar tu fondo de emergencia a 6 meses para una tranquilidad total');
     }
     // Factor 3: Consistencia de gastos (25% del score)
-    const trends = this.analyzeTrends();
     if (trends.consistency < 50) {
       score -= 25;
       recommendations.push('Tus gastos son muy variables. Crear un presupuesto te ayudará a tener más control');
@@ -237,9 +313,7 @@ class FinancialEngine {
   }
 
   // Proyecciones financieras inteligentes
-  private generateProjections(): FinancialProjection[] {
-    const metrics = this.calculateFinancialMetrics();
-    const trends = this.analyzeTrends();
+  private generateProjections(metrics: FinancialMetrics, trends: TrendAnalysis): FinancialProjection[] {
     const projections: FinancialProjection[] = [];
     // Proyecciones para diferentes timeframes
     const timeframes = [3, 6, 12, 24];
@@ -275,11 +349,9 @@ class FinancialEngine {
   }
   
     // Método para calcular proyecciones de flujo de caja
-    private calculateCashFlowProjection(months: number = 12): CashFlowProjection[] {
+    private calculateCashFlowProjection(metrics: FinancialMetrics, months: number = 12): CashFlowProjection[] {
       if(this.transactions.length === 0) return [];
       const monthlyData = this.getMonthlyAggregates();
-      const avgIncome = this.calculateFinancialMetrics().averageMonthlyIncome;
-      const avgExpenses = this.calculateFinancialMetrics().averageMonthlyExpenses;
       
       return Array.from({ length: months }, (_, i) => {
         const projectedDate = new Date();
@@ -287,9 +359,9 @@ class FinancialEngine {
         
         return {
           month: projectedDate.toISOString().slice(0, 7),
-          projectedIncome: avgIncome,
-          projectedExpenses: avgExpenses,
-          projectedBalance: avgIncome - avgExpenses,
+          projectedIncome: metrics.averageMonthlyIncome,
+          projectedExpenses: metrics.averageMonthlyExpenses,
+          projectedBalance: metrics.averageMonthlyIncome - metrics.averageMonthlyExpenses,
           confidenceLevel: this.calculateConfidence(monthlyData.length, i)
         };
       });

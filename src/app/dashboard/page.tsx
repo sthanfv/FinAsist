@@ -21,6 +21,7 @@ import { useAppStore } from '@/store/useAppStore';
 import Link from 'next/link';
 import { useFinancialAnalysis } from '@/hooks/useFinancialAnalysis';
 import { AlertCard } from '@/components/dashboard/AlertCard';
+import { TransactionSkeleton } from '@/components/ui/loading-spinner';
 
 export default function Dashboard() {
   const { balance, transactions, goals, isLoading } = useAppStore();
@@ -44,6 +45,8 @@ export default function Dashboard() {
 
   const totalGoalsAmount = goals.reduce((sum, g) => sum + g.targetAmount, 0);
   const totalGoalsSaved = goals.reduce((sum, g) => sum + g.currentAmount, 0);
+  
+  const mainAlert = analysis?.alerts?.[0];
 
   return (
     <Layout>
@@ -54,14 +57,13 @@ export default function Dashboard() {
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
         {isLoading ? (
-          <div className="space-y-4 animate-pulse">
-            <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
-                <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
-                <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+          <div className="space-y-4">
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse"></div>
+                <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse"></div>
+                <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse"></div>
             </div>
-            <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+            <TransactionSkeleton />
           </div>
         ) : (
           <>
@@ -112,11 +114,11 @@ export default function Dashboard() {
             </div>
             
             <div className="mb-6">
-              {analysis?.risk?.recommendations[0] && (
-                <AlertCard 
-                    type={analysis.risk.riskLevel === 'CRITICAL' ? 'error' : 'warning'}
-                    title="Recomendación Importante"
-                    message={analysis.risk.recommendations[0]}
+              {mainAlert && (
+                 <AlertCard 
+                    type={mainAlert.type}
+                    title={mainAlert.title}
+                    message={mainAlert.message}
                 />
               )}
                <UnifiedAssistant 
