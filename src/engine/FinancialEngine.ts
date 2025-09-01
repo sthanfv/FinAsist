@@ -1,4 +1,5 @@
 
+
 import { Transaction, Goal } from '@/store/useAppStore';
 
 // Interfaces del motor
