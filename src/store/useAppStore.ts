@@ -53,7 +53,6 @@ interface AppState {
   setInitialized: (initialized: boolean) => void;
   setTransactions: (transactions: Transaction[]) => void;
   setGoals: (goals: Goal[]) => void;
-  calculateBalance: () => number;
   addTransaction: (transactionData: Omit<Transaction, 'id' | 'createdAt'>) => Promise<void>;
   updateTransaction: (id: string, transactionData: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
@@ -64,10 +63,6 @@ interface AppState {
   subscribeToUserData: () => () => void;
   loadGuestData: () => void;
   saveGuestData: () => void;
-  
-  // Cache y optimizaciones
-  _balanceCache: number | null;
-  _lastCalculated: number;
 }
 
 
@@ -99,8 +94,6 @@ export const useAppStore = create<AppState>()(
         
         // UI state
         isDarkMode: false,
-        _balanceCache: null,
-        _lastCalculated: 0,
 
         // Auth actions
         setUser: (user) => set({ user }, false, 'setUser'),
@@ -108,30 +101,16 @@ export const useAppStore = create<AppState>()(
         setInitialized: (initialized) => set({ isInitialized: initialized }, false, 'setInitialized'),
 
         // Data actions
-        setTransactions: (transactions) => set({ transactions, _balanceCache: null }, false, 'setTransactions'), // Invalida caché
-        setGoals: (goals) => set({ goals }, false, 'setGoals'),
-        
-        calculateBalance: () => {
-          const now = Date.now();
-          if (get()._balanceCache !== null && now - get()._lastCalculated < 1000) { // Cache por 1 segundo
-            return get()._balanceCache as number;
-          }
-          
-          const { transactions } = get();
-          const balance = transactions.reduce((sum, t) => 
+        setTransactions: (transactions) => {
+          const newBalance = transactions.reduce((sum, t) => 
             sum + (t.type === 'income' ? t.amount : -t.amount), 0
           );
-          
-          set({ 
-            balance, 
-            _balanceCache: balance, 
-            _lastCalculated: now 
-          });
-          return balance;
+          set({ transactions, balance: newBalance });
         },
+        setGoals: (goals) => set({ goals }, false, 'setGoals'),
         
         addTransaction: debounce(async (transactionData: Omit<Transaction, 'id' | 'createdAt'>) => {
-          const { user, saveGuestData, calculateBalance } = get();
+          const { user, saveGuestData } = get();
           const newTransaction = { ...transactionData, createdAt: new Date().toISOString() };
           if (user) {
             try {
@@ -143,15 +122,16 @@ export const useAppStore = create<AppState>()(
           } else {
             set((state) => {
               state.transactions.push({ ...newTransaction, id: `${Date.now()}` });
-              state._balanceCache = null; // Invalida caché
+              state.balance = state.transactions.reduce((sum, t) => 
+                sum + (t.type === 'income' ? t.amount : -t.amount), 0
+              );
             }, false, 'addTransaction/local');
             saveGuestData();
           }
-          calculateBalance();
         }, 300),
 
         updateTransaction: async (id, transactionData) => {
-          const { user, saveGuestData, calculateBalance } = get();
+          const { user, saveGuestData } = get();
           if (user) {
             try {
               await updateDoc(doc(db, 'users', user.uid, 'transactions', id), transactionData);
@@ -163,14 +143,15 @@ export const useAppStore = create<AppState>()(
             set((state) => {
               const index = state.transactions.findIndex(t => t.id === id);
               if (index !== -1) Object.assign(state.transactions[index], transactionData);
-              state._balanceCache = null; // Invalida caché
+               state.balance = state.transactions.reduce((sum, t) => 
+                sum + (t.type === 'income' ? t.amount : -t.amount), 0
+              );
             }, false, 'updateTransaction/local');
             saveGuestData();
           }
-          calculateBalance();
         },
         deleteTransaction: async (id) => {
-          const { user, saveGuestData, calculateBalance } = get();
+          const { user, saveGuestData } = get();
           if (user) {
             try {
               await deleteDoc(doc(db, 'users', user.uid, 'transactions', id));
@@ -181,11 +162,12 @@ export const useAppStore = create<AppState>()(
           } else {
             set((state) => {
               state.transactions = state.transactions.filter(t => t.id !== id);
-              state._balanceCache = null; // Invalida caché
+              state.balance = state.transactions.reduce((sum, t) => 
+                sum + (t.type === 'income' ? t.amount : -t.amount), 0
+              );
             }, false, 'deleteTransaction/local');
             saveGuestData();
           }
-          calculateBalance();
         },
         addGoal: async (goalData) => {
           const { user, saveGuestData } = get();
@@ -243,13 +225,12 @@ export const useAppStore = create<AppState>()(
         
         // Subscription and data handling
         subscribeToUserData: () => {
-          const { user, setTransactions, setGoals, calculateBalance } = get();
+          const { user, setTransactions, setGoals } = get();
           if (!user) return () => {};
 
           const unsubTransactions = onSnapshot(query(collection(db, 'users', user.uid, 'transactions')), (snapshot) => {
             const transactions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }) as Transaction);
             setTransactions(transactions);
-            calculateBalance();
           }, (error) => {
             console.error("Error en snapshot de transacciones: ", error);
             NotificationSystem.error("Error al cargar transacciones");
@@ -277,7 +258,6 @@ export const useAppStore = create<AppState>()(
               const { transactions = [], goals = [] } = JSON.parse(saved);
               get().setTransactions(transactions);
               get().setGoals(goals);
-              get().calculateBalance();
             }
           } catch (error) {
             console.error('Error loading guest data:', error);
