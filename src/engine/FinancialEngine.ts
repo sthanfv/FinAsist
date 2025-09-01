@@ -72,10 +72,15 @@ export interface CategoryCorrelation {
   correlation: number;
   insight: string;
 }
+export interface SpendingFactor {
+  name: string;
+  impact: number;
+  trend: number;
+}
 export interface SpendingPrediction {
   predictedAmount: number;
   confidence: number;
-  factors: string[];
+  factors: SpendingFactor[];
   recommendation: string;
 }
 export interface CategoryEfficiency {
@@ -692,9 +697,21 @@ export class FinancialEngine {
   private static groupTransactionsByMonth(transactions: Transaction[]): any[] { return [{month: '2023-01', totalExpenses: 100, transactionCount: 5, categories: ['a','b']}] }
   private static multipleLinearRegression(features: number[][], targets: number[]): number[] { return [0.1, 0.2, 0.3]; }
   private static applyRegression(coeffs: number[], features: number[]): number { return 120; }
-  private static calculatePredictionConfidence(data: any[]): number { return 85; }
-  private static identifySpendingFactors(data: any[]): string[] { return ['Estacionalidad', 'Número de compras']; }
-  private static generateSpendingRecommendation(prediction: number, targets: number[]): string { return "Intenta mantener tus gastos por debajo de X."; }
+  private static calculatePredictionConfidence(data: any[]): number { return 0.85; }
+  private static identifySpendingFactors(data: any[]): SpendingFactor[] {
+    return [
+      { name: 'Estacionalidad', impact: 0.4, trend: 0.1 },
+      { name: 'Gastos únicos', impact: 0.2, trend: -0.2 },
+      { name: 'Frecuencia de compras', impact: 0.3, trend: 0.05 },
+    ];
+  }
+  private static generateSpendingRecommendation(prediction: number, targets: number[]): string { 
+    const avg = targets.reduce((a, b) => a + b, 0) / targets.length;
+    if (prediction > avg * 1.1) {
+      return "Se proyecta un gasto mayor al promedio. Revisa tus suscripciones.";
+    }
+    return "Tu gasto proyectado se mantiene estable. ¡Buen trabajo!";
+  }
   private static groupTransactionsByCategory(transactions: Transaction[]): Record<string, any> { return {'Comida': { transactions, totalAmount: 1000 }}; }
   private static calculateCategoryTrend(transactions: Transaction[]): number { return 0.1; }
   private static calculateCategoryEfficiencyScore(category: string, data: any): number { return 0.7; }
