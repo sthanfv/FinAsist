@@ -1,28 +1,30 @@
+
 "use client";
 import Layout from '@/components/layout';
 import ReportCard from '@/components/reports/ReportCard';
 import BackButton from '@/components/BackButton';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
+import { useFinancialAnalysis } from '@/hooks/useFinancialAnalysis';
+import { ChartComponent } from '@/components/dashboard/ChartComponent';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 
 export default function ReportsPage() {
   const { transactions } = useAppStore();
+  const analysis = useFinancialAnalysis();
 
-  // Agrupar por mes para reporte
-  const months = [
-    'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-    'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
-  ];
-  
-  const monthlyData = months.map((month, index) => {
-    const monthTransactions = transactions.filter((t) => {
-      const tDate = new Date(t.date);
-      // getMonth() is 0-indexed, so it matches the index
-      return tDate.getMonth() === index && t.type === 'expense';
-    });
-    const amount = monthTransactions.reduce((sum, t) => sum + t.amount, 0);
-    return { name: month, amount };
-  });
+  const monthlyData = Array.from(transactions.reduce((acc, t) => {
+    const month = t.date.slice(0, 7); // YYYY-MM
+    const existing = acc.get(month) || { name: month, Gasto: 0, Ingreso: 0 };
+    if (t.type === 'expense') {
+        existing.Gasto += t.amount;
+    } else {
+        existing.Ingreso += t.amount;
+    }
+    acc.set(month, existing);
+    return acc;
+  }, new Map()).values());
 
   const categoryData = Array.from(transactions.reduce((acc, t) => {
     if (t.type === 'expense') {
@@ -47,8 +49,26 @@ export default function ReportsPage() {
               <h1 className="text-4xl font-bold font-headline">Reportes</h1>
           </div>
           
-          <ReportCard title="Gastos Mensuales" data={monthlyData} />
-          <ReportCard title="Gastos por Categoría" data={categoryData} />
+          <ReportCard title="Gastos Mensuales" data={monthlyData} dataKey='Gasto' xAxisKey='name' type='bar' />
+          <ReportCard title="Ingresos Mensuales" data={monthlyData} dataKey='Ingreso' xAxisKey='name' type='bar' />
+          <ReportCard title="Gastos por Categoría" data={categoryData} dataKey='amount' xAxisKey='name' type='bar' />
+
+          {analysis?.cashFlowProjection && analysis.cashFlowProjection.length > 0 && (
+             <Card className="shadow-soft rounded-xl mb-8">
+              <CardHeader>
+                <CardTitle>Proyección de Flujo de Caja (Próximos 12 meses)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ChartComponent 
+                  type="line"
+                  data={analysis.cashFlowProjection}
+                  dataKey="projectedBalance"
+                  xAxisKey="month"
+                  config={{ projectedBalance: { label: 'Balance', color: 'hsl(var(--accent))'}}}
+                />
+              </CardContent>
+            </Card>
+          )}
 
         </div>
       </motion.div>

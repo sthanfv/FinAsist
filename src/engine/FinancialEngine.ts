@@ -1,3 +1,4 @@
+
 import { Transaction, Goal } from '@/store/useAppStore';
 
 // Interfaces del motor
@@ -9,11 +10,13 @@ export interface FinancialMetrics {
   averageMonthlyExpenses: number;
   savingsRate: number;
   burnRate: number; // Cuánto tiempo durarían los ahorros
+  efficiency: number;
 }
 
 export interface TrendAnalysis {
   incomeGrowthRate: number;
   expenseGrowthRate: number;
+  savingsGrowth: number;
   volatilityScore: number;
   consistency: number;
   predictedNextMonthExpenses: number;
@@ -79,7 +82,10 @@ class FinancialEngine {
     cashFlowProjection: CashFlowProjection[];
     anomalousTransactions: Transaction[];
     seasonality: SeasonalityAnalysis[];
-  } {
+  } | null {
+    if (this.transactions.length === 0) {
+      return null;
+    }
     return {
       metrics: this.calculateFinancialMetrics(),
       trends: this.analyzeTrends(),
@@ -105,10 +111,13 @@ class FinancialEngine {
     const averageMonthlyIncome = totalIncome / monthsWithData;
     const averageMonthlyExpenses = totalExpenses / monthsWithData;
     // Tasa de ahorro
-    const savingsRate = totalIncome > 0 ? ((netFlow / totalIncome) * 100) : 0;
+    const savingsRate = totalIncome > 0 ? (netFlow / totalIncome) : 0;
     // Burn rate (cuántos meses puede sobrevivir sin ingresos)
     const burnRate = averageMonthlyExpenses > 0 ? 
       Math.max(0, this.currentBalance / averageMonthlyExpenses) : Infinity;
+    // Efficiency
+    const efficiency = totalIncome > 0 ? netFlow / totalIncome : 0;
+
     return {
       totalIncome,
       totalExpenses,
@@ -117,6 +126,7 @@ class FinancialEngine {
       averageMonthlyExpenses,
       savingsRate,
       burnRate,
+      efficiency,
     };
   }
 
@@ -128,6 +138,7 @@ class FinancialEngine {
       return {
         incomeGrowthRate: 0,
         expenseGrowthRate: 0,
+        savingsGrowth: 0,
         volatilityScore: 0,
         consistency: 100,
         predictedNextMonthExpenses: monthlyData[0]?.expenses || 0,
@@ -142,6 +153,11 @@ class FinancialEngine {
     const expenseGrowthRate = this.calculateGrowthRate(
       monthlyData.map(m => m.expenses)
     );
+
+    const savingsGrowth = this.calculateGrowthRate(
+        monthlyData.map(m => m.income - m.expenses)
+    );
+
     // Puntuación de volatilidad
     const expenseVolatility = this.calculateVolatility(
       monthlyData.map(m => m.expenses)
@@ -159,6 +175,7 @@ class FinancialEngine {
     return {
       incomeGrowthRate,
       expenseGrowthRate,
+      savingsGrowth,
       volatilityScore: expenseVolatility * 100,
       consistency,
       predictedNextMonthExpenses,
@@ -172,10 +189,10 @@ class FinancialEngine {
     let score = 100;
     const recommendations: string[] = [];
     // Factor 1: Tasa de ahorro (40% del score)
-    if (metrics.savingsRate < 10) {
+    if (metrics.savingsRate < 0.1) { // Ahorro < 10%
       score -= 40;
       recommendations.push('Aumenta tu tasa de ahorro al menos al 10%');
-    } else if (metrics.savingsRate < 20) {
+    } else if (metrics.savingsRate < 0.2) { // Ahorro < 20%
       score -= 20;
       recommendations.push('Mejora tu tasa de ahorro al 20% para mayor seguridad');
     }
@@ -183,20 +200,27 @@ class FinancialEngine {
     const emergencyFundMonths = metrics.burnRate;
     if (emergencyFundMonths < 3) {
       score -= 35;
-      recommendations.push('Crítico: Construye un fondo de emergencia de al menos 3 meses');
+      recommendations.push('Crítico: Construye un fondo de emergencia de al menos 3 meses de gastos');
     } else if (emergencyFundMonths < 6) {
       score -= 15;
-      recommendations.push('Amplía tu fondo de emergencia a 6 meses');
+      recommendations.push('Excelente progreso. Intenta ampliar tu fondo de emergencia a 6 meses para una tranquilidad total');
     }
     // Factor 3: Consistencia de gastos (25% del score)
     const trends = this.analyzeTrends();
     if (trends.consistency < 50) {
       score -= 25;
-      recommendations.push('Tus gastos son muy variables, crear un presupuesto te ayudará');
+      recommendations.push('Tus gastos son muy variables. Crear un presupuesto te ayudará a tener más control');
     } else if (trends.consistency < 75) {
       score -= 10;
-      recommendations.push('Mejora la consistencia de tus gastos mensuales');
+      recommendations.push('Busca mejorar la consistencia de tus gastos mensuales para facilitar la planificación');
     }
+
+    // Detectar gastos anómalos
+    const anomalous = this.detectAnomalousTransactions();
+    if(anomalous.length > 0) {
+        recommendations.push(`Hemos detectado ${anomalous.length} transacción(es) inusualmente alta(s). Revísalas para asegurar que todo esté en orden.`);
+    }
+
     // Determinar nivel de riesgo
     let riskLevel: RiskProfile['riskLevel'];
     if (score >= 80) riskLevel = 'LOW';
@@ -229,11 +253,11 @@ class FinancialEngine {
       if (this.goals.length > 0) {
         const primaryGoal = this.goals[0]; // Meta más importante
         const remainingAmount = primaryGoal.targetAmount - primaryGoal.currentAmount;
-        requiredMonthlySavings = remainingAmount / months;
+        requiredMonthlySavings = remainingAmount > 0 && months > 0 ? remainingAmount / months : 0;
         
         // Probabilidad basada en capacidad actual de ahorro
         const currentMonthlySavingsCapacity = Math.max(0, monthlyNetFlow);
-        if (requiredMonthlySavings <= currentMonthlySavingsCapacity) {
+        if (requiredMonthlySavings <= 0 || requiredMonthlySavings <= currentMonthlySavingsCapacity) {
           goalAchievementProbability = Math.min(95, 85 + (trends.consistency / 10));
         } else {
           goalAchievementProbability = Math.max(5, 50 * (currentMonthlySavingsCapacity / requiredMonthlySavings));
@@ -309,7 +333,6 @@ class FinancialEngine {
       return months.map((name, index) => {
           const amounts = monthlyTotals[index] || [0];
           const totalAmount = amounts.reduce((sum, val) => sum + val, 0);
-          const averageAmount = totalAmount / amounts.length;
           
           return {
               month: name,
@@ -330,19 +353,19 @@ class FinancialEngine {
     const months = new Set<string>();
     this.transactions.forEach(t => {
       const date = new Date(t.date);
-      months.add(`${date.getFullYear()}-${date.getMonth()}`);
+      months.add(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
     });
     return Array.from(months);
   }
 
   private getMonthlyAggregates() {
-    const monthlyMap = new Map<string, { income: number; expenses: number }>();
+    const monthlyMap = new Map<string, { income: number; expenses: number; date: Date }>();
     this.transactions.forEach(t => {
       const date = new Date(t.date);
-      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       
       if (!monthlyMap.has(key)) {
-        monthlyMap.set(key, { income: 0, expenses: 0 });
+        monthlyMap.set(key, { income: 0, expenses: 0, date: new Date(date.getFullYear(), date.getMonth(), 1) });
       }
       const data = monthlyMap.get(key)!;
       if (t.type === 'income') {
@@ -351,7 +374,8 @@ class FinancialEngine {
         data.expenses += t.amount;
       }
     });
-    return Array.from(monthlyMap.values());
+
+    return Array.from(monthlyMap.values()).sort((a,b) => a.date.getTime() - b.date.getTime());
   }
 
   private calculateGrowthRate(values: number[]): number {
@@ -367,23 +391,25 @@ class FinancialEngine {
     const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
     const avgY = sumY / n;
     
-    return avgY > 0 ? (slope / avgY) * 100 : 0; // Porcentaje de crecimiento
+    return avgY !== 0 ? (slope / Math.abs(avgY)) : 0; // Porcentaje de crecimiento relativo
   }
 
   private calculateVolatility(values: number[]): number {
     if (values.length < 2) return 0;
     const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+    if (mean === 0) return 0;
     const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
     const stdDev = Math.sqrt(variance);
-    return mean > 0 ? stdDev / mean : 0; // Coeficiente de variación
+    return stdDev / mean; // Coeficiente de variación
   }
 
   private predictNextValue(values: number[]): number {
-    if (values.length < 2) return values[0] || 0;
-    const trend = this.calculateGrowthRate(values);
+    if (values.length === 0) return 0;
+    if (values.length < 2) return values[0];
+    const trendRate = this.calculateGrowthRate(values);
     const lastValue = values[values.length - 1];
     
-    return lastValue * (1 + trend / 100);
+    return lastValue * (1 + trendRate);
   }
 }
 

@@ -1,3 +1,4 @@
+
 "use client";
 import { utils, writeFile } from 'xlsx';
 import { jsPDF } from 'jspdf';
@@ -5,17 +6,29 @@ import { ChartComponent } from '@/components/dashboard/ChartComponent';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileDown, FileText } from 'lucide-react';
+import 'jspdf-autotable'; // Import jspdf-autotable
 
-type ReportData = { name: string; amount: number };
+// Extend jsPDF interface
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
+}
+
+type ReportData = { [key: string]: any };
 
 type Props = {
   title: string;
   data: ReportData[];
+  dataKey: string;
+  xAxisKey: string;
+  type: 'bar' | 'line';
+  config?: any;
 };
 
-export default function ReportCard({ title, data }: Props) {
+export default function ReportCard({ title, data, dataKey, xAxisKey, type, config }: Props) {
   const formatCurrency = (value: number) => {
-    return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+    return value.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
   };
   
   const handleExportExcel = () => {
@@ -29,21 +42,24 @@ export default function ReportCard({ title, data }: Props) {
     const doc = new jsPDF();
     doc.setFontSize(18);
     doc.text(title, 14, 22);
-    doc.setFontSize(11);
     
-    let y = 30;
-    data.forEach((d) => {
-      // Basic check to avoid page overflow
-      if (y > 280) {
-        doc.addPage();
-        y = 20;
-      }
-      doc.text(`${d.name}: ${formatCurrency(d.amount)}`, 14, y);
-      y += 7;
-    });
+    if (data.length > 0) {
+      const head = [Object.keys(data[0])];
+      const body = data.map(row => Object.values(row));
+      
+      doc.autoTable({
+        startY: 30,
+        head: head,
+        body: body,
+        theme: 'striped',
+        headStyles: { fillColor: [37, 99, 235] }, // Tailwind's blue-600
+      });
+    }
 
     doc.save(`${title.replace(/ /g, '_')}.pdf`);
   };
+
+  const chartConfig = config || { [dataKey]: { label: dataKey, color: 'hsl(var(--primary))'}};
 
   return (
     <Card className="shadow-soft rounded-xl mb-8">
@@ -52,7 +68,7 @@ export default function ReportCard({ title, data }: Props) {
       </CardHeader>
       <CardContent>
         {data.length > 0 ? (
-          <ChartComponent data={data} />
+          <ChartComponent data={data} dataKey={dataKey} xAxisKey={xAxisKey} type={type} config={chartConfig} />
         ) : (
           <p className="text-muted-foreground text-center py-10">No hay datos para mostrar en este reporte.</p>
         )}

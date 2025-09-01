@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from 'react';
@@ -14,13 +15,16 @@ import Layout from '@/components/layout';
 import { ChartComponent } from '@/components/dashboard/ChartComponent';
 import UnifiedAssistant from '@/components/assistant/UnifiedAssistant';
 import { Button } from '@/components/ui/button';
-import { Sparkles, PlusCircle } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
 import Link from 'next/link';
+import { useFinancialAnalysis } from '@/hooks/useFinancialAnalysis';
+import { AlertCard } from '@/components/dashboard/AlertCard';
 
 export default function Dashboard() {
   const { balance, transactions, goals, isLoading } = useAppStore();
+  const analysis = useFinancialAnalysis();
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
 
   const chartData = transactions
@@ -35,7 +39,8 @@ export default function Dashboard() {
         return acc;
     }, [] as { name: string; amount: number }[]);
 
-  const totalGoalsAmount = goals.reduce((sum, g) => sum + g.currentAmount, 0);
+  const totalGoalsAmount = goals.reduce((sum, g) => sum + g.targetAmount, 0);
+  const totalGoalsSaved = goals.reduce((sum, g) => sum + g.currentAmount, 0);
 
   return (
     <Layout>
@@ -104,7 +109,14 @@ export default function Dashboard() {
             </div>
             
             <div className="mb-6">
-              <UnifiedAssistant 
+              {analysis?.risk?.recommendations[0] && (
+                <AlertCard 
+                    type={analysis.risk.riskLevel === 'CRITICAL' ? 'error' : 'warning'}
+                    title="Recomendación Importante"
+                    message={analysis.risk.recommendations[0]}
+                />
+              )}
+               <UnifiedAssistant 
                 balance={balance} 
                 transactions={transactions} 
                 goals={goals}
@@ -135,7 +147,7 @@ export default function Dashboard() {
               <div className="group bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-medium text-emerald-600 dark:text-emerald-400 tracking-wide">
-                    TOTAL AHORRADO
+                    TOTAL AHORRADO EN METAS
                   </h3>
                   <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
                     <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -144,18 +156,18 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="text-3xl font-bold text-emerald-700 dark:text-emerald-300 mb-1 tracking-tight">
-                  {totalGoalsAmount.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}
+                  {totalGoalsSaved.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}
                 </div>
                 <div className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center">
                   <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
                   </svg>
-                  +12% este mes
+                  {totalGoalsAmount > 0 ? ((totalGoalsSaved / totalGoalsAmount) * 100).toFixed(0) : '0'}% de la meta total
                 </div>
               </div>
               <div className="col-span-1 md:col-span-2 lg:col-span-1 bg-card shadow-soft p-6 rounded-xl">
                 <h2 className="text-lg font-semibold text-card-foreground mb-4">Gastos por categoría</h2>
-                <ChartComponent data={chartData} />
+                <ChartComponent type="bar" data={chartData} dataKey="amount" xAxisKey="name" config={{amount: {label: 'Gasto', color: 'hsl(var(--primary))'}}}/>
               </div>
             </div>
           </>
