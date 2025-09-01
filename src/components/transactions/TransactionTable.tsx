@@ -109,11 +109,8 @@ export default function TransactionTable({ transactions, onEdit, onDelete }: Pro
             {rowVirtualizer.getVirtualItems().map((virtualItem) => {
               const transaction = filtered[virtualItem.index];
               return (
-                <TransactionRow
+                <motion.div
                   key={virtualItem.key}
-                  transaction={transaction}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
                   style={{
                     position: 'absolute',
                     top: 0,
@@ -122,7 +119,20 @@ export default function TransactionTable({ transactions, onEdit, onDelete }: Pro
                     height: `${virtualItem.size}px`,
                     transform: `translateY(${virtualItem.start}px)`,
                   }}
-                />
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, delay: virtualItem.index * 0.02 }}
+                >
+                  <TransactionRow
+                    transaction={transaction}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    style={{
+                      height: '100%',
+                      width: '100%',
+                    }}
+                  />
+                </motion.div>
               );
             })}
           </TableBody>
