@@ -19,6 +19,7 @@ import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import type { Toast } from '@/components/ui/toast-system';
 
+// Interfaces
 export interface Transaction {
   id: string;
   amount: number;
@@ -38,267 +39,161 @@ export interface Goal {
   createdAt: string;
 }
 
-interface AppState {
-  // Estado de autenticación
-  user: User | null;
-  isLoading: boolean;
-  isInitialized: boolean;
-  
-  // Datos financieros
-  transactions: Transaction[];
-  goals: Goal[];
-  balance: number;
-  
-  // UI State
-  isDarkMode: boolean;
-  sidebarOpen: boolean;
-  toasts: Toast[];
-  
-  // Acciones de autenticación
-  setUser: (user: User | null) => void;
-  setLoading: (loading: boolean) => void;
-  setInitialized: (initialized: boolean) => void;
-  
-  // Acciones de datos
-  setTransactions: (transactions: Transaction[]) => void;
-  addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt'>) => Promise<void>;
-  updateTransaction: (id: string, transaction: Partial<Transaction>) => Promise<void>;
-  deleteTransaction: (id: string) => Promise<void>;
-  
-  setGoals: (goals: Goal[]) => void;
-  addGoal: (goal: Omit<Goal, 'id' | 'createdAt'>) => Promise<void>;
-  updateGoal: (id: string, goal: Partial<Goal>) => Promise<void>;
-  deleteGoal: (id: string) => Promise<void>;
-  
-  calculateBalance: () => void;
-  
-  // Acciones de UI
-  toggleDarkMode: () => void;
-  toggleSidebar: () => void;
-  addToast: (message: string, type?: 'success' | 'error' | 'warning' | 'info', duration?: number) => string;
-  removeToast: (id: string) => void;
-  clearAllToasts: () => void;
-  
-  // Inicialización
-  initializeApp: () => () => void;
-  subscribeToUserData: () => () => void;
-  loadGuestData: () => void;
-  saveGuestData: () => void;
-}
+// Slices
+const createAuthSlice = (set, get) => ({
+  user: null,
+  isLoading: true,
+  isInitialized: false,
+  setUser: (user) => set({ user }, false, 'setUser'),
+  setLoading: (loading) => set({ isLoading: loading }, false, 'setLoading'),
+  setInitialized: (initialized) => set({ isInitialized: initialized }, false, 'setInitialized'),
+});
+
+const createDataSlice = (set, get) => ({
+  transactions: [],
+  goals: [],
+  balance: 0,
+  setTransactions: (transactions) => set({ transactions }, false, 'setTransactions'),
+  setGoals: (goals) => set({ goals }, false, 'setGoals'),
+  calculateBalance: () => set((state) => {
+    state.balance = state.transactions.reduce((acc, transaction) => {
+      return transaction.type === 'income' 
+        ? acc + transaction.amount 
+        : acc - transaction.amount;
+    }, 0);
+  }, false, 'calculateBalance'),
+  addTransaction: async (transactionData) => {
+    const { user, addToast, saveGuestData, calculateBalance } = get();
+    const newTransaction = { ...transactionData, createdAt: new Date().toISOString() };
+    if (user) {
+      try {
+        await addDoc(collection(db, 'users', user.uid, 'transactions'), newTransaction);
+      } catch (error) {
+        console.error('Error adding transaction:', error);
+        addToast('Error al agregar transacción', 'error');
+      }
+    } else {
+      set((state) => {
+        state.transactions.push({ ...newTransaction, id: `${Date.now()}` });
+      }, false, 'addTransaction/local');
+      saveGuestData();
+    }
+    calculateBalance();
+  },
+  updateTransaction: async (id, transactionData) => {
+    const { user, addToast, saveGuestData, calculateBalance } = get();
+    if (user) {
+      try {
+        await updateDoc(doc(db, 'users', user.uid, 'transactions', id), transactionData);
+      } catch (error) {
+        console.error('Error updating transaction:', error);
+        addToast('Error al actualizar transacción', 'error');
+      }
+    } else {
+      set((state) => {
+        const index = state.transactions.findIndex(t => t.id === id);
+        if (index !== -1) Object.assign(state.transactions[index], transactionData);
+      }, false, 'updateTransaction/local');
+      saveGuestData();
+    }
+    calculateBalance();
+  },
+  deleteTransaction: async (id) => {
+    const { user, addToast, saveGuestData, calculateBalance } = get();
+    if (user) {
+      try {
+        await deleteDoc(doc(db, 'users', user.uid, 'transactions', id));
+      } catch (error) {
+        console.error('Error deleting transaction:', error);
+        addToast('Error al eliminar transacción', 'error');
+      }
+    } else {
+      set((state) => {
+        state.transactions = state.transactions.filter(t => t.id !== id);
+      }, false, 'deleteTransaction/local');
+      saveGuestData();
+    }
+    calculateBalance();
+  },
+  addGoal: async (goalData) => {
+    const { user, addToast, saveGuestData } = get();
+    const newGoal = { ...goalData, id: `${Date.now()}`, createdAt: new Date().toISOString() };
+    if (user) {
+      try {
+        await setDoc(doc(db, 'users', user.uid, 'goals', newGoal.id), newGoal);
+      } catch (error) {
+        console.error('Error adding goal:', error);
+        addToast('Error al agregar meta', 'error');
+      }
+    } else {
+      set((state) => {
+        state.goals.push(newGoal);
+      }, false, 'addGoal/local');
+      saveGuestData();
+    }
+  },
+  updateGoal: async (id, goalData) => {
+    const { user, addToast, saveGuestData } = get();
+    if (user) {
+      try {
+        await updateDoc(doc(db, 'users', user.uid, 'goals', id), goalData);
+      } catch (error) {
+        console.error('Error updating goal:', error);
+        addToast('Error al actualizar meta', 'error');
+      }
+    } else {
+      set((state) => {
+        const index = state.goals.findIndex(g => g.id === id);
+        if (index !== -1) Object.assign(state.goals[index], goalData);
+      }, false, 'updateGoal/local');
+      saveGuestData();
+    }
+  },
+  deleteGoal: async (id) => {
+    const { user, addToast, saveGuestData } = get();
+    if (user) {
+      try {
+        await deleteDoc(doc(db, 'users', user.uid, 'goals', id));
+      } catch (error) {
+        console.error('Error deleting goal:', error);
+        addToast('Error al eliminar meta', 'error');
+      }
+    } else {
+      set((state) => {
+        state.goals = state.goals.filter(g => g.id !== id);
+      }, false, 'deleteGoal/local');
+      saveGuestData();
+    }
+  },
+});
+
+const createUISlice = (set, get) => ({
+  isDarkMode: false,
+  toasts: [],
+  toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode }), false, 'toggleDarkMode'),
+  addToast: (message, type = 'info', duration = 5000) => {
+    const id = `toast-${Date.now()}`;
+    set((state) => ({ toasts: [...state.toasts, { id, message, type, duration }] }), false, 'addToast');
+    return id;
+  },
+  removeToast: (id) => set((state) => ({ toasts: state.toasts.filter(t => t.id !== id) }), false, 'removeToast'),
+  clearAllToasts: () => set({ toasts: [] }, false, 'clearAllToasts'),
+});
 
 const GUEST_DATA_KEY = 'finassist_guest_data';
 
-export const useAppStore = create<AppState>()(
+export const useAppStore = create(
   subscribeWithSelector(
     persist(
       immer((set, get) => ({
-        // Estado inicial
-        user: null,
-        isLoading: true,
-        isInitialized: false,
-        transactions: [],
-        goals: [],
-        balance: 0,
-        isDarkMode: false,
-        sidebarOpen: false,
-        toasts: [],
-        // Acciones de autenticación
-        setUser: (user) => set((state) => {
-          state.user = user;
-        }),
-        setLoading: (loading) => set((state) => {
-          state.isLoading = loading;
-        }),
-        setInitialized: (initialized) => set((state) => {
-          state.isInitialized = initialized;
-        }),
-        // Acciones de datos
-        setTransactions: (transactions) => set((state) => {
-          state.transactions = transactions;
-        }),
-        addTransaction: async (transactionData) => {
-          const { user } = get();
-          const newTransaction: Omit<Transaction, 'id'> & { id?: string } = {
-            ...transactionData,
-            createdAt: new Date().toISOString(),
-          };
+        ...createAuthSlice(set, get),
+        ...createDataSlice(set, get),
+        ...createUISlice(set, get),
 
-          if (user) {
-            // Usuario autenticado: guardar en Firestore
-            try {
-              const docRef = await addDoc(
-                collection(db, 'users', user.uid, 'transactions'),
-                newTransaction
-              );
-              // Firestore se actualizará vía onSnapshot, no es necesario pushear al estado local.
-            } catch (error) {
-              console.error('Error adding transaction:', error);
-              get().addToast('Error al agregar transacción', 'error');
-            }
-          } else {
-            // Usuario invitado: guardar en localStorage
-            set((state) => {
-              state.transactions.push({ ...newTransaction, id: `${Date.now()}` });
-            });
-            get().saveGuestData();
-          }
-          get().calculateBalance();
-        },
-        updateTransaction: async (id, transactionData) => {
-          const { user } = get();
-          
-          if (user) {
-            try {
-              await updateDoc(
-                doc(db, 'users', user.uid, 'transactions', id),
-                transactionData
-              );
-            } catch (error) {
-              console.error('Error updating transaction:', error);
-              get().addToast('Error al actualizar transacción', 'error');
-            }
-          } else {
-            set((state) => {
-              const index = state.transactions.findIndex(t => t.id === id);
-              if (index !== -1) {
-                Object.assign(state.transactions[index], transactionData);
-              }
-            });
-            get().saveGuestData();
-          }
-          get().calculateBalance();
-        },
-        deleteTransaction: async (id) => {
-          const { user } = get();
-          
-          if (user) {
-            try {
-              await deleteDoc(doc(db, 'users', user.uid, 'transactions', id));
-            } catch (error) {
-              console.error('Error deleting transaction:', error);
-              get().addToast('Error al eliminar transacción', 'error');
-            }
-          } else {
-            set((state) => {
-              state.transactions = state.transactions.filter(t => t.id !== id);
-            });
-            get().saveGuestData();
-          }
-          get().calculateBalance();
-        },
-        setGoals: (goals) => set((state) => {
-          state.goals = goals;
-        }),
-        addGoal: async (goalData) => {
-          const { user } = get();
-          const newGoal: Goal = {
-            ...goalData,
-            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            createdAt: new Date().toISOString(),
-          };
-          if (user) {
-            try {
-              // Usamos el ID generado para consistencia
-              await setDoc(
-                doc(db, 'users', user.uid, 'goals', newGoal.id),
-                newGoal
-              );
-            } catch (error) {
-              console.error('Error adding goal:', error);
-              get().addToast('Error al agregar meta', 'error');
-            }
-          } else {
-             set((state) => {
-                state.goals.push(newGoal);
-              });
-              get().saveGuestData();
-          }
-        },
-        updateGoal: async (id, goalData) => {
-          const { user } = get();
-          
-          if (user) {
-            try {
-              await updateDoc(doc(db, 'users', user.uid, 'goals', id), goalData);
-            } catch (error) {
-              console.error('Error updating goal:', error);
-              get().addToast('Error al actualizar meta', 'error');
-            }
-          } else {
-            set((state) => {
-              const index = state.goals.findIndex(g => g.id === id);
-              if (index !== -1) {
-                Object.assign(state.goals[index], goalData);
-              }
-            });
-            get().saveGuestData();
-          }
-        },
-        deleteGoal: async (id) => {
-          const { user } = get();
-          
-          if (user) {
-            try {
-              await deleteDoc(doc(db, 'users', user.uid, 'goals', id));
-            } catch (error) {
-              console.error('Error deleting goal:', error);
-              get().addToast('Error al eliminar meta', 'error');
-            }
-          } else {
-            set((state) => {
-              state.goals = state.goals.filter(g => g.id !== id);
-            });
-            get().saveGuestData();
-          }
-        },
-        calculateBalance: () => set((state) => {
-          state.balance = state.transactions.reduce((acc, transaction) => {
-            return transaction.type === 'income' 
-              ? acc + transaction.amount 
-              : acc - transaction.amount;
-          }, 0);
-        }),
-        // Acciones de UI
-        toggleDarkMode: () => set((state) => {
-          state.isDarkMode = !state.isDarkMode;
-        }),
-        toggleSidebar: () => set((state) => {
-          state.sidebarOpen = !state.sidebarOpen;
-        }),
-        
-        addToast: (message, type = 'info', duration = 5000) => {
-          const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-          const newToast: Toast = {
-            id,
-            message,
-            type,
-            duration,
-          };
-          
-          set((state) => {
-            state.toasts.push(newToast);
-          });
-          
-          return id;
-        },
-        removeToast: (id) => set((state) => {
-          state.toasts = state.toasts.filter(toast => toast.id !== id);
-        }),
-        clearAllToasts: () => set((state) => {
-          state.toasts = [];
-        }),
-        
-        // Inicialización
         initializeApp: () => {
           const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-            const { isInitialized } = get();
-            
-            if (!isInitialized) {
-              get().setLoading(true);
-            }
-
+            if (!get().isInitialized) get().setLoading(true);
             get().setUser(user);
-            
             if (user) {
               const unsubscribeData = get().subscribeToUserData();
               get().setLoading(false);
@@ -312,53 +207,42 @@ export const useAppStore = create<AppState>()(
           });
           return unsubscribeAuth;
         },
+
         subscribeToUserData: () => {
-          const { user } = get();
+          const { user, setTransactions, setGoals, calculateBalance, addToast } = get();
           if (!user) return () => {};
 
-          const transactionsRef = collection(db, 'users', user.uid, 'transactions');
-          const transactionsQuery = query(transactionsRef);
-          const unsubscribeTransactions = onSnapshot(transactionsQuery, (snapshot) => {
-            const transactions = snapshot.docs.map(doc => ({
-              ...doc.data(),
-              id: doc.id
-            } as Transaction));
-            get().setTransactions(transactions);
-            get().calculateBalance();
+          const unsubTransactions = onSnapshot(query(collection(db, 'users', user.uid, 'transactions')), (snapshot) => {
+            const transactions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }) as Transaction);
+            setTransactions(transactions);
+            calculateBalance();
           }, (error) => {
             console.error("Error en snapshot de transacciones: ", error);
-            get().addToast("Error al cargar transacciones", "error");
+            addToast("Error al cargar transacciones", "error");
           });
 
-          const goalsRef = collection(db, 'users', user.uid, 'goals');
-          const goalsQuery = query(goalsRef);
-          const unsubscribeGoals = onSnapshot(goalsQuery, (snapshot) => {
-            const goals = snapshot.docs.map(doc => ({
-              ...doc.data(),
-              id: doc.id
-            } as Goal));
-            get().setGoals(goals);
+          const unsubGoals = onSnapshot(query(collection(db, 'users', user.uid, 'goals')), (snapshot) => {
+            const goals = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }) as Goal);
+            setGoals(goals);
           }, (error) => {
             console.error("Error en snapshot de metas: ", error);
-            get().addToast("Error al cargar metas", "error");
+            addToast("Error al cargar metas", "error");
           });
 
           return () => {
-            unsubscribeTransactions();
-            unsubscribeGoals();
+            unsubTransactions();
+            unsubGoals();
           };
         },
+
         loadGuestData: () => {
           if (typeof window === 'undefined') return;
-          
           try {
             const saved = localStorage.getItem(GUEST_DATA_KEY);
             if (saved) {
-              const guestData = JSON.parse(saved);
-              set((state) => {
-                state.transactions = guestData.transactions || [];
-                state.goals = guestData.goals || [];
-              });
+              const { transactions = [], goals = [] } = JSON.parse(saved);
+              get().setTransactions(transactions);
+              get().setGoals(goals);
               get().calculateBalance();
             }
           } catch (error) {
@@ -366,28 +250,22 @@ export const useAppStore = create<AppState>()(
             get().addToast('Error al cargar datos locales', 'error');
           }
         },
+
         saveGuestData: () => {
           if (typeof window === 'undefined') return;
-          
-          const { transactions, goals } = get();
           try {
-            localStorage.setItem(GUEST_DATA_KEY, JSON.stringify({
-              transactions,
-              goals,
-              lastSaved: new Date().toISOString()
-            }));
+            const { transactions, goals } = get();
+            localStorage.setItem(GUEST_DATA_KEY, JSON.stringify({ transactions, goals }));
           } catch (error) {
             console.error('Error saving guest data:', error);
-             get().addToast('Error al guardar datos locales', 'error');
+            get().addToast('Error al guardar datos locales', 'error');
           }
         },
       })),
       {
         name: 'finassist-settings',
         storage: createJSONStorage(() => localStorage),
-        partialize: (state) => ({
-          isDarkMode: state.isDarkMode,
-        }),
+        partialize: (state) => ({ isDarkMode: state.isDarkMode }),
       }
     )
   )
