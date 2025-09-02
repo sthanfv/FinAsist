@@ -93,6 +93,7 @@ interface AppState {
   updateBudget: (budgetId: string, updates: Partial<Budget>) => Promise<void>;
   deleteBudget: (budgetId: string) => Promise<void>;
   calculateBudgetStatus: () => void;
+  getBudgetUsage: (category: string) => Budget | undefined;
 }
 
 
@@ -341,6 +342,11 @@ export const useAppStore = create<AppState>()(
           });
           
           set({ budgets: updatedBudgets, budgetAlerts: alerts }, false, 'calculateBudgetStatus');
+        },
+
+        getBudgetUsage: (category) => {
+          const { budgets } = get();
+          return budgets.find(b => b.category === category && b.isActive);
         },
 
         // UI actions
