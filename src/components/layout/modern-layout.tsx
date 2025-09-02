@@ -296,12 +296,18 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
       {/* Modals for Quick Actions */}
       <Dialog open={isTransactionModalOpen} onOpenChange={setTransactionModalOpen}>
         <DialogContent>
+          <DialogHeader>
+              <DialogTitle>Nueva Transacción</DialogTitle>
+          </DialogHeader>
           <EnhancedTransactionForm onTransactionAdded={() => setTransactionModalOpen(false)} />
         </DialogContent>
       </Dialog>
       
       <Dialog open={isGoalModalOpen} onOpenChange={setGoalModalOpen}>
         <DialogContent>
+          <DialogHeader>
+              <DialogTitle>Nueva Meta</DialogTitle>
+          </DialogHeader>
            <AddGoalForm onAddGoal={handleGoalAdded} />
         </DialogContent>
       </Dialog>
