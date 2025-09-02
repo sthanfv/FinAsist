@@ -105,41 +105,49 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
       </motion.header>
       {/* Sidebar Moderno */}
       <motion.aside
-        initial={{ x: -280 }}
-        animate={{ x: sidebarCollapsed ? -240 : 0 }}
-        transition={{ type: "spring", damping: 20 }}
-        className="fixed left-4 top-24 bottom-4 z-40 w-64 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border border-slate-200/50 dark:border-slate-700/50 rounded-2xl shadow-lg overflow-hidden"
+        initial={false}
+        animate={sidebarCollapsed ? "collapsed" : "expanded"}
+        variants={{
+          expanded: { width: "16rem" }, // 256px
+          collapsed: { width: "4rem" }, // 64px
+        }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className={cn(
+          "fixed left-4 top-24 bottom-4 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border border-slate-200/50 dark:border-slate-700/50 rounded-2xl shadow-lg overflow-hidden transition-all duration-300",
+          sidebarCollapsed ? "w-16" : "w-64"
+        )}
       >
-        <div className="p-6">
+        <div className="p-2">
           <nav className="space-y-2">
             {navigationItems.map((item, index) => (
-              <motion.a
+              <motion.div
                 key={item.href}
-                href={item.href}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
-                  "hover:bg-slate-100 dark:hover:bg-slate-800",
-                  "group cursor-pointer"
-                )}
+                whileHover={{ backgroundColor: "rgba(100, 116, 139, 0.1)" }}
+                className="rounded-lg"
               >
-                <item.icon className={cn("h-5 w-5", item.color)} />
-                <AnimatePresence>
-                  {!sidebarCollapsed && (
-                    <motion.span
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: "auto" }}
-                      exit={{ opacity: 0, width: 0 }}
-                      className="font-medium"
-                    >
-                      {item.label}
-                    </motion.span>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                    "group cursor-pointer"
                   )}
-                </AnimatePresence>
-                <ChevronRight className="h-4 w-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-              </motion.a>
+                >
+                  <item.icon className={cn("h-5 w-5 shrink-0", item.color)} />
+                  <AnimatePresence>
+                    {!sidebarCollapsed && (
+                      <motion.span
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: "auto" }}
+                        exit={{ opacity: 0, width: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="font-medium whitespace-nowrap"
+                      >
+                        {item.label}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </Link>
+              </motion.div>
             ))}
           </nav>
         </div>
@@ -204,7 +212,7 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
       {/* Main Content */}
       <main className={cn(
         "transition-all duration-300 pt-28 pb-8",
-        sidebarCollapsed ? "pl-8 pr-8" : "pl-80 pr-8"
+        sidebarCollapsed ? "pl-24 pr-8" : "pl-80 pr-8"
       )}>
         {children}
       </main>
