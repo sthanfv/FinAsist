@@ -1,10 +1,9 @@
+
 'use server';
 /**
  * @fileOverview Un agente de IA que categoriza transacciones.
  *
- * - categorizeTransaction: Una función que sugiere una categoría para una transacción.
- * - CategorizationInput: El tipo de entrada para la función categorizeTransaction.
- * - CategorizationOutput: El tipo de retorno para la función categorizeTransaction.
+arroyo'
  */
 
 import {ai} from '@/ai/genkit';
@@ -50,35 +49,6 @@ export const CategorizationOutputSchema = z.object({
 });
 export type CategorizationOutput = z.infer<typeof CategorizationOutputSchema>;
 
-export async function categorizeTransaction(
-  input: CategorizationInput
-): Promise<CategorizationOutput> {
-  return categorizationFlow(input);
-}
-
-const prompt = ai.definePrompt({
-  name: 'categorizationPrompt',
-  input: {schema: CategorizationInputSchema},
-  output: {schema: CategorizationOutputSchema},
-  prompt: `Analiza esta transacción y sugiere la categoría más apropiada:
-    
-Descripción: "{{description}}"
-Monto: {{amount}}
-
-Categorías disponibles: ${categories.join(', ')}
-
-{{#if userHistory}}
-Historial del usuario (últimas transacciones):
-{{#each userHistory}}
-- "{{this.description}}" -> {{this.category}}
-{{/each}}
-{{/if}}
-
-Responde SOLO con el nombre exacto de la categoría, nada más. Si la descripción sugiere un ingreso, responde 'Ingreso'.
-Considera el historial del usuario para hacer una mejor sugerencia.
-Basado en la descripción y el historial, proporciona la categoría, un nivel de confianza y una razón corta.`,
-});
-
 const categorizationFlow = ai.defineFlow(
   {
     name: 'categorizationFlow',
@@ -109,11 +79,33 @@ const categorizationFlow = ai.defineFlow(
     }
 
     try {
-      const { output } = await prompt(input);
-      if (!output) {
+      const prompt = await ai.definePrompt({
+        name: 'categorizationPrompt',
+        input: {schema: CategorizationInputSchema},
+        output: {schema: CategorizationOutputSchema},
+        prompt: `Analiza esta transacción y sugiere la categoría más apropiada:
+    
+Descripción: "{{description}}"
+Monto: {{amount}}
+
+Categorías disponibles: ${categories.join(', ')}
+
+{{#if userHistory}}
+Historial del usuario (últimas transacciones):
+{{#each userHistory}}
+- "{{this.description}}" -> {{this.category}}
+{{/each}}
+{{/if}}
+
+Responde SOLO con el nombre exacto de la categoría, nada más. Si la descripción sugiere un ingreso, responde 'Ingreso'.
+Considera el historial del usuario para hacer una mejor sugerencia.
+Basado en la descripción y el historial, proporciona la categoría, un nivel de confianza y una razón corta.`,
+      })(input);
+
+      if (!prompt.output) {
         throw new Error('No se recibió respuesta del modelo de IA');
       }
-      return output;
+      return prompt.output;
     } catch (error) {
       console.error('Error en categorización:', error);
       return {
@@ -124,3 +116,9 @@ const categorizationFlow = ai.defineFlow(
     }
   }
 );
+
+
+export async function categorizeTransaction(input: CategorizationInput): Promise<CategorizationOutput> {
+  const result = await categorizationFlow(input);
+  return result;
+}

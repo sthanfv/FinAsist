@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Sparkles, Wand2 } from 'lucide-react';
-import { getFinancialRecommendation, RecommendationInput } from '@/ai/flows/recommendationFlow';
-import { getAdvancedRecommendation, AdvancedRecommendationInput } from '@/ai/flows/advancedRecommendationFlow';
+import { getFinancialRecommendation } from '@/ai/flows/recommendationFlow';
+import type { RecommendationInput } from '@/ai/flows/recommendationFlow';
+import { getAdvancedRecommendation } from '@/ai/flows/advancedRecommendationFlow';
+import type { AdvancedRecommendationInput } from '@/ai/flows/advancedRecommendationFlow';
 import type { Goal, Transaction } from '@/store/useAppStore';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
