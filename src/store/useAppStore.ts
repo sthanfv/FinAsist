@@ -171,23 +171,31 @@ export const useAppStore = create<AppState>()(
         initializeAuthListener: () => {
           const { setUser, setLoading, subscribeToUserData, loadGuestData, setInitialized } = get();
           
-          setLoading(true); // Inicia el loading
+          setLoading(true);
           
           return onAuthStateChanged(auth, async (user) => {
             console.log('🔥 Auth state changed:', user ? 'User logged in' : 'No user');
             
             try {
-              setUser(user);
-              
+              // MEJORA: Si hay un usuario, refrescar su información
               if (user) {
-                console.log('👤 Setting up user data subscription...');
-                subscribeToUserData();
+                console.log('🔄 Refreshing user data...');
+                await user.reload(); // Esto actualiza emailVerified
+                
+                // Actualizar el usuario en el estado después del reload
+                const refreshedUser = auth.currentUser;
+                setUser(refreshedUser);
+                
+                console.log('📧 Email verified:', refreshedUser?.emailVerified);
+                
+                if (refreshedUser) {
+                  subscribeToUserData();
+                }
               } else {
-                console.log('👻 Loading guest data...');
+                setUser(null);
                 loadGuestData();
               }
               
-              // CRÍTICO: Finalizar el loading e inicializar
               setInitialized(true);
               setLoading(false);
               
@@ -492,7 +500,7 @@ export const useAppStore = create<AppState>()(
                   currentSpent: spent,
                   limitAmount: budget.limitAmount,
                   percentage,
-                  type: percentage >= 100 ? 'exceeded' : 'warning'
+                  type: percentage >= 100 ? 'exceeded' : 'exceeded'
                 });
               }
             });

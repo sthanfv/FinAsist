@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -96,6 +96,33 @@ export const AuthPanel = ({ initialMode = 'login' }: AuthPanelProps) => {
     resolver: zodResolver(resetSchema),
     defaultValues: { email: '' }
   });
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (verificationSent) {
+      // Verificar cada 30 segundos si el email fue verificado
+      interval = setInterval(async () => {
+        if (auth.currentUser && !auth.currentUser.emailVerified) {
+          try {
+            await auth.currentUser.reload();
+            if (auth.currentUser.emailVerified) {
+              toast.success('¡Email verificado automáticamente!');
+              setVerificationSent(false);
+              router.push('/dashboard');
+            }
+          } catch (error) {
+            console.log('Error checking verification status:', error);
+          }
+        }
+      }, 30000); // 30 segundos
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [verificationSent, router]);
+
   // Función para verificar fortaleza de contraseña
   const getPasswordStrength = (password: string) => {
     let strength = 0;
@@ -797,5 +824,3 @@ export const AuthPanel = ({ initialMode = 'login' }: AuthPanelProps) => {
     </div>
   );
 };
-
-    
