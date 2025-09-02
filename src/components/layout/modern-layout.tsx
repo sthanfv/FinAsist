@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';
 import { useBalance } from '@/store/selectors';
 import Link from 'next/link';
+import { ThemeToggle } from '../ThemeToggle';
 
 interface ModernLayoutProps {
   children: React.ReactNode;
@@ -94,6 +95,8 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
               <span className="hidden sm:inline">Acciones</span>
             </Button>
             
+            <ThemeToggle />
+
             <Button variant="ghost" size="sm">
               <User className="h-5 w-5" />
             </Button>
