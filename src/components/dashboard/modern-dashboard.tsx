@@ -114,63 +114,67 @@ export const ModernDashboard = () => {
                 </div>
               </motion.div>
             </div>
-            {/* Ingresos del mes - MEJORADO */}
+            {/* Ingresos del mes - MEJOR PROPORCIÓN */}
             <motion.div
-              whileHover={{ scale: 1.05, y: -8 }}
-              className="relative bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl rounded-3xl p-6 border border-white/30 dark:border-slate-700/30 shadow-2xl shadow-blue-500/10 overflow-hidden"
+              whileHover={{ scale: 1.03, y: -8 }}
+              className="relative bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-3xl p-6 lg:p-8 border-2 border-white/40 dark:border-slate-700/40 shadow-2xl shadow-blue-500/15 overflow-hidden min-h-[160px]"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5" />
-              <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-blue-400/20 to-cyan-500/20 rounded-full blur-lg" />
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/8 to-cyan-500/8" />
+              <div className="absolute -top-6 -right-6 w-28 h-28 bg-gradient-to-br from-blue-400/20 to-cyan-500/20 rounded-full blur-xl" />
               
-              <div className="relative flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Ingresos</p>
-                  <motion.p 
-                    className="text-3xl font-bold text-blue-600"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
+              <div className="relative h-full flex flex-col justify-between">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Ingresos</p>
+                    <motion.p 
+                      className="text-3xl lg:text-4xl font-bold text-blue-600 dark:text-blue-400"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      ${thisMonthIncome.toLocaleString()}
+                    </motion.p>
+                  </div>
+                  <motion.div
+                    whileHover={{ scale: 1.15, rotate: 45 }}
+                    className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg shadow-blue-500/30"
                   >
-                    ${thisMonthIncome.toLocaleString()}
-                  </motion.p>
+                    <ArrowUpRight className="h-6 w-6 text-white" />
+                  </motion.div>
                 </div>
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: 45 }}
-                  className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg shadow-blue-500/25"
-                >
-                  <ArrowUpRight className="h-6 w-6 text-white" />
-                </motion.div>
+                <p className="text-xs text-muted-foreground mt-auto">Este mes</p>
               </div>
-              <p className="text-xs text-muted-foreground">Este mes</p>
             </motion.div>
-            {/* Gastos del mes - MEJORADO */}
+            {/* Gastos del mes - MEJOR PROPORCIÓN */}
             <motion.div
-              whileHover={{ scale: 1.05, y: -8 }}
-              className="relative bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl rounded-3xl p-6 border border-white/30 dark:border-slate-700/30 shadow-2xl shadow-red-500/10 overflow-hidden"
+              whileHover={{ scale: 1.03, y: -8 }}
+              className="relative bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-3xl p-6 lg:p-8 border-2 border-white/40 dark:border-slate-700/40 shadow-2xl shadow-red-500/15 overflow-hidden min-h-[160px]"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-pink-500/5" />
-              <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-red-400/20 to-pink-500/20 rounded-full blur-lg" />
+              <div className="absolute inset-0 bg-gradient-to-br from-red-500/8 to-pink-500/8" />
+              <div className="absolute -top-6 -right-6 w-28 h-28 bg-gradient-to-br from-red-400/20 to-pink-500/20 rounded-full blur-xl" />
               
-              <div className="relative flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Gastos</p>
-                  <motion.p 
-                    className="text-3xl font-bold text-red-500"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
+              <div className="relative h-full flex flex-col justify-between">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Gastos</p>
+                    <motion.p 
+                      className="text-3xl lg:text-4xl font-bold text-red-500 dark:text-red-400"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      ${thisMonthExpenses.toLocaleString()}
+                    </motion.p>
+                  </div>
+                  <motion.div
+                    whileHover={{ scale: 1.15, rotate: -45 }}
+                    className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-lg shadow-red-500/30"
                   >
-                    ${thisMonthExpenses.toLocaleString()}
-                  </motion.p>
+                    <ArrowDownRight className="h-6 w-6 text-white" />
+                  </motion.div>
                 </div>
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: -45 }}
-                  className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-lg shadow-red-500/25"
-                >
-                  <ArrowDownRight className="h-6 w-6 text-white" />
-                </motion.div>
+                <p className="text-xs text-muted-foreground mt-auto">Este mes</p>
               </div>
-              <p className="text-xs text-muted-foreground">Este mes</p>
             </motion.div>
           </div>
         </div>
