@@ -4,7 +4,7 @@
 import React, { ReactNode, useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { Menu, Home, Wallet, Target, BarChart, X, LogOut, LogIn, Cpu } from 'lucide-react';
+import { Menu, Home, Wallet, Target, BarChart, X, LogOut, LogIn, Cpu, Landmark } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from './ThemeToggle';
 import { useAppStore } from '@/store/useAppStore';
@@ -48,6 +48,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Principal', icon: Home, href: '/dashboard', color: 'blue' },
     { name: 'Transacciones', icon: Wallet, href: '/transactions', color: 'green' },
     { name: 'Metas', icon: Target, href: '/goals', color: 'purple' },
+    { name: 'Presupuestos', icon: Landmark, href: '/budgets', color: 'yellow' },
     { name: 'Reportes', icon: BarChart, href: '/reports', color: 'indigo' },
     { name: 'Calculadoras', icon: Cpu, href: '/calculators', color: 'orange' },
   ];

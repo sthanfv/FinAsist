@@ -93,21 +93,10 @@ interface AppState {
   updateBudget: (budgetId: string, updates: Partial<Budget>) => Promise<void>;
   deleteBudget: (budgetId: string) => Promise<void>;
   calculateBudgetStatus: () => void;
-  getBudgetUsage: (category: string) => number;
 }
 
 
 const GUEST_DATA_KEY = 'finassist_guest_data';
-
-// Utility function
-function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
-  let timeout: NodeJS.Timeout;
-  return ((...args: any[]) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), wait);
-  }) as T;
-}
-
 
 export const useAppStore = create<AppState>()(
   subscribeWithSelector(
@@ -139,10 +128,11 @@ export const useAppStore = create<AppState>()(
             sum + (t.type === 'income' ? t.amount : -t.amount), 0
           );
           set({ transactions, balance: newBalance });
+          get().calculateBudgetStatus();
         },
         setGoals: (goals) => set({ goals }, false, 'setGoals'),
         
-        addTransaction: debounce(async (transactionData: Omit<Transaction, 'id' | 'createdAt'>) => {
+        addTransaction: async (transactionData) => {
           const { user, saveGuestData } = get();
           const newTransaction = { ...transactionData, createdAt: new Date().toISOString() };
           if (user) {
@@ -155,13 +145,11 @@ export const useAppStore = create<AppState>()(
           } else {
             set((state) => {
               state.transactions.push({ ...newTransaction, id: `${Date.now()}` });
-              state.balance = state.transactions.reduce((sum, t) => 
-                sum + (t.type === 'income' ? t.amount : -t.amount), 0
-              );
-            }, false, 'addTransaction/local');
+            });
             saveGuestData();
           }
-        }, 300),
+          get().calculateBudgetStatus();
+        },
 
         updateTransaction: async (id, transactionData) => {
           const { user, saveGuestData } = get();
@@ -176,12 +164,10 @@ export const useAppStore = create<AppState>()(
             set((state) => {
               const index = state.transactions.findIndex(t => t.id === id);
               if (index !== -1) Object.assign(state.transactions[index], transactionData);
-               state.balance = state.transactions.reduce((sum, t) => 
-                sum + (t.type === 'income' ? t.amount : -t.amount), 0
-              );
-            }, false, 'updateTransaction/local');
+            });
             saveGuestData();
           }
+          get().calculateBudgetStatus();
         },
         deleteTransaction: async (id) => {
           const { user, saveGuestData } = get();
@@ -195,12 +181,10 @@ export const useAppStore = create<AppState>()(
           } else {
             set((state) => {
               state.transactions = state.transactions.filter(t => t.id !== id);
-              state.balance = state.transactions.reduce((sum, t) => 
-                sum + (t.type === 'income' ? t.amount : -t.amount), 0
-              );
-            }, false, 'deleteTransaction/local');
+            });
             saveGuestData();
           }
+          get().calculateBudgetStatus();
         },
         addGoal: async (goalData) => {
           const { user, saveGuestData } = get();
@@ -255,10 +239,9 @@ export const useAppStore = create<AppState>()(
 
         // Budget actions
         addBudget: async (budgetData) => {
-          const { user, saveGuestData, calculateBudgetStatus } = get();
-          const newBudget: Budget = {
+          const { user, saveGuestData } = get();
+          const newBudget: Omit<Budget, 'id'> = {
             ...budgetData,
-            id: `budget_${Date.now()}`,
             spentAmount: 0,
             createdAt: new Date().toISOString()
           };
@@ -270,14 +253,14 @@ export const useAppStore = create<AppState>()(
             }
           } else {
             set((state) => {
-              state.budgets.push(newBudget);
+              state.budgets.push({ ...newBudget, id: `budget_${Date.now()}` });
             });
             saveGuestData();
           }
-          calculateBudgetStatus();
+          get().calculateBudgetStatus();
         },
         updateBudget: async (budgetId, updates) => {
-          const { user, saveGuestData, calculateBudgetStatus } = get();
+          const { user, saveGuestData } = get();
           if (user) {
             try {
               const budgetRef = doc(db, 'users', user.uid, 'budgets', budgetId);
@@ -294,7 +277,7 @@ export const useAppStore = create<AppState>()(
             });
             saveGuestData();
           }
-          calculateBudgetStatus();
+          get().calculateBudgetStatus();
         },
         deleteBudget: async (budgetId) => {
             const { user, saveGuestData } = get();
@@ -321,11 +304,13 @@ export const useAppStore = create<AppState>()(
             
             const periodTransactions = transactions.filter(t => {
               const transactionDate = new Date(t.date);
+              // Lógica de fecha simple (mensual por ahora)
+              const budgetStartDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
               return (
                 t.type === 'expense' &&
                 t.category === budget.category &&
-                transactionDate >= new Date(budget.startDate) &&
-                transactionDate <= new Date(budget.endDate)
+                transactionDate >= budgetStartDate
               );
             });
             
@@ -357,26 +342,18 @@ export const useAppStore = create<AppState>()(
           
           set({ budgets: updatedBudgets, budgetAlerts: alerts }, false, 'calculateBudgetStatus');
         },
-        getBudgetUsage: (category: string) => {
-          const { budgets } = get();
-          const budget = budgets.find(b => b.category === category && b.isActive);
-          if (!budget || budget.limitAmount === 0) return 0;
-          return (budget.spentAmount / budget.limitAmount) * 100;
-        },
-
 
         // UI actions
         toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode }), false, 'toggleDarkMode'),
         
         // Subscription and data handling
         subscribeToUserData: () => {
-          const { user, setTransactions, setGoals } = get();
+          const { user } = get();
           if (!user) return () => {};
 
           const unsubTransactions = onSnapshot(query(collection(db, 'users', user.uid, 'transactions')), (snapshot) => {
             const transactions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }) as Transaction);
-            setTransactions(transactions);
-            get().calculateBudgetStatus(); 
+            get().setTransactions(transactions);
           }, (error) => {
             console.error("Error en snapshot de transacciones: ", error);
             NotificationSystem.error("Error al cargar transacciones");
@@ -384,7 +361,7 @@ export const useAppStore = create<AppState>()(
 
           const unsubGoals = onSnapshot(query(collection(db, 'users', user.uid, 'goals')), (snapshot) => {
             const goals = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }) as Goal);
-            setGoals(goals);
+            set({ goals });
           }, (error) => {
             console.error("Error en snapshot de metas: ", error);
             NotificationSystem.error("Error al cargar metas");
@@ -413,8 +390,7 @@ export const useAppStore = create<AppState>()(
             if (saved) {
               const { transactions = [], goals = [], budgets = [] } = JSON.parse(saved);
               get().setTransactions(transactions);
-              get().setGoals(goals);
-              set({ budgets });
+              set({ goals, budgets });
               get().calculateBudgetStatus();
             }
           } catch (error) {
