@@ -9,14 +9,13 @@ El proyecto está diseñado para ser funcional tanto para **usuarios registrados
 ### 1.1. Características Principales
 
 *   **Gestión de Transacciones**: Registro, edición y eliminación de ingresos y gastos, con una interfaz virtualizada para manejar grandes volúmenes de datos sin pérdida de rendimiento.
-*   **Metas de Ahorro**: Creación y seguimiento de objetivos financieros.
+*   **Metas de Ahorro Interactivas**: Creación, edición, eliminación y abono a metas financieras, con descuentos automáticos del balance principal para mantener la consistencia contable.
 *   **Asistente con IA**: Recomendaciones financieras personalizadas y categorización automática de transacciones.
 *   **Sistema de Alertas Proactivo**: Detecta gastos anómalos y metas en riesgo, notificando al usuario a través de alertas en el dashboard.
-*   **Dashboard Interactivo y Moderno**: Visualización rápida del balance, gastos por categoría y estado de las metas con un diseño de "efecto cristal" (glassmorphism).
+*   **Dashboard Interactivo y Moderno**: Visualización en tiempo real del balance, gastos por categoría y estado de las metas con un diseño de "efecto cristal" (glassmorphism).
 *   **Simulador Bancario**: Un conjunto de calculadoras profesionales para simular productos como CDTs, préstamos, tarjetas de crédito e inversiones.
-*   **Navegación Profesional**: Un panel lateral colapsable que maximiza el espacio de contenido y ofrece una experiencia de usuario moderna.
-*   **Modo Invitado**: Funcionalidad completa sin necesidad de registro.
-*   **Autenticación Segura**: Sistema de registro e inicio de sesión con Firebase.
+*   **Navegación Profesional**: Un panel lateral colapsable y un menú de acciones rápidas que ofrecen una experiencia de usuario moderna y eficiente.
+*   **Modo Invitado y Autenticación Segura**: Funcionalidad completa sin registro y un sistema de autenticación robusto con Firebase y navegación protegida.
 *   **Interfaz Moderna y Optimizada**: Diseño limpio, responsivo y con modo oscuro/claro, construido con las mejores prácticas de UI/UX.
 
 ---
@@ -35,6 +34,7 @@ El proyecto está diseñado para ser funcional tanto para **usuarios registrados
 | **Gestión de Estado**       | [Zustand](https://github.com/pmndrs/zustand)                             | Gestor de estado global optimizado con selectores `shallow`.       |
 | **Lógica de Negocio**     | **Motor Financiero (`FinancialEngine`)**                                 | Encapsulación de cálculos complejos, proyecciones y alertas.     |
 | **Optimización Frontend** | **`@tanstack/react-virtual` & `React.memo`**                             | Virtualización de listas y memoización para alto rendimiento.    |
+| **Configuración** | **`next.config.ts`** | Cabeceras de seguridad, optimización de imágenes y variables de entorno. |
 
 ---
 
@@ -49,11 +49,16 @@ graph TD
     end
 
     subgraph "Frontend (React / Next.js)"
-        B(Componentes de UI Optimizados)
-        C{useAppStore (Zustand) con Selectores}
+        B(Componentes Reactivos)
+        C{Hooks Selectores Optimizados<br/>(useTransactions, useBalance, etc.)}
         D[Layout / Páginas]
     end
 
+    subgraph "Gestión de Estado (Zustand)"
+        G[useAppStore]
+        H(Acciones del Store<br/>addTransaction, updateGoal)
+    end
+    
     subgraph "Lógica de Negocio (Frontend)"
         E[Hooks Personalizados<br/>(useFinancialAnalysis, useSmartCategorization)]
     end
@@ -64,36 +69,35 @@ graph TD
     end
 
     subgraph "Persistencia de Datos"
-        H(Firebase Auth)
-        I(Firestore DB)
-        K[LocalStorage]
+        I(Firebase: Auth, Firestore)
+        K[LocalStorage (Modo Invitado)]
     end
     
     A --> B
-    B --> E
+    B -- Dispara Acción --> H
+    H -- Modifica Estado --> G
+    C -- Lee Estado --> G
+    C -- Provee Datos --> D & B
+    B -- Usa Hooks --> E
     E -- Llama a Flujo de Servidor --> J
     J -- Ejecuta lógica de backend y devuelve --> E
-    E -- Actualiza Estado --> G[Acciones de Zustand]
-    G --> C
-    C --> D
-    D --> B
     
-    subgraph "Cálculos"
-        E --> F
-        F -- Devuelve a --> E
+    subgraph "Cálculos y Análisis"
+        E -- Usa FinancialEngine --> F
+        F -- Devuelve Análisis --> E
     end
     
-    subgraph "Persistencia de Datos"
-        G -- Si usuario está logueado --> I
-        G -- Si usuario es invitado --> K
-        H <--> C
-        I <.-> C
-        K <.-> C
+    subgraph "Persistencia"
+        H -- Si usuario está logueado --> I
+        H -- Si usuario es invitado --> K
+        G <.-> I
+        G <.-> K
     end
 
     style A fill:#f9f,stroke:#333,stroke-width:2px
     style J fill:#bbf,stroke:#333,stroke-width:2px
     style C fill:#9f9,stroke:#333,stroke-width:2px
+    style H fill:#f99,stroke:#333,stroke-width:2px
 ```
 
 ---
@@ -117,8 +121,8 @@ src/
 │   ├── layout/           # Nuevo ModernLayout flotante y responsivo
 │   └── ui/               # Componentes base de shadcn/ui
 ├── store/                # Gestor de estado global
-│   ├── useAppStore.ts
-│   └── selectors.ts
+│   ├── useAppStore.ts    # Cerebro de la aplicación (lógica y estado)
+│   └── selectors.ts      # Hooks optimizados para acceder al estado
 ├── engine/               # Lógica de negocio pura (Cálculos)
 │   ├── FinancialEngine.ts
 │   └── BankingEngine.ts
@@ -134,50 +138,49 @@ src/
     └── utils.ts
 ```
 
-### 4.2. Gestión de Estado Global Optimizada (`useAppStore` y `selectors`)
+### 4.2. Gestión de Estado Global Optimizada (`useAppStore` y `selectors.ts`)
 
-El estado global, gestionado con Zustand, ha sido optimizado para evitar re-renders innecesarios, que es uno de los mayores cuellos de botella en aplicaciones React complejas.
+El estado global, gestionado con Zustand, ha sido refactorizado para máxima eficiencia y para prevenir re-renders innecesarios, uno de los mayores cuellos de botella en aplicaciones React.
 
 **Estrategias de Optimización Clave:**
 
-1.  **Selectores con `shallow`**: En `src/store/selectors.ts`, hemos creado hooks específicos como `useTransactions` o `useGoals`. Estos hooks utilizan el comparador `shallow` de Zustand. Esto significa que un componente que use `useTransactions` solo se volverá a renderizar si el array de transacciones en sí cambia (se añade o elimina un elemento), pero no si cambia otra parte del estado como `user` o `goals`.
-2.  **Cálculo Derivado y Centralizado**: El balance del usuario se calcula dinámicamente (`deriva`) a partir de la lista de transacciones usando el hook `useBalance`. Esto elimina la necesidad de sincronizar el balance y previene errores de estado inconsistente.
+1.  **Selectores Optimizados con `shallow`**: Hemos creado un archivo dedicado `src/store/selectors.ts` que exporta hooks específicos como `useTransactions` o `useGoals`. Estos hooks utilizan el comparador `shallow` de Zustand. Esto significa que un componente que use `useTransactions` solo se volverá a renderizar si el array de transacciones en sí cambia (referencia), pero no si cambia otra parte del estado como `user` o `goals`.
+2.  **Cálculo de Balance Centralizado**: El balance ya no se deriva en la UI, sino que se calcula y actualiza directamente en el `store` (`useAppStore.ts`) cada vez que una transacción es añadida, actualizada o eliminada. Esto garantiza una única fuente de verdad (`single source of truth`) y previene errores de estado inconsistente.
+3.  **Lógica Robusta en Acciones**: Todas las acciones del store (ej. `addTransaction`) son `async` y manejan la lógica para usuarios registrados (operaciones con Firebase) y para invitados (operaciones con `localStorage`), además de incluir notificaciones `toast` para el feedback al usuario.
 
-### 4.3. Layout y Optimización de Renderizado en la UI
+### 4.3. Lógica de Negocio y Reglas Financieras
 
-*   **Layout Moderno y Flotante**: Se ha implementado un `ModernLayout` con una cabecera flotante que utiliza efectos de desenfoque (`backdrop-blur`) para una apariencia moderna.
-*   **Panel Lateral Responsivo**: El panel lateral es totalmente responsivo:
-    *   **En Escritorio**: Se mantiene fijo a la izquierda, empujando el contenido principal.
-    *   **En Móvil/Tablet**: Funciona como un `overlay` que se despliega desde la izquierda, con un botón animado de menú/cierre para una experiencia nativa.
-*   **Virtualización de Listas (`@tanstack/react-virtual`)**: Para la tabla de transacciones, que puede crecer indefinidamente, se implementó la virtualización. Solo se renderizan las filas visibles en pantalla, manteniendo la aplicación fluida incluso con un historial de transacciones enorme.
-*   **Error Boundaries**: El Dashboard está envuelto en un `ErrorBoundary` personalizado. Si ocurre un error de renderizado, la aplicación no se bloquea y muestra un mensaje amigable.
-
----
-
-## 5. Lógica de Negocio: El Motor Financiero (`FinancialEngine`)
-
-Toda la inteligencia financiera está encapsulada en `src/engine/FinancialEngine.ts`. Es una clase pura de TypeScript con métodos estáticos que se encargan de analizar los datos del usuario.
+#### `FinancialEngine`
+Toda la inteligencia de análisis financiero está encapsulada en `src/engine/FinancialEngine.ts`. Es una clase pura de TypeScript con métodos estáticos que se encargan de analizar los datos del usuario.
 
 **Responsabilidades Clave:**
 
 *   **`runCompleteAnalysis()`**: Orquesta todos los análisis para generar una visión completa del estado financiero.
-*   **`calculateFinancialMetrics()`**: Calcula KPIs esenciales como el flujo neto, la tasa de ahorro y el "burn rate" (meses de supervivencia con los ahorros actuales).
-*   **`analyzeTrends()`**: Utiliza regresión lineal simple para detectar si los ingresos o gastos tienen una tendencia al alza o a la baja y calcula la volatilidad de los gastos.
-*   **`assessRiskProfile()`**: Genera un puntaje de salud financiera (0-100) y un nivel de riesgo (Bajo, Medio, Alto, Crítico).
-*   **`detectAnomalousTransactions()`**: Utiliza la desviación estándar para identificar transacciones de gastos que son inusualmente altas.
-*   **`generateAlerts()`**: Basado en todas las métricas, genera un array de alertas proactivas (ej. "Gasto Inusual Detectado", "Meta en Riesgo") que se muestran en el Dashboard.
+*   **`calculateFinancialMetrics()`**: Calcula KPIs esenciales como el flujo neto y la tasa de ahorro.
+*   **`analyzeTrends()`**: Utiliza regresión lineal simple para detectar tendencias en ingresos o gastos.
+*   **`detectAnomalousTransactions()`**: Utiliza la desviación estándar para identificar transacciones de gastos inusualmente altas.
+*   **`generateAlerts()`**: Basado en todas las métricas, genera un array de alertas proactivas que se muestran en el Dashboard.
+
+#### Lógica de Negocio en el Store y Componentes
+Aunque el `FinancialEngine` hace el análisis, las **reglas de negocio transaccionales** se aplican directamente donde ocurren las acciones para garantizar la integridad de los datos.
+
+**Ejemplo Crítico: Abono a Metas**
+
+*   **Problema Resuelto**: Se corrigió un fallo crítico que permitía a los usuarios "crear dinero" al abonar a una meta sin tener saldo suficiente, lo que resultaba en un balance negativo irreal.
+*   **Solución**: En la página de Metas (`src/app/goals/page.tsx`), la función `handleAddFunds` ahora implementa una **regla de negocio estricta**:
+    1.  **Verifica el balance** actual del usuario usando el selector `useBalance`.
+    2.  Si el monto a abonar es mayor que el balance, **la operación se detiene** y se muestra una notificación de error.
+    3.  Solo si hay fondos suficientes, se procede a **crear la transacción de gasto** y **actualizar el monto de la meta**, garantizando la consistencia contable del sistema.
 
 ---
 
-## 6. Backend y Servicios
+## 5. Backend y Servicios
 
-### 6.1. Firebase
+### 5.1. Firebase
+*   **Authentication**: Gestiona el registro, inicio y cierre de sesión de usuarios. El estado de autenticación se sincroniza en tiempo real con el store de Zustand.
+*   **Firestore**: Base de datos NoSQL con una estructura escalable y reglas de seguridad robustas que garantizan que un usuario solo puede acceder a sus propios datos. Las suscripciones en tiempo real (`onSnapshot`) mantienen la UI siempre actualizada.
 
-*   **Authentication**: Gestiona el registro e inicio de sesión de usuarios con correo y contraseña.
-*   **Firestore**: Base de datos NoSQL con una estructura escalable y reglas de seguridad robustas que garantizan que un usuario solo puede acceder a sus propios datos.
-
-### 6.2. Arquitectura de IA Segura con Genkit
-
+### 5.2. Arquitectura de IA Segura con Genkit
 La funcionalidad de IA, como la categorización automática de transacciones, se ha implementado siguiendo un patrón seguro y robusto del lado del servidor.
 
 **Problema Resuelto**: Se eliminó un `anti-pattern` que intentaba usar la clave de API de IA en el lado del cliente, lo cual es un grave riesgo de seguridad y causaba errores en Next.js.
@@ -189,25 +192,14 @@ La funcionalidad de IA, como la categorización automática de transacciones, se
 3.  **Seguridad de Claves**: Las claves de API (ej. `GEMINI_API_KEY`) se almacenan de forma segura como variables de entorno en el servidor y **nunca se exponen al navegador**.
 4.  **Robustez con Zod**: Se utilizan esquemas de `Zod` (`src/ai/schemas.ts`) para validar las entradas y, más importante, para forzar a la IA a devolver los datos en un formato JSON estructurado y predecible.
 
-**Ejemplo del prompt de categorización (`categorizationFlow.ts`):**
-```handlebars
-Analiza esta transacción y sugiere la categoría más apropiada:
-      
-Descripción: "{{description}}"
-Monto: {{amount}}
+---
 
-Categorías disponibles: ${categories.join(', ')}
+## 6. Configuración del Proyecto y Seguridad
 
-{{#if userHistory}}
-Historial del usuario (últimas transacciones para dar contexto):
-{{#each userHistory}}
-- "{{this.description}}" fue categorizado como {{this.category}}
-{{/each}}
-{{/if}}
+El archivo `next.config.ts` ha sido actualizado a la sintaxis moderna y se le han añadido mejoras de seguridad.
 
-Basado en la descripción y el historial, proporciona la categoría, un nivel de confianza (confidence) de 0 a 1, y una razón (reason) corta para tu elección.
-Si la descripción sugiere un ingreso (salario, pago, etc.), la categoría debe ser 'Ingreso'.
-```
+*   **Cabeceras de Seguridad**: Se han implementado cabeceras HTTP como `X-Frame-Options` y `X-Content-Type-Options` para proteger la aplicación contra ataques de clickjacking y sniffing de MIME type.
+*   **Optimización de Scripts**: Los scripts en `package.json` han sido optimizados para incluir herramientas de `linting`, formateo y limpieza del proyecto, mejorando la calidad del código y la productividad del desarrollador.
 
 ---
 
@@ -216,6 +208,5 @@ Si la descripción sugiere un ingreso (salario, pago, etc.), la categoría debe 
 *   **Expandir Asistente de IA**:
     *   **Chatbot conversacional**: Permitir al usuario hacer preguntas en lenguaje natural sobre sus finanzas ("¿Cuánto gasté en comida el mes pasado?").
 *   **Notificaciones Push**: Utilizar Firebase Cloud Messaging para enviar alertas importantes incluso cuando el usuario no está en la aplicación.
-*   **Pruebas (Testing)**: Implementar tests unitarios (con Jest/Vitest) para el `FinancialEngine` y tests E2E (con Playwright/Cypress) para los flujos críticos.
+*   **Pruebas (Testing)**: Implementar tests unitarios (con Jest/Vitest) para el `FinancialEngine` y `BankingEngine`, y tests E2E (con Playwright/Cypress) para los flujos críticos como el registro y la creación de transacciones.
 *   **Internacionalización (i18n)**: Adaptar la aplicación para soportar múltiples idiomas y monedas.
-```
