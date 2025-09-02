@@ -1,7 +1,6 @@
 
 'use client';
 import { useMemo } from 'react';
-import { useAppStore } from '@/store/useAppStore';
 import { FinancialEngine } from '@/engine/FinancialEngine';
 import { useTransactions, useGoals, useBalance } from '@/store/selectors';
 

@@ -11,11 +11,12 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useFinancialAnalysis } from '@/hooks/useFinancialAnalysis';
-import { useBalance } from '@/store/selectors';
+import { useBalance, useTransactions, useGoals } from '@/store/selectors';
 import { cn } from '@/lib/utils';
 
 export const ModernDashboard = () => {
-  const { transactions, goals } = useAppStore();
+  const transactions = useTransactions();
+  const goals = useGoals();
   const balance = useBalance();
   const analysis = useFinancialAnalysis();
 

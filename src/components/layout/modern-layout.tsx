@@ -9,8 +9,7 @@ import {
   ChevronRight, Home, CreditCard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAppStore } from '@/store/useAppStore';
-import { useBalance } from '@/store/selectors';
+import { useUser, useBalance } from '@/store/selectors';
 import Link from 'next/link';
 import { ThemeToggle } from '../ThemeToggle';
 
@@ -20,7 +19,7 @@ interface ModernLayoutProps {
 export const ModernLayout = ({ children }: ModernLayoutProps) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // Inicia cerrado en móvil
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
-  const user = useAppStore(state => state.user);
+  const user = useUser();
   const balance = useBalance();
 
   const navigationItems = [
@@ -127,7 +126,7 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
       </motion.header>
       {/* Sidebar Moderno - CORREGIDO */}
       <AnimatePresence>
-        {(!sidebarCollapsed) && (
+        {!sidebarCollapsed && (
           <>
             {/* Overlay para móvil */}
             {(
