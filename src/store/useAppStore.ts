@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { User, signOut } from 'firebase/auth';
+import { User, signOut, onAuthStateChanged } from 'firebase/auth';
 import { 
   collection, 
   query, 
@@ -90,6 +90,7 @@ interface AppState {
   setLoading: (loading: boolean) => void;
   setInitialized: (initialized: boolean) => void;
   logout: () => Promise<void>;
+  initializeAuthListener: () => Unsubscribe;
   
   // Data actions
   setTransactions: (transactions: Transaction[]) => void;
@@ -166,6 +167,18 @@ export const useAppStore = create<AppState>()(
             console.error("Error al cerrar sesión", error);
             toast.error('Hubo un problema al cerrar sesión');
           }
+        },
+        initializeAuthListener: () => {
+          const { setUser, subscribeToUserData, loadGuestData, setInitialized } = get();
+          return onAuthStateChanged(auth, (user) => {
+            setUser(user);
+            if (user) {
+              subscribeToUserData();
+            } else {
+              loadGuestData();
+            }
+            setInitialized(true);
+          });
         },
 
         // Data setters
