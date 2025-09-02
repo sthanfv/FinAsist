@@ -2,8 +2,8 @@
 'use client';
 import { useState, useCallback } from 'react';
 import { categorizeTransaction } from '@/ai/flows/categorizationFlow';
-import type { CategorizationInput, CategorizationOutput } from '@/ai/flows/categorizationFlow';
 import { useTransactions } from '@/store/selectors';
+import type { CategorizationInput, CategorizationOutput } from '@/ai/schemas';
 
 export const useSmartCategorization = () => {
   const [isLoading, setIsLoading] = useState(false);

@@ -4,41 +4,15 @@
  * @fileOverview Un agente de IA que proporciona recomendaciones financieras avanzadas.
  *
  * - getAdvancedRecommendation: Una función que genera recomendaciones financieras avanzadas.
- * - AdvancedRecommendationInput: El tipo de entrada para la función getAdvancedRecommendation.
- * - AdvancedRecommendationOutput: El tipo de retorno para la función getAdvancedRecommendation.
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'zod';
-
-const TransactionSchema = z.object({
-  id: z.string(),
-  date: z.string(),
-  category: z.string().describe('La categoría de la transacción (ej: Ocio, Comida, etc.).'),
-  amount: z.number().describe('El monto de la transacción.'),
-  type: z.enum(['income', 'expense']).describe('El tipo de transacción.'),
-  description: z.string().optional(),
-});
-
-const GoalSchema = z.object({
-    id: z.string(),
-    name: z.string().describe('El título de la meta de ahorro.'),
-    targetAmount: z.number().describe('La cantidad objetivo a ahorrar.'),
-    currentAmount: z.number().describe('La cantidad que ya se ha ahorrado.'),
-    deadline: z.string().describe('La fecha límite para alcanzar la meta.'),
-});
-
-const AdvancedRecommendationInputSchema = z.object({
-  balance: z.number().describe('El saldo actual del usuario.'),
-  transactions: z.array(TransactionSchema).describe('La lista de transacciones del usuario.'),
-  goals: z.array(GoalSchema).describe('Las metas de ahorro del usuario.'),
-});
-export type AdvancedRecommendationInput = z.infer<typeof AdvancedRecommendationInputSchema>;
-
-const AdvancedRecommendationOutputSchema = z.object({
-  recommendations: z.array(z.string()).describe('La lista de recomendaciones financieras para el usuario.'),
-});
-export type AdvancedRecommendationOutput = z.infer<typeof AdvancedRecommendationOutputSchema>;
+import { 
+  AdvancedRecommendationInputSchema, 
+  AdvancedRecommendationOutputSchema,
+  type AdvancedRecommendationInput,
+  type AdvancedRecommendationOutput 
+} from '@/ai/schemas';
 
 export async function getAdvancedRecommendation(input: AdvancedRecommendationInput): Promise<AdvancedRecommendationOutput> {
   const advancedRecommendationFlow = ai.defineFlow(

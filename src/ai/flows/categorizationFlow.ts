@@ -7,22 +7,12 @@ arroyo'
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'zod';
-
-const TransactionHistorySchema = z.object({
-  description: z.string(),
-  category: z.string(),
-});
-
-export const CategorizationInputSchema = z.object({
-  description: z.string().describe('La descripción de la transacción a categorizar.'),
-  amount: z.number().describe('El monto de la transacción.'),
-  userHistory: z
-    .array(TransactionHistorySchema)
-    .optional()
-    .describe('Una lista de transacciones pasadas del usuario para dar contexto.'),
-});
-export type CategorizationInput = z.infer<typeof CategorizationInputSchema>;
+import {
+  CategorizationInputSchema,
+  CategorizationOutputSchema,
+  type CategorizationInput,
+  type CategorizationOutput
+} from '@/ai/schemas';
 
 const categories = [
   'Alimentación',
@@ -35,19 +25,6 @@ const categories = [
   'Ingreso',
   'Otros',
 ];
-
-export const CategorizationOutputSchema = z.object({
-  category: z.enum(categories).describe('La categoría sugerida para la transacción.'),
-  confidence: z
-    .number()
-    .describe(
-      'Un valor entre 0 y 1 que indica la confianza de la sugerencia.'
-    ),
-  reason: z
-    .string()
-    .describe('Una breve explicación de por qué se sugirió esa categoría.'),
-});
-export type CategorizationOutput = z.infer<typeof CategorizationOutputSchema>;
 
 export async function categorizeTransaction(input: CategorizationInput): Promise<CategorizationOutput> {
   const categorizationFlow = ai.defineFlow(

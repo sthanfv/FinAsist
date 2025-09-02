@@ -3,29 +3,16 @@
  * @fileOverview Un agente de IA que proporciona recomendaciones financieras.
  *
  * - getFinancialRecommendation: Una función que genera recomendaciones financieras.
- * - RecommendationInput: El tipo de entrada para la función getFinancialRecommendation.
- * - RecommendationOutput: El tipo de retorno para la función getFinancialRecommendation.
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'zod';
+import {
+    RecommendationInputSchema,
+    RecommendationOutputSchema,
+    type RecommendationInput,
+    type RecommendationOutput
+} from '@/ai/schemas';
 
-const TransactionSchema = z.object({
-  category: z.string().describe('La categoría de la transacción (ej: Ocio, Comida, etc.).'),
-  amount: z.number().describe('El monto de la transacción.'),
-  type: z.enum(['Ingreso', 'Gasto']).describe('El tipo de transacción.'),
-});
-
-const RecommendationInputSchema = z.object({
-  balance: z.number().describe('El saldo actual del usuario.'),
-  transactions: z.array(TransactionSchema).describe('La lista de transacciones del usuario.'),
-});
-export type RecommendationInput = z.infer<typeof RecommendationInputSchema>;
-
-const RecommendationOutputSchema = z.object({
-  recommendation: z.string().describe('La recomendación financiera para el usuario.'),
-});
-export type RecommendationOutput = z.infer<typeof RecommendationOutputSchema>;
 
 export async function getFinancialRecommendation(input: RecommendationInput): Promise<RecommendationOutput> {
   return recommendationFlow(input);

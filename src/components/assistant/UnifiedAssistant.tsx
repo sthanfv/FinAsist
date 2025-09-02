@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Sparkles, Wand2 } from 'lucide-react';
 import { getFinancialRecommendation } from '@/ai/flows/recommendationFlow';
-import type { RecommendationInput } from '@/ai/flows/recommendationFlow';
 import { getAdvancedRecommendation } from '@/ai/flows/advancedRecommendationFlow';
-import type { AdvancedRecommendationInput } from '@/ai/flows/advancedRecommendationFlow';
 import type { Goal, Transaction } from '@/store/useAppStore';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import type { RecommendationInput } from '@/ai/schemas';
+import type { AdvancedRecommendationInput } from '@/ai/schemas';
 
 type Props = {
   balance: number;
@@ -29,7 +29,7 @@ export default function UnifiedAssistant({ balance, transactions, goals, isGloba
     setRecommendation('');
     setError('');
     try {
-        const input: RecommendationInput = { balance, transactions: transactions.slice(-10) }; // Solo últimas 10
+        const input: RecommendationInput = { balance, transactions: transactions.slice(-10).map(t => ({...t, type: t.type === 'income' ? 'Ingreso' : 'Gasto'})) };
         const result = await getFinancialRecommendation(input);
         setRecommendation(result.recommendation);
     } catch (err) {
