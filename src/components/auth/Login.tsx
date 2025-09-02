@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { ArrowLeft } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -36,8 +37,16 @@ export default function Login() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-      <Card className="w-full max-w-md shadow-soft">
-        <CardHeader>
+      <Card className="w-full max-w-md shadow-soft relative">
+        <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 left-4"
+            onClick={() => router.back()}
+        >
+            <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <CardHeader className="text-center pt-12">
           <CardTitle className="text-2xl font-headline">Iniciar sesión</CardTitle>
           <CardDescription>Bienvenido de nuevo a FinAssist.</CardDescription>
         </CardHeader>
