@@ -18,7 +18,7 @@ interface ModernLayoutProps {
   children: React.ReactNode;
 }
 export const ModernLayout = ({ children }: ModernLayoutProps) => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // Inicia cerrado en móvil
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
   const user = useAppStore(state => state.user);
   const balance = useBalance();
@@ -51,9 +51,31 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
               variant="ghost"
               size="sm"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="lg:hidden p-2"
+              className="lg:hidden p-2 relative z-50"
             >
-              <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
+              <AnimatePresence mode="wait">
+                {sidebarCollapsed ? (
+                  <motion.div
+                    key="menu"
+                    initial={{ rotate: -90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: 90, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="close"
+                    initial={{ rotate: 90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: -90, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </Button>
             
             <div className="flex items-center gap-2 sm:gap-3">
@@ -103,55 +125,63 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
           </div>
         </div>
       </motion.header>
-      {/* Sidebar Moderno */}
-      <motion.aside
-        initial={false}
-        animate={sidebarCollapsed ? "collapsed" : "expanded"}
-        variants={{
-          expanded: { width: "16rem" }, // 256px
-          collapsed: { width: "4rem" }, // 64px
-        }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className={cn(
-          "fixed left-4 top-24 bottom-4 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border border-slate-200/50 dark:border-slate-700/50 rounded-2xl shadow-lg overflow-hidden transition-all duration-300",
-          sidebarCollapsed ? "w-16" : "w-64"
-        )}
-      >
-        <div className="p-2">
-          <nav className="space-y-2">
-            {navigationItems.map((item, index) => (
+      {/* Sidebar Moderno - CORREGIDO */}
+      <AnimatePresence>
+        {(!sidebarCollapsed) && (
+          <>
+            {/* Overlay para móvil */}
+            {(
               <motion.div
-                key={item.href}
-                whileHover={{ backgroundColor: "rgba(100, 116, 139, 0.1)" }}
-                className="rounded-lg"
-              >
-                <Link
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
-                    "group cursor-pointer"
-                  )}
-                >
-                  <item.icon className={cn("h-5 w-5 shrink-0", item.color)} />
-                  <AnimatePresence>
-                    {!sidebarCollapsed && (
-                      <motion.span
-                        initial={{ opacity: 0, width: 0 }}
-                        animate={{ opacity: 1, width: "auto" }}
-                        exit={{ opacity: 0, width: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="font-medium whitespace-nowrap"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 lg:hidden"
+                onClick={() => setSidebarCollapsed(true)}
+              />
+            )}
+            
+            <motion.aside
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className={cn(
+                "fixed left-4 top-24 bottom-4 z-40 w-64 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border border-slate-200/50 dark:border-slate-700/50 rounded-2xl shadow-lg overflow-hidden"
+              )}
+            >
+              <div className="p-2">
+                <nav className="space-y-2">
+                  {navigationItems.map((item, index) => (
+                    <motion.div
+                      key={item.href}
+                      whileHover={{ backgroundColor: "rgba(100, 116, 139, 0.1)" }}
+                      className="rounded-lg"
+                    >
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                          "group cursor-pointer"
+                        )}
+                        onClick={() => {
+                          if (window.innerWidth < 1024) {
+                            setSidebarCollapsed(true);
+                          }
+                        }}
                       >
-                        {item.label}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </Link>
-              </motion.div>
-            ))}
-          </nav>
-        </div>
-      </motion.aside>
+                        <item.icon className={cn("h-5 w-5 shrink-0", item.color)} />
+                        <span className="font-medium whitespace-nowrap">
+                            {item.label}
+                        </span>
+                      </Link>
+                    </motion.div>
+                  ))}
+                </nav>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
       {/* Panel de Acciones Rápidas */}
       <AnimatePresence>
         {quickActionsOpen && (
@@ -209,10 +239,10 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
           />
         )}
       </AnimatePresence>
-      {/* Main Content */}
+      {/* Main Content - CORREGIDO */}
       <main className={cn(
-        "transition-all duration-300 pt-28 pb-6 px-4 sm:px-6 md:px-8",
-        sidebarCollapsed ? "lg:pl-24" : "lg:pl-72"
+        "transition-all duration-300 pt-28 pb-6 px-4 sm:px-6",
+        !sidebarCollapsed && "lg:pl-80"
       )}>
         {children}
       </main>
