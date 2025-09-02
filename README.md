@@ -15,7 +15,8 @@ El proyecto está diseñado para ser funcional tanto para **usuarios registrados
 *   **Dashboard Interactivo y Moderno**: Visualización en tiempo real del balance, gastos por categoría y estado de las metas con un diseño de "efecto cristal" (glassmorphism).
 *   **Simulador Bancario**: Un conjunto de calculadoras profesionales para simular productos como CDTs, préstamos, tarjetas de crédito e inversiones.
 *   **Navegación Profesional**: Un panel lateral colapsable y un menú de acciones rápidas que ofrecen una experiencia de usuario moderna y eficiente.
-*   **Modo Invitado y Autenticación Segura**: Funcionalidad completa sin registro y un sistema de autenticación robusto con Firebase y navegación protegida.
+*   **Autenticación Segura y Verificación de Email**: Un flujo de autenticación de nivel "Enterprise" con registro, inicio de sesión, recuperación de contraseña y verificación de email obligatoria para garantizar la máxima seguridad de los datos del usuario.
+*   **Modo Invitado Robusto**: Funcionalidad completa sin registro, con persistencia de datos local.
 *   **Interfaz Moderna y Optimizada**: Diseño limpio, responsivo y con modo oscuro/claro, construido con las mejores prácticas de UI/UX.
 
 ---
@@ -34,7 +35,7 @@ El proyecto está diseñado para ser funcional tanto para **usuarios registrados
 | **Gestión de Estado**       | [Zustand](https://github.com/pmndrs/zustand)                             | Gestor de estado global optimizado con selectores `shallow`.       |
 | **Lógica de Negocio**     | **Motor Financiero (`FinancialEngine`)**                                 | Encapsulación de cálculos complejos, proyecciones y alertas.     |
 | **Optimización Frontend** | **`@tanstack/react-virtual` & `React.memo`**                             | Virtualización de listas y memoización para alto rendimiento.    |
-| **Configuración** | **`next.config.ts`** | Cabeceras de seguridad, optimización de imágenes y variables de entorno. |
+| **Configuración** | **`next.config.ts` & `firestore.rules`** | Cabeceras de seguridad, reglas de BBDD y variables de entorno. |
 
 ---
 
@@ -113,12 +114,14 @@ src/
 │   ├── calculators/
 │   ├── goals/
 │   ├── budgets/
-│   └── transactions/
+│   ├── transactions/
+│   └── login/ & register/ # Páginas de autenticación
 ├── components/           # Componentes reutilizables
 │   ├── auth/
+│   │   └── AuthPanel.tsx # Panel UNIFICADO para login y registro
 │   ├── assistant/
-│   ├── dashboard/        # Componentes del dashboard rediseñado
-│   ├── layout/           # Nuevo ModernLayout flotante y responsivo
+│   ├── dashboard/        
+│   ├── layout/           # ModernLayout flotante y responsivo
 │   └── ui/               # Componentes base de shadcn/ui
 ├── store/                # Gestor de estado global
 │   ├── useAppStore.ts    # Cerebro de la aplicación (lógica y estado)
@@ -144,69 +147,70 @@ El estado global, gestionado con Zustand, ha sido refactorizado para máxima efi
 
 **Estrategias de Optimización Clave:**
 
-1.  **Selectores Optimizados con `shallow`**: Hemos creado un archivo dedicado `src/store/selectors.ts` que exporta hooks específicos como `useTransactions` o `useGoals`. Estos hooks utilizan el comparador `shallow` de Zustand. Esto significa que un componente que use `useTransactions` solo se volverá a renderizar si el array de transacciones en sí cambia (referencia), pero no si cambia otra parte del estado como `user` o `goals`.
-2.  **Cálculo de Balance Centralizado**: El balance ya no se deriva en la UI, sino que se calcula y actualiza directamente en el `store` (`useAppStore.ts`) cada vez que una transacción es añadida, actualizada o eliminada. Esto garantiza una única fuente de verdad (`single source of truth`) y previene errores de estado inconsistente.
-3.  **Lógica Robusta en Acciones**: Todas las acciones del store (ej. `addTransaction`) son `async` y manejan la lógica para usuarios registrados (operaciones con Firebase) y para invitados (operaciones con `localStorage`), además de incluir notificaciones `toast` para el feedback al usuario.
+1.  **Inicialización Robusta:** Se ha implementado un `initializeAuthListener` en el `store` que se ejecuta una sola vez al cargar la aplicación. Este método resuelve de forma segura si el usuario está autenticado o es un invitado **antes** de renderizar cualquier página, eliminando condiciones de carrera y bucles de carga infinitos.
+2.  **Selectores Optimizados con `shallow`**: Un archivo dedicado `src/store/selectors.ts` exporta hooks específicos como `useTransactions`. Estos hooks utilizan el comparador `shallow` de Zustand, asegurando que los componentes solo se re-rendericen cuando la porción específica del estado que consumen realmente cambia.
+3.  **Cálculo de Balance Centralizado**: El balance se calcula y actualiza directamente en el `store` (`useAppStore.ts`) cada vez que una transacción es modificada, garantizando una única fuente de verdad (`single source of truth`).
+4.  **Lógica Robusta en Acciones**: Todas las acciones del store (ej. `addTransaction`) son `async` y manejan la lógica para usuarios registrados (operaciones con Firebase) y para invitados (operaciones con `localStorage`), además de incluir notificaciones `toast` para el feedback al usuario.
 
 ### 4.3. Lógica de Negocio y Reglas Financieras
 
 #### `FinancialEngine`
-Toda la inteligencia de análisis financiero está encapsulada en `src/engine/FinancialEngine.ts`. Es una clase pura de TypeScript con métodos estáticos que se encargan de analizar los datos del usuario.
+Toda la inteligencia de análisis financiero está encapsulada en `src/engine/FinancialEngine.ts`. Es una clase pura de TypeScript con métodos estáticos que se encargan de analizar los datos del usuario para generar métricas, tendencias, alertas y proyecciones.
 
 **Responsabilidades Clave:**
 
 *   **`runCompleteAnalysis()`**: Orquesta todos los análisis para generar una visión completa del estado financiero.
 *   **`calculateFinancialMetrics()`**: Calcula KPIs esenciales como el flujo neto y la tasa de ahorro.
 *   **`analyzeTrends()`**: Utiliza regresión lineal simple para detectar tendencias en ingresos o gastos.
-*   **`detectAnomalousTransactions()`**: Utiliza la desviación estándar para identificar transacciones de gastos inusualmente altas.
-*   **`generateAlerts()`**: Basado en todas las métricas, genera un array de alertas proactivas que se muestran en el Dashboard.
+*   **`detectAnomalousTransactions()`**: Identifica transacciones de gastos inusualmente altas.
+*   **`generateAlerts()`**: Genera un array de alertas proactivas que se muestran en el Dashboard.
 
 #### Lógica de Negocio en el Store y Componentes
 Aunque el `FinancialEngine` hace el análisis, las **reglas de negocio transaccionales** se aplican directamente donde ocurren las acciones para garantizar la integridad de los datos.
 
 **Ejemplo Crítico: Abono a Metas**
-
-*   **Problema Resuelto**: Se corrigió un fallo crítico que permitía a los usuarios "crear dinero" al abonar a una meta sin tener saldo suficiente, lo que resultaba en un balance negativo irreal.
-*   **Solución**: En la página de Metas (`src/app/goals/page.tsx`), la función `handleAddFunds` ahora implementa una **regla de negocio estricta**:
-    1.  **Verifica el balance** actual del usuario usando el selector `useBalance`.
-    2.  Si el monto a abonar es mayor que el balance, **la operación se detiene** y se muestra una notificación de error.
-    3.  Solo si hay fondos suficientes, se procede a **crear la transacción de gasto** y **actualizar el monto de la meta**, garantizando la consistencia contable del sistema.
+Se corrigió un fallo crítico que permitía a los usuarios abonar a una meta sin tener saldo suficiente. La función `handleAddFunds` en `src/app/goals/page.tsx` ahora implementa una **regla de negocio estricta**: verifica el balance antes de crear la transacción de gasto, garantizando la consistencia contable del sistema.
 
 ---
 
-## 5. Backend y Servicios
+## 5. Backend y Seguridad "Enterprise"
 
 ### 5.1. Firebase
 *   **Authentication**: Gestiona el registro, inicio y cierre de sesión de usuarios. El estado de autenticación se sincroniza en tiempo real con el store de Zustand.
-*   **Firestore**: Base de datos NoSQL con una estructura escalable y reglas de seguridad robustas que garantizan que un usuario solo puede acceder a sus propios datos. Las suscripciones en tiempo real (`onSnapshot`) mantienen la UI siempre actualizada.
+*   **Firestore**: Base de datos NoSQL con una estructura escalable.
 
-### 5.2. Arquitectura de IA Segura con Genkit
-La funcionalidad de IA, como la categorización automática de transacciones, se ha implementado siguiendo un patrón seguro y robusto del lado del servidor.
+### 5.2. Arquitectura de Autenticación y Seguridad
+Se ha implementado un sistema de seguridad de nivel empresarial para proteger los datos de los usuarios.
 
-**Problema Resuelto**: Se eliminó un `anti-pattern` que intentaba usar la clave de API de IA en el lado del cliente, lo cual es un grave riesgo de seguridad y causaba errores en Next.js.
+1.  **Reglas de Seguridad de Firestore (`firestore.rules`)**:
+    *   Se han definido reglas estrictas en el backend. Un usuario **debe estar autenticado y tener su email verificado** para poder leer o escribir en su propia colección de datos.
+    *   Cualquier intento de acceso por parte de un usuario no autenticado, no verificado o que intente acceder a datos de otro usuario es **bloqueado a nivel de servidor**.
 
-**Solución Arquitectónica:**
+2.  **Flujo de Verificación de Email Obligatorio (`AuthPanel.tsx`):**
+    *   Al registrarse, el usuario recibe un correo de verificación.
+    *   La aplicación **no permite el inicio de sesión** si el correo no ha sido verificado, mostrando un mensaje informativo y ofreciendo reenviar el correo.
+    *   Se ha implementado un sistema de **auto-detección** que comprueba periódicamente si el usuario ha verificado su correo en otra pestaña, redirigiéndolo automáticamente al dashboard para una experiencia sin fricciones.
 
-1.  **Flujos Exclusivos del Servidor**: Toda la lógica que interactúa con las APIs de IA reside en los flujos de Genkit (`src/ai/flows/*.ts`). Estos archivos se ejecutan **únicamente en el servidor de Next.js**.
-2.  **Llamada Segura desde el Frontend**: El frontend (a través de hooks como `useSmartCategorization`) llama a estos flujos como si fueran endpoints de una API. Next.js gestiona esta comunicación de forma segura.
-3.  **Seguridad de Claves**: Las claves de API (ej. `GEMINI_API_KEY`) se almacenan de forma segura como variables de entorno en el servidor y **nunca se exponen al navegador**.
-4.  **Robustez con Zod**: Se utilizan esquemas de `Zod` (`src/ai/schemas.ts`) para validar las entradas y, más importante, para forzar a la IA a devolver los datos en un formato JSON estructurado y predecible.
+3.  **Lógica de Suscripción Segura (`useAppStore.ts`):**
+    *   Se corrigió un error crítico donde la aplicación intentaba suscribirse a los datos de Firestore antes de confirmar que el email del usuario estaba verificado.
+    *   Ahora, la lógica de `subscribeToUserData` **primero comprueba el estado `emailVerified`** del token de autenticación. Solo si es `true`, procede a establecer la escucha en tiempo real con Firestore, evitando así cualquier error de "permisos insuficientes".
+
+### 5.3. Arquitectura de IA Segura con Genkit
+Toda la lógica que interactúa con las APIs de IA (ej. `categorizeTransaction`) reside en los flujos de Genkit (`src/ai/flows/*.ts`). Estos archivos se ejecutan **únicamente en el servidor**, asegurando que las claves de API nunca se expongan al navegador. El frontend llama a estos flujos de forma segura a través de Server Actions de Next.js.
 
 ---
 
-## 6. Configuración del Proyecto y Seguridad
+## 6. Configuración del Proyecto y Calidad de Código
 
-El archivo `next.config.ts` ha sido actualizado a la sintaxis moderna y se le han añadido mejoras de seguridad.
-
-*   **Cabeceras de Seguridad**: Se han implementado cabeceras HTTP como `X-Frame-Options` y `X-Content-Type-Options` para proteger la aplicación contra ataques de clickjacking y sniffing de MIME type.
-*   **Optimización de Scripts**: Los scripts en `package.json` han sido optimizados para incluir herramientas de `linting`, formateo y limpieza del proyecto, mejorando la calidad del código y la productividad del desarrollador.
+*   **Cabeceras de Seguridad**: El archivo `next.config.ts` implementa cabeceras HTTP como `X-Frame-Options` y `X-Content-Type-Options` para proteger la aplicación contra ataques comunes.
+*   **Scripts Optimizados**: Los scripts en `package.json` han sido optimizados para incluir herramientas de `linting`, formateo y chequeo de tipos, mejorando la calidad del código y la productividad.
 
 ---
 
 ## 7. Próximos Pasos y Mejoras
 
 *   **Expandir Asistente de IA**:
-    *   **Chatbot conversacional**: Permitir al usuario hacer preguntas en lenguaje natural sobre sus finanzas ("¿Cuánto gasté en comida el mes pasado?").
-*   **Notificaciones Push**: Utilizar Firebase Cloud Messaging para enviar alertas importantes incluso cuando el usuario no está en la aplicación.
-*   **Pruebas (Testing)**: Implementar tests unitarios (con Jest/Vitest) para el `FinancialEngine` y `BankingEngine`, y tests E2E (con Playwright/Cypress) para los flujos críticos como el registro y la creación de transacciones.
+    *   **Chatbot conversacional**: Permitir al usuario hacer preguntas en lenguaje natural sobre sus finanzas.
+*   **Notificaciones Push**: Utilizar Firebase Cloud Messaging para enviar alertas importantes.
+*   **Pruebas (Testing)**: Implementar tests unitarios (con Jest/Vitest) para el `FinancialEngine` y `BankingEngine`, y tests E2E (con Playwright/Cypress) para los flujos críticos.
 *   **Internacionalización (i18n)**: Adaptar la aplicación para soportar múltiples idiomas y monedas.
