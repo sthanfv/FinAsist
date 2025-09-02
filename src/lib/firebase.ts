@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, sendEmailVerification, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -15,3 +15,21 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Configuración de seguridad enterprise
+export const requireEmailVerification = async (user: any) => {
+  if (!user.emailVerified) {
+    await sendEmailVerification(user);
+    throw new Error('EMAIL_NOT_VERIFIED');
+  }
+};
+// Configuración del proveedor de Google
+export const configureGoogleProvider = () => {
+  const provider = new GoogleAuthProvider();
+  provider.addScope('email');
+  provider.addScope('profile');
+  provider.setCustomParameters({
+    prompt: 'select_account'
+  });
+  return provider;
+};
