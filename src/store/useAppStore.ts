@@ -13,13 +13,13 @@ import {
   doc, 
   updateDoc,
   setDoc,
-  getDoc
+  deleteField,
+  type Unsubscribe
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { NotificationSystem } from '@/components/ui/toast-system';
+import { toast } from 'sonner';
 
-
-// Interfaces
+// Interfaces corregidas
 export interface Transaction {
   id: string;
   amount: number;
@@ -28,7 +28,6 @@ export interface Transaction {
   type: 'income' | 'expense';
   date: string;
   createdAt: string;
-  // NUEVOS CAMPOS PARA IA
   aiSuggestion?: {
     category: string;
     confidence: number;
@@ -55,7 +54,7 @@ export interface Budget {
   period: 'monthly' | 'weekly' | 'yearly';
   startDate: string;
   endDate: string;
-  alertThreshold: number; // Porcentaje para alertas (ej: 80%)
+  alertThreshold: number;
   isActive: boolean;
   createdAt: string;
 }
@@ -69,45 +68,60 @@ export interface BudgetAlert {
   type: 'warning' | 'exceeded';
 }
 
-
-// State interface
+// State interface corregida
 interface AppState {
+  // Auth
   user: User | null;
   isLoading: boolean;
   isInitialized: boolean;
+  
+  // Data
   transactions: Transaction[];
   goals: Goal[];
   budgets: Budget[];
   budgetAlerts: BudgetAlert[];
   balance: number;
+  
+  // UI
   isDarkMode: boolean;
 
+  // Auth actions
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
   setInitialized: (initialized: boolean) => void;
+  
+  // Data actions
   setTransactions: (transactions: Transaction[]) => void;
-  setGoals: (goals) => void;
+  setGoals: (goals: Goal[]) => void;
+  setBudgets: (budgets: Budget[]) => void;
+  
+  // Transaction actions
   addTransaction: (transactionData: Omit<Transaction, 'id' | 'createdAt'>) => Promise<void>;
   updateTransaction: (id: string, transactionData: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
+  
+  // Goal actions
   addGoal: (goalData: Omit<Goal, 'id' | 'createdAt'>) => Promise<void>;
   updateGoal: (id: string, goalData: Partial<Goal>) => Promise<void>;
   deleteGoal: (id: string) => Promise<void>;
-  toggleDarkMode: () => void;
-  subscribeToUserData: () => () => void;
-  loadGuestData: () => void;
-  saveGuestData: () => void;
   
+  // Budget actions
   addBudget: (budget: Omit<Budget, 'id' | 'createdAt' | 'spentAmount'>) => Promise<void>;
   updateBudget: (budgetId: string, updates: Partial<Budget>) => Promise<void>;
   deleteBudget: (budgetId: string) => Promise<void>;
   calculateBudgetStatus: () => void;
   getBudgetUsage: (category: string) => Budget | undefined;
-
-  // Acciones de IA
+  
+  // AI actions
   categorizeTransactionWithAI: (transactionId: string) => Promise<void>;
   acceptAISuggestion: (transactionId: string) => void;
   rejectAISuggestion: (transactionId: string) => void;
+  
+  // System actions
+  toggleDarkMode: () => void;
+  subscribeToUserData: () => Unsubscribe;
+  loadGuestData: () => void;
+  saveGuestData: () => void;
 }
 
 
@@ -117,219 +131,217 @@ export const useAppStore = create<AppState>()(
   subscribeWithSelector(
     persist(
       immer((set, get) => ({
-        // Auth state
+        // Estado inicial
         user: null,
         isLoading: true,
         isInitialized: false,
-        
-        // Data state
         transactions: [],
         goals: [],
         budgets: [],
         budgetAlerts: [],
         balance: 0,
-        
-        // UI state
         isDarkMode: false,
 
         // Auth actions
-        setUser: (user) => set({ user }, false, 'setUser'),
-        setLoading: (loading) => set({ isLoading: loading }, false, 'setLoading'),
-        setInitialized: (initialized) => set({ isInitialized: initialized }, false, 'setInitialized'),
+        setUser: (user) => set((state) => { state.user = user; }),
+        setLoading: (loading) => set((state) => { state.isLoading = loading; }),
+        setInitialized: (initialized) => set((state) => { state.isInitialized = initialized; }),
 
-        // Data actions
-        setTransactions: (transactions) => {
-          const newBalance = transactions.reduce((sum, t) => 
+        // Data setters
+        setTransactions: (transactions) => set((state) => {
+          state.transactions = transactions;
+          state.balance = transactions.reduce((sum, t) => 
             sum + (t.type === 'income' ? t.amount : -t.amount), 0
           );
-          set({ transactions, balance: newBalance });
-          get().calculateBudgetStatus();
-        },
-        setGoals: (goals) => set({ goals }, false, 'setGoals'),
-        
+        }),
+        setGoals: (goals) => set((state) => { state.goals = goals; }),
+        setBudgets: (budgets) => set((state) => { state.budgets = budgets; }),
+
+        // Transaction actions
         addTransaction: async (transactionData) => {
-          const { user, saveGuestData } = get();
-          const newTransaction = { ...transactionData, createdAt: new Date().toISOString() };
+          const { user, saveGuestData, calculateBudgetStatus } = get();
+          const newTransaction = { 
+            ...transactionData, 
+            createdAt: new Date().toISOString() 
+          };
+          
           if (user) {
             try {
               await addDoc(collection(db, 'users', user.uid, 'transactions'), newTransaction);
+              toast.success('Transacción agregada correctamente');
             } catch (error) {
               console.error('Error adding transaction:', error);
-              NotificationSystem.error('Error al agregar transacción');
+              toast.error('Error al agregar transacción');
             }
           } else {
             set((state) => {
-              state.transactions.push({ ...newTransaction, id: `${Date.now()}` });
+              state.transactions.push({ 
+                ...newTransaction, 
+                id: `local_${Date.now()}` 
+              });
+              state.balance = state.transactions.reduce((sum, t) => 
+                sum + (t.type === 'income' ? t.amount : -t.amount), 0
+              );
             });
             saveGuestData();
+            toast.success('Transacción agregada');
           }
-          get().calculateBudgetStatus();
+          calculateBudgetStatus();
         },
-
         updateTransaction: async (id, transactionData) => {
-          const { user, saveGuestData } = get();
+          const { user, saveGuestData, calculateBudgetStatus } = get();
+          
           if (user) {
             try {
               await updateDoc(doc(db, 'users', user.uid, 'transactions', id), transactionData);
+              toast.success('Transacción actualizada');
             } catch (error) {
               console.error('Error updating transaction:', error);
-              NotificationSystem.error('Error al actualizar transacción');
+              toast.error('Error al actualizar transacción');
             }
           } else {
             set((state) => {
               const index = state.transactions.findIndex(t => t.id === id);
-              if (index !== -1) Object.assign(state.transactions[index], transactionData);
+              if (index !== -1) {
+                Object.assign(state.transactions[index], transactionData);
+                state.balance = state.transactions.reduce((sum, t) => 
+                  sum + (t.type === 'income' ? t.amount : -t.amount), 0
+                );
+              }
             });
             saveGuestData();
+            toast.success('Transacción actualizada');
           }
-          get().calculateBudgetStatus();
+          calculateBudgetStatus();
         },
         deleteTransaction: async (id) => {
-          const { user, saveGuestData } = get();
+          const { user, saveGuestData, calculateBudgetStatus } = get();
+          
           if (user) {
             try {
               await deleteDoc(doc(db, 'users', user.uid, 'transactions', id));
+              toast.success('Transacción eliminada');
             } catch (error) {
               console.error('Error deleting transaction:', error);
-              NotificationSystem.error('Error al eliminar transacción');
+              toast.error('Error al eliminar transacción');
             }
           } else {
             set((state) => {
               state.transactions = state.transactions.filter(t => t.id !== id);
+              state.balance = state.transactions.reduce((sum, t) => 
+                sum + (t.type === 'income' ? t.amount : -t.amount), 0
+              );
             });
             saveGuestData();
+            toast.success('Transacción eliminada');
           }
-          get().calculateBudgetStatus();
+          calculateBudgetStatus();
         },
+
+        // Goal actions
         addGoal: async (goalData) => {
           const { user, saveGuestData } = get();
-          const newGoal = { ...goalData, id: `${Date.now()}`, createdAt: new Date().toISOString() };
+          const newGoal = { 
+            ...goalData, 
+            id: `goal_${Date.now()}`, 
+            createdAt: new Date().toISOString() 
+          };
+          
           if (user) {
             try {
               await setDoc(doc(db, 'users', user.uid, 'goals', newGoal.id), newGoal);
+              toast.success('Meta creada correctamente');
             } catch (error) {
               console.error('Error adding goal:', error);
-              NotificationSystem.error('Error al agregar meta');
+              toast.error('Error al crear meta');
             }
           } else {
             set((state) => {
               state.goals.push(newGoal);
-            }, false, 'addGoal/local');
+            });
             saveGuestData();
+            toast.success('Meta creada');
           }
         },
         updateGoal: async (id, goalData) => {
           const { user, saveGuestData } = get();
+          
           if (user) {
             try {
               await updateDoc(doc(db, 'users', user.uid, 'goals', id), goalData);
+              toast.success('Meta actualizada');
             } catch (error) {
               console.error('Error updating goal:', error);
-              NotificationSystem.error('Error al actualizar meta');
+              toast.error('Error al actualizar meta');
             }
           } else {
             set((state) => {
               const index = state.goals.findIndex(g => g.id === id);
-              if (index !== -1) Object.assign(state.goals[index], goalData);
-            }, false, 'updateGoal/local');
+              if (index !== -1) {
+                Object.assign(state.goals[index], goalData);
+              }
+            });
             saveGuestData();
+            toast.success('Meta actualizada');
           }
         },
         deleteGoal: async (id) => {
           const { user, saveGuestData } = get();
+          
           if (user) {
             try {
               await deleteDoc(doc(db, 'users', user.uid, 'goals', id));
+              toast.success('Meta eliminada');
             } catch (error) {
               console.error('Error deleting goal:', error);
-              NotificationSystem.error('Error al eliminar meta');
+              toast.error('Error al eliminar meta');
             }
           } else {
             set((state) => {
               state.goals = state.goals.filter(g => g.id !== id);
-            }, false, 'deleteGoal/local');
-            saveGuestData();
-          }
-        },
-        categorizeTransactionWithAI: async (transactionId: string) => {
-          const { transactions, updateTransaction } = get();
-          const transaction = transactions.find(t => t.id === transactionId);
-          
-          if (!transaction) return;
-        },
-        acceptAISuggestion: (transactionId: string) => {
-          const { transactions, updateTransaction } = get();
-          const transaction = transactions.find(t => t.id === transactionId);
-
-          if(transaction && transaction.aiSuggestion){
-              const updatedFields = { 
-                category: transaction.aiSuggestion.category,
-                aiSuggestion: {
-                  ...transaction.aiSuggestion,
-                  isAccepted: true
-                }
-              };
-              updateTransaction(transactionId, updatedFields);
-          }
-        },
-        rejectAISuggestion: (transactionId: string) => {
-          const { transactions, updateTransaction } = get();
-          const transaction = transactions.find(t => t.id === transactionId);
-
-          if(transaction && transaction.aiSuggestion){
-            const updatedFields = {
-                aiSuggestion: undefined,
-                isAiCategorized: false
-            };
-            // Firestore no permite 'undefined', así que necesitaríamos eliminar el campo.
-            // Para simplicidad en el estado local, lo ponemos como undefined.
-            // La lógica de persistencia debe manejar la eliminación del campo.
-             set((state) => {
-              const index = state.transactions.findIndex(t => t.id === transactionId);
-              if (index !== -1) {
-                delete state.transactions[index].aiSuggestion;
-                state.transactions[index].isAiCategorized = false;
-              }
             });
-            const { user } = get();
-            if (user) {
-              // Aquí iría la lógica para eliminar el campo en Firebase.
-              // updateDoc(doc(db, 'users', user.uid, 'transactions', transactionId), {
-              //   aiSuggestion: deleteField()
-              // });
-            }
+            saveGuestData();
+            toast.success('Meta eliminada');
           }
         },
+
         // Budget actions
         addBudget: async (budgetData) => {
-          const { user, saveGuestData } = get();
-          const newBudget: Omit<Budget, 'id'> = {
+          const { user, saveGuestData, calculateBudgetStatus } = get();
+          const newBudget = {
             ...budgetData,
+            id: `budget_${Date.now()}`,
             spentAmount: 0,
             createdAt: new Date().toISOString()
           };
+          
           if (user) {
             try {
-              await addDoc(collection(db, 'users', user.uid, 'budgets'), newBudget);
+              await setDoc(doc(db, 'users', user.uid, 'budgets', newBudget.id), newBudget);
+              toast.success('Presupuesto creado');
             } catch (error) {
               console.error('Error adding budget:', error);
+              toast.error('Error al crear presupuesto');
             }
           } else {
             set((state) => {
-              state.budgets.push({ ...newBudget, id: `budget_${Date.now()}` });
+              state.budgets.push(newBudget);
             });
             saveGuestData();
+            toast.success('Presupuesto creado');
           }
-          get().calculateBudgetStatus();
+          calculateBudgetStatus();
         },
         updateBudget: async (budgetId, updates) => {
-          const { user, saveGuestData } = get();
+          const { user, saveGuestData, calculateBudgetStatus } = get();
+          
           if (user) {
             try {
-              const budgetRef = doc(db, 'users', user.uid, 'budgets', budgetId);
-              await updateDoc(budgetRef, updates);
+              await updateDoc(doc(db, 'users', user.uid, 'budgets', budgetId), updates);
+              toast.success('Presupuesto actualizado');
             } catch (error) {
               console.error('Error updating budget:', error);
+              toast.error('Error al actualizar presupuesto');
             }
           } else {
             set((state) => {
@@ -339,158 +351,207 @@ export const useAppStore = create<AppState>()(
               }
             });
             saveGuestData();
+            toast.success('Presupuesto actualizado');
           }
-          get().calculateBudgetStatus();
+          calculateBudgetStatus();
         },
         deleteBudget: async (budgetId) => {
-            const { user, saveGuestData } = get();
-            if (user) {
-              try {
-                await deleteDoc(doc(db, 'users', user.uid, 'budgets', budgetId));
-              } catch (error) {
-                console.error('Error deleting budget:', error);
-                NotificationSystem.error('Error al eliminar presupuesto');
-              }
-            } else {
-              set((state) => {
-                state.budgets = state.budgets.filter(b => b.id !== budgetId);
-              });
-              saveGuestData();
-            }
-          },
-        calculateBudgetStatus: () => {
-          const { budgets, transactions } = get();
-          const alerts: BudgetAlert[] = [];
+          const { user, saveGuestData } = get();
           
-          const updatedBudgets = budgets.map(budget => {
-            if (!budget.isActive) return { ...budget, spentAmount: 0 };
-            
-            const periodTransactions = transactions.filter(t => {
-              const transactionDate = new Date(t.date);
-              // Lógica de fecha simple (mensual por ahora)
-              const budgetStartDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-
-              return (
-                t.type === 'expense' &&
-                t.category === budget.category &&
-                transactionDate >= budgetStartDate
-              );
+          if (user) {
+            try {
+              await deleteDoc(doc(db, 'users', user.uid, 'budgets', budgetId));
+              toast.success('Presupuesto eliminado');
+            } catch (error) {
+              console.error('Error deleting budget:', error);
+              toast.error('Error al eliminar presupuesto');
+            }
+          } else {
+            set((state) => {
+              state.budgets = state.budgets.filter(b => b.id !== budgetId);
             });
-            
-            const spentAmount = periodTransactions.reduce((sum, t) => sum + t.amount, 0);
-            const percentage = budget.limitAmount > 0 ? (spentAmount / budget.limitAmount) * 100 : 0;
-            
-            if (percentage >= 100) {
-              alerts.push({
-                budgetId: budget.id,
-                category: budget.category,
-                currentSpent: spentAmount,
-                limitAmount: budget.limitAmount,
-                percentage,
-                type: 'exceeded'
-              });
-            } else if (percentage >= budget.alertThreshold) {
-              alerts.push({
-                budgetId: budget.id,
-                category: budget.category,
-                currentSpent: spentAmount,
-                limitAmount: budget.limitAmount,
-                percentage,
-                type: 'warning'
-              });
-            }
-            
-            return { ...budget, spentAmount };
-          });
-          
-          set({ budgets: updatedBudgets, budgetAlerts: alerts }, false, 'calculateBudgetStatus');
+            saveGuestData();
+            toast.success('Presupuesto eliminado');
+          }
         },
 
-        getBudgetUsage: (category) => {
+        // Budget calculations
+        calculateBudgetStatus: () => {
+          set((state) => {
+            const alerts: BudgetAlert[] = [];
+            
+            state.budgets.forEach(budget => {
+              if (!budget.isActive) return;
+              
+              const spent = state.transactions
+                .filter(t => 
+                  t.type === 'expense' && 
+                  t.category === budget.category &&
+                  new Date(t.date) >= new Date(budget.startDate) &&
+                  new Date(t.date) <= new Date(budget.endDate)
+                )
+                .reduce((sum, t) => sum + t.amount, 0);
+              
+              budget.spentAmount = spent;
+              const percentage = (spent / budget.limitAmount) * 100;
+              
+              if (percentage >= budget.alertThreshold) {
+                alerts.push({
+                  budgetId: budget.id,
+                  category: budget.category,
+                  currentSpent: spent,
+                  limitAmount: budget.limitAmount,
+                  percentage,
+                  type: percentage >= 100 ? 'exceeded' : 'warning'
+                });
+              }
+            });
+            
+            state.budgetAlerts = alerts;
+          });
+        },
+        getBudgetUsage: (category: string) => {
           const { budgets } = get();
           return budgets.find(b => b.category === category && b.isActive);
         },
 
-        // UI actions
-        toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode }), false, 'toggleDarkMode'),
-        
-        // Subscription and data handling
-        subscribeToUserData: () => {
+        // AI actions
+        categorizeTransactionWithAI: async (transactionId: string) => {
+          // Implementar después con Genkit
+          toast.info('Función de IA pendiente de implementar');
+        },
+        acceptAISuggestion: (transactionId: string) => {
+          const { updateTransaction } = get();
+          set((state) => {
+            const transaction = state.transactions.find(t => t.id === transactionId);
+            if (transaction?.aiSuggestion) {
+              transaction.category = transaction.aiSuggestion.category;
+              transaction.aiSuggestion.isAccepted = true;
+              transaction.isAiCategorized = true;
+            }
+          });
+          toast.success('Sugerencia de IA aceptada');
+        },
+        rejectAISuggestion: (transactionId: string) => {
           const { user } = get();
-          if (!user) return () => {};
-
-          const unsubTransactions = onSnapshot(query(collection(db, 'users', user.uid, 'transactions')), (snapshot) => {
-            const transactions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }) as Transaction);
-            get().setTransactions(transactions);
-          }, (error) => {
-            console.error("Error en snapshot de transacciones: ", error);
-            NotificationSystem.error("Error al cargar transacciones");
+          set((state) => {
+            const transaction = state.transactions.find(t => t.id === transactionId);
+            if (transaction) {
+              delete transaction.aiSuggestion;
+              transaction.isAiCategorized = false;
+            }
           });
-
-          const unsubGoals = onSnapshot(query(collection(db, 'users', user.uid, 'goals')), (snapshot) => {
-            const goals = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }) as Goal);
-            set({ goals });
-          }, (error) => {
-            console.error("Error en snapshot de metas: ", error);
-            NotificationSystem.error("Error al cargar metas");
-          });
-
-          const unsubBudgets = onSnapshot(query(collection(db, 'users', user.uid, 'budgets')), (snapshot) => {
-            const budgets = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }) as Budget);
-            set({ budgets });
-            get().calculateBudgetStatus();
-          }, (error) => {
-            console.error("Error en snapshot de presupuestos: ", error);
-            NotificationSystem.error("Error al cargar presupuestos");
-          });
-
-          return () => {
-            unsubTransactions();
-            unsubGoals();
-            unsubBudgets();
-          };
+          
+          if (user) {
+            updateDoc(doc(db, 'users', user.uid, 'transactions', transactionId), {
+              aiSuggestion: deleteField(),
+              isAiCategorized: false
+            }).catch(console.error);
+          }
+          
+          toast.info('Sugerencia de IA rechazada');
         },
 
+        // System actions
+        toggleDarkMode: () => set((state) => { 
+          state.isDarkMode = !state.isDarkMode; 
+        }),
+        subscribeToUserData: () => {
+          const { user, setTransactions, setGoals, setBudgets } = get();
+          if (!user) return () => {};
+
+          const unsubscribers: Unsubscribe[] = [];
+
+          // Suscripción a transacciones
+          const transactionsUnsubscribe = onSnapshot(
+            collection(db, 'users', user.uid, 'transactions'),
+            (snapshot) => {
+              const transactions = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+              } as Transaction));
+              setTransactions(transactions);
+            },
+            (error) => {
+              console.error('Error in transactions subscription:', error);
+              toast.error('Error al cargar transacciones');
+            }
+          );
+          unsubscribers.push(transactionsUnsubscribe);
+
+          // Suscripción a metas
+          const goalsUnsubscribe = onSnapshot(
+            collection(db, 'users', user.uid, 'goals'),
+            (snapshot) => {
+              const goals = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+              } as Goal));
+              setGoals(goals);
+            },
+            (error) => {
+              console.error('Error in goals subscription:', error);
+              toast.error('Error al cargar metas');
+            }
+          );
+          unsubscribers.push(goalsUnsubscribe);
+
+          // Suscripción a presupuestos
+          const budgetsUnsubscribe = onSnapshot(
+            collection(db, 'users', user.uid, 'budgets'),
+            (snapshot) => {
+              const budgets = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+              } as Budget));
+              setBudgets(budgets);
+              get().calculateBudgetStatus();
+            },
+            (error) => {
+              console.error('Error in budgets subscription:', error);
+              toast.error('Error al cargar presupuestos');
+            }
+          );
+          unsubscribers.push(budgetsUnsubscribe);
+
+          return () => {
+            unsubscribers.forEach(unsubscribe => unsubscribe());
+          };
+        },
         loadGuestData: () => {
-          if (typeof window === 'undefined') return;
           try {
-            const saved = localStorage.getItem(GUEST_DATA_KEY);
-            if (saved) {
-              const { transactions = [], goals = [], budgets = [] } = JSON.parse(saved);
-              get().setTransactions(transactions);
-              set({ goals, budgets });
+            const data = localStorage.getItem(GUEST_DATA_KEY);
+            if (data) {
+              const parsedData = JSON.parse(data);
+              set((state) => {
+                state.transactions = parsedData.transactions || [];
+                state.goals = parsedData.goals || [];
+                state.budgets = parsedData.budgets || [];
+                state.balance = state.transactions.reduce((sum, t) => 
+                  sum + (t.type === 'income' ? t.amount : -t.amount), 0
+                );
+              });
               get().calculateBudgetStatus();
             }
           } catch (error) {
             console.error('Error loading guest data:', error);
-            NotificationSystem.error('Error al cargar datos locales');
           }
         },
-
         saveGuestData: () => {
-          if (typeof window === 'undefined') return;
           try {
             const { transactions, goals, budgets } = get();
-            localStorage.setItem(GUEST_DATA_KEY, JSON.stringify({ transactions, goals, budgets }));
+            const dataToSave = { transactions, goals, budgets };
+            localStorage.setItem(GUEST_DATA_KEY, JSON.stringify(dataToSave));
           } catch (error) {
             console.error('Error saving guest data:', error);
-            NotificationSystem.error('Error al guardar datos locales');
           }
         },
       })),
       {
         name: 'finassist-store',
         storage: createJSONStorage(() => localStorage),
-        partialize: (state) => ({
-          transactions: state.transactions,
-          goals: state.goals,
-          budgets: state.budgets,
-          user: state.user,
-          isDarkMode: state.isDarkMode
-        }),
+        partialize: (state) => ({ isDarkMode: state.isDarkMode }),
       }
     )
   )
 );
-
-    
