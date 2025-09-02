@@ -1,7 +1,7 @@
 
 
 "use client";
-import Layout from '@/components/layout';
+import { ModernLayout } from '@/components/layout/modern-layout';
 import TransactionTable from '@/components/transactions/TransactionTable';
 import { EnhancedTransactionForm } from '@/components/transactions/enhanced-transaction-form';
 import { Button } from '@/components/ui/button';
@@ -72,7 +72,7 @@ export default function TransactionsPage() {
       };
 
     return (
-        <Layout>
+        <ModernLayout>
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -135,6 +135,6 @@ export default function TransactionsPage() {
                   </Dialog>
               )}
             </motion.div>
-        </Layout>
+        </ModernLayout>
     );
 }

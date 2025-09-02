@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import Layout from '@/components/layout';
+import { ModernLayout } from '@/components/layout/modern-layout';
 import { ChartComponent } from '@/components/dashboard/ChartComponent';
 import UnifiedAssistant from '@/components/assistant/UnifiedAssistant';
 import { Button } from '@/components/ui/button';
@@ -67,7 +67,7 @@ export default function Dashboard() {
 
 
   return (
-    <Layout>
+    <ModernLayout>
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -197,6 +197,6 @@ export default function Dashboard() {
         )}
         </FinancialErrorBoundary>
       </motion.div>
-    </Layout>
+    </ModernLayout>
   );
 }

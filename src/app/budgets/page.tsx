@@ -1,13 +1,13 @@
 
 "use client";
-import Layout from '@/components/layout';
+import { ModernLayout } from '@/components/layout/modern-layout';
 import BackButton from '@/components/BackButton';
 import { motion } from 'framer-motion';
 import { BudgetManager } from '@/components/budgets/BudgetManager';
 
 export default function BudgetsPage() {
     return (
-        <Layout>
+        <ModernLayout>
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -24,6 +24,6 @@ export default function BudgetsPage() {
 
               </div>
             </motion.div>
-        </Layout>
+        </ModernLayout>
     );
 }

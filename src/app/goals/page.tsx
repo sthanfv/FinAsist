@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import Layout from '@/components/layout';
+import { ModernLayout } from '@/components/layout/modern-layout';
 import AddGoalForm from '@/components/goals/AddGoalForm';
 import GoalsList from '@/components/goals/GoalsList';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ export default function GoalsPage() {
     };
 
     return (
-        <Layout>
+        <ModernLayout>
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -46,6 +46,6 @@ export default function GoalsPage() {
                   <GoalsList goals={goals} />
               </div>
             </motion.div>
-        </Layout>
+        </ModernLayout>
     );
 }
