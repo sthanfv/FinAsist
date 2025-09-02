@@ -11,6 +11,7 @@ import type { Goal, Transaction } from '@/store/useAppStore';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import type { RecommendationInput } from '@/ai/schemas';
 import type { AdvancedRecommendationInput } from '@/ai/schemas';
+import { AlertCard } from '../dashboard/AlertCard';
 
 type Props = {
   balance: number;
@@ -57,15 +58,15 @@ export default function UnifiedAssistant({ balance, transactions, goals, isGloba
           <span>Obtener Consejo de IA</span>
         </Button>
          {advancedRecommendations.length > 0 && !error && (
-            <Alert className="mt-4 bg-accent/10 border-accent/50 text-accent [&>svg]:text-accent">
-                <Sparkles className="h-4 w-4" />
-                <AlertTitle>Consejo Financiero</AlertTitle>
-                <AlertDescription>
-                    <ul className="list-disc list-inside space-y-1">
-                      {advancedRecommendations.map((rec, i) => <li key={i}>{rec}</li>)}
-                    </ul>
-                </AlertDescription>
-            </Alert>
+            <AlertCard
+              type="info"
+              title="Consejo Financiero"
+              message={
+                 <ul className="list-disc list-inside space-y-1">
+                    {advancedRecommendations.map((rec, i) => <li key={i}>{rec}</li>)}
+                  </ul>
+              }
+            />
         )}
         {advancedRecommendations.length === 0 && !loading && !error && (
              <motion.div 
@@ -78,10 +79,11 @@ export default function UnifiedAssistant({ balance, transactions, goals, isGloba
               </motion.div>
         )}
         {error && (
-             <Alert variant="destructive" className="mt-4">
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-            </Alert>
+            <AlertCard
+              type="error"
+              title="Error"
+              message={error}
+            />
         )}
       </div>
     )
