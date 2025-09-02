@@ -33,8 +33,8 @@ El proyecto está diseñado para ser funcional tanto para **usuarios registrados
 | **Backend & Base de Datos** | [Firebase (Firestore & Authentication)](https://firebase.google.com/) | Autenticación de usuarios y base de datos NoSQL en tiempo real.  |
 | **Inteligencia Artificial** | [Genkit (Google AI)](https://firebase.google.com/docs/genkit)      | Orquestación de flujos de IA generativa del lado del servidor.        |
 | **Gestión de Estado**       | [Zustand](https://github.com/pmndrs/zustand)                             | Gestor de estado global optimizado con selectores `shallow`.       |
-| **Lógica de Negocio**     | **Motor Financiero (`FinancialEngine`)**                                 | Encapsulación de cálculos complejos, proyecciones y alertas.     |
-| **Optimización Frontend** | **`@tanstack/react-virtual` & `React.memo`**                             | Virtualización de listas y memoización para alto rendimiento.    |
+| **Lógica de Negocio**     | **Motor Financiero (`FinancialEngine` y `PerformanceEngine`)**                                 | Encapsulación de cálculos complejos, proyecciones y alertas.     |
+| **Optimización Frontend** | **`@tanstack/react-virtual`, `React.memo`, Web Workers**                             | Virtualización, memoización y cálculo en segundo plano.    |
 | **Configuración** | **`next.config.ts` & `firestore.rules`** | Cabeceras de seguridad, reglas de BBDD y variables de entorno. |
 
 ---
@@ -51,7 +51,7 @@ graph TD
 
     subgraph "Frontend (React / Next.js)"
         B(Componentes Reactivos)
-        C{Hooks Selectores Optimizados<br/>(useTransactions, useBalance, etc.)}
+        C{Hooks Selectores Optimizados<br/>(useFinancialAnalysis, etc.)}
         D[Layout / Páginas]
     end
 
@@ -65,7 +65,7 @@ graph TD
     end
     
     subgraph "Lógica de Negocio (Backend)"
-        F[FinancialEngine / BankingEngine]
+        F[PerformanceEngine]
         J[Flujos de IA (Genkit)]
     end
 
@@ -84,7 +84,7 @@ graph TD
     J -- Ejecuta lógica de backend y devuelve --> E
     
     subgraph "Cálculos y Análisis"
-        E -- Usa FinancialEngine --> F
+        E -- Usa PerformanceEngine --> F
         F -- Devuelve Análisis --> E
     end
     
@@ -111,34 +111,25 @@ graph TD
 src/
 ├── app/                  # Rutas de la aplicación (App Router)
 │   ├── dashboard/
-│   ├── calculators/
-│   ├── goals/
-│   ├── budgets/
-│   ├── transactions/
-│   └── login/ & register/ # Páginas de autenticación
+│   │   └── analysis/     # NUEVO: Dashboard técnico
+│   ├── ...
 ├── components/           # Componentes reutilizables
-│   ├── auth/
-│   │   └── AuthPanel.tsx # Panel UNIFICADO para login y registro
-│   ├── assistant/
-│   ├── dashboard/        
-│   ├── layout/           # ModernLayout flotante y responsivo
-│   └── ui/               # Componentes base de shadcn/ui
+│   ├── ...
 ├── store/                # Gestor de estado global
 │   ├── useAppStore.ts    # Cerebro de la aplicación (lógica y estado)
 │   └── selectors.ts      # Hooks optimizados para acceder al estado
 ├── engine/               # Lógica de negocio pura (Cálculos)
 │   ├── FinancialEngine.ts
-│   └── BankingEngine.ts
+│   ├── BankingEngine.ts
+│   ├── PerformanceEngine.ts # NUEVO: Orquestador de cálculos
+│   ├── cache/             # NUEVO: Sistema de cache
+│   └── workers/           # NUEVO: Gestión de Web Workers
 ├── hooks/                # Hooks reutilizables para lógica de UI
-│   ├── useFinancialAnalysis.ts
+│   ├── useFinancialAnalysis.ts # ACTUALIZADO: Ahora usa PerformanceEngine
+│   ├── useRealTimeMetrics.ts   # NUEVO: Para métricas ligeras
 │   └── useSmartCategorization.ts
 ├── ai/                   # Lógica de IA (Genkit)
-│   ├── flows/            # Contienen la lógica de los flujos de IA
-│   ├── genkit.ts         # Configuración de Genkit
-│   └── schemas.ts        # Schemas de Zod y tipos para IA
-└── lib/                  # Utilidades y configuración de servicios
-    ├── firebase.ts
-    └── utils.ts
+...
 ```
 
 ### 4.2. Gestión de Estado Global Optimizada (`useAppStore` y `selectors.ts`)
@@ -152,24 +143,28 @@ El estado global, gestionado con Zustand, ha sido refactorizado para máxima efi
 3.  **Cálculo de Balance Centralizado**: El balance se calcula y actualiza directamente en el `store` (`useAppStore.ts`) cada vez que una transacción es modificada, garantizando una única fuente de verdad (`single source of truth`).
 4.  **Lógica Robusta en Acciones**: Todas las acciones del store (ej. `addTransaction`) son `async` y manejan la lógica para usuarios registrados (operaciones con Firebase) y para invitados (operaciones con `localStorage`), además de incluir notificaciones `toast` para el feedback al usuario.
 
-### 4.3. Lógica de Negocio y Reglas Financieras
+### 4.3. Lógica de Negocio y Motores de Cálculo (`FinancialEngine` y `PerformanceEngine`)
 
 #### `FinancialEngine`
-Toda la inteligencia de análisis financiero está encapsulada en `src/engine/FinancialEngine.ts`. Es una clase pura de TypeScript con métodos estáticos que se encargan de analizar los datos del usuario para generar métricas, tendencias, alertas y proyecciones.
+Encapsula la lógica pura para los cálculos financieros. Define **qué** calcular.
 
-**Responsabilidades Clave:**
+#### `PerformanceEngine`
+Es el orquestador inteligente que decide **cómo y cuándo** realizar los cálculos.
+*   **Orquestación de Workers**: Delega los cálculos pesados a un Web Worker en segundo plano, evitando que la interfaz de usuario se congele.
+*   **Gestión de Caché**: Utiliza un sistema de caché en memoria (`ComputationCache`) para almacenar los resultados de los análisis. Si los datos no han cambiado, devuelve el resultado cacheado en milisegundos en lugar de recalcular.
+*   **Lógica de Fallbacks**: Si el Worker falla, el motor puede ejecutar una versión más simple del análisis en el hilo principal, garantizando que la app siga funcionando.
 
-*   **`runCompleteAnalysis()`**: Orquesta todos los análisis para generar una visión completa del estado financiero.
-*   **`calculateFinancialMetrics()`**: Calcula KPIs esenciales como el flujo neto y la tasa de ahorro.
-*   **`analyzeTrends()`**: Utiliza regresión lineal simple para detectar tendencias en ingresos o gastos.
-*   **`detectAnomalousTransactions()`**: Identifica transacciones de gastos inusualmente altas.
-*   **`generateAlerts()`**: Genera un array de alertas proactivas que se muestran en el Dashboard.
+### 4.4. Panel de Análisis Avanzado (`/dashboard/analysis`)
 
-#### Lógica de Negocio en el Store y Componentes
-Aunque el `FinancialEngine` hace el análisis, las **reglas de negocio transaccionales** se aplican directamente donde ocurren las acciones para garantizar la integridad de los datos.
+Esta nueva sección ofrece una vista técnica "bajo el capó" del estado financiero del usuario y, más importante aún, del rendimiento del propio `PerformanceEngine`. Es una herramienta de diagnóstico y depuración de nivel profesional.
 
-**Ejemplo Crítico: Abono a Metas**
-Se corrigió un fallo crítico que permitía a los usuarios abonar a una meta sin tener saldo suficiente. La función `handleAddFunds` en `src/app/goals/page.tsx` ahora implementa una **regla de negocio estricta**: verifica el balance antes de crear la transacción de gasto, garantizando la consistencia contable del sistema.
+*   **Score Financiero**: Un índice de 0 a 100 que resume la salud financiera general del usuario.
+*   **Métricas en Tiempo Real**: Tarjetas que muestran cálculos ligeros (ej. flujo de caja del mes) y alertas proactivas (ej. "Gastos Elevados"), gestionadas por el hook `useRealTimeMetrics`.
+*   **Performance del Sistema**: Esta es la joya de la corona del panel técnico.
+    *   **Tiempo de Cálculo**: Mide en milisegundos la velocidad del último análisis completo. Valores bajos indican un sistema muy rápido.
+    *   **Cache Hit Rate**: Muestra el porcentaje de veces que se encontró un resultado en el caché, evitando un recálculo. Un valor alto significa que el sistema está siendo extremadamente eficiente.
+    *   **Modo de Cálculo**: Indica si el último cálculo pesado se hizo en el hilo principal (`Main`) o si fue delegado a un `Worker` en segundo plano para no afectar la fluidez de la UI.
+*   **Controles del Sistema**: Botones para que un desarrollador pueda forzar un recálculo o limpiar el caché para realizar pruebas de rendimiento.
 
 ---
 
