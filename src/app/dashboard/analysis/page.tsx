@@ -9,6 +9,7 @@ import { Brain, Zap, TrendingUp, HelpCircle, Activity, ShieldCheck, Target, Refr
 import { ModernLayout } from '@/components/layout/modern-layout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
+import { PredictiveDashboard } from '@/components/dashboard/PredictiveDashboard';
 
 export default function DashboardAnalysisPage() {
   const { 
@@ -50,7 +51,7 @@ export default function DashboardAnalysisPage() {
           {/* Columna Izquierda: Métricas */}
           <div className="lg:col-span-2 space-y-8">
              <RealTimeMetrics />
-
+             <PredictiveDashboard />
             {/* Análisis Principal */}
             {analysis && (
               <Card>
