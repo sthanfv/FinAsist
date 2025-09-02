@@ -122,11 +122,15 @@ export const AuthPanel = ({ initialMode = 'login' }: AuthPanelProps) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       
-      // Verificar si el email está verificado
+      // SOLUCIÓN: Refrescar el token para obtener el estado más reciente
+      await userCredential.user.reload();
+      
+      // Verificar si el email está verificado DESPUÉS del reload
       if (!userCredential.user.emailVerified) {
         toast.warning('Tu cuenta no está verificada. Te hemos enviado un nuevo email de verificación.');
         await sendEmailVerification(userCredential.user);
         setVerificationSent(true);
+        setLoading(false); // Detener el loading para permitir la interacción
         return;
       }
       toast.success('¡Bienvenido de vuelta!');
@@ -156,7 +160,9 @@ export const AuthPanel = ({ initialMode = 'login' }: AuthPanelProps) => {
       
       toast.error(errorMessage);
     } finally {
-      setLoading(false);
+      if(router.asPath !== '/dashboard') { // No detener el loading si ya estamos navegando
+        setLoading(false);
+      }
     }
   };
   const handleRegister = async (data: RegisterForm) => {
@@ -365,7 +371,7 @@ export const AuthPanel = ({ initialMode = 'login' }: AuthPanelProps) => {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
+                    className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg space-y-3"
                   >
                     <div className="flex items-center gap-2">
                       <Mail className="h-5 w-5 text-blue-600" />
@@ -373,6 +379,45 @@ export const AuthPanel = ({ initialMode = 'login' }: AuthPanelProps) => {
                         Email de verificación enviado. Revisa tu bandeja de entrada.
                       </p>
                     </div>
+                    
+                    {/* NUEVO: Botón para verificar después de hacer clic en el email */}
+                    <Button
+                      onClick={async () => {
+                        setLoading(true);
+                        try {
+                          // Refrescar el usuario actual
+                          if (auth.currentUser) {
+                            await auth.currentUser.reload();
+                            
+                            if (auth.currentUser.emailVerified) {
+                              toast.success('¡Email verificado! Redirigiendo...');
+                              router.push('/dashboard');
+                            } else {
+                              toast.warning('Aún no hemos detectado la verificación. Asegúrate de hacer clic en el enlace del email.');
+                            }
+                          }
+                        } catch (error) {
+                          toast.error('Error al verificar el estado del email');
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      disabled={isLoading}
+                      variant="outline"
+                      size="sm"
+                      className="w-full bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
+                    >
+                      {isLoading ? (
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          className="h-4 w-4 border-2 border-blue-500/30 border-t-blue-500 rounded-full mr-2"
+                        />
+                      ) : (
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                      )}
+                      Ya verifiqué mi email
+                    </Button>
                   </motion.div>
                 )}
                 {emailSent && (
@@ -752,3 +797,5 @@ export const AuthPanel = ({ initialMode = 'login' }: AuthPanelProps) => {
     </div>
   );
 };
+
+    
