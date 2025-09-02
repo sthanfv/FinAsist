@@ -47,30 +47,38 @@ graph TD
     subgraph "Usuario"
         A[Interactúa con la UI]
     end
+
     subgraph "Frontend (React / Next.js)"
         B(Componentes de UI Optimizados)
         C{useAppStore (Zustand) con Selectores}
         D[Layout / Páginas]
     end
+
     subgraph "Lógica de Negocio"
-        F[FinancialEngine.ts]
+        E[Hooks Personalizados<br/>(useFinancialAnalysis, useSmartCategorization)]
+        F[FinancialEngine / BankingEngine]
         G[Acciones de Zustand]
     end
+
     subgraph "Backend & Servicios"
         H(Firebase Auth)
         I(Firestore DB)
-        J(Genkit Flows / Google AI)
+        J[Flujos de IA (Genkit)]
         K[LocalStorage]
     end
+
     A --> B
+    B --> E
     B --> G
-    G --> C
     C --> D
     D --> B
-    G -- Llama a --> J
-    J -- Devuelve a --> B
-    G -- Dispara Análisis --> F
-    F -- Actualiza --> B
+    E --> J
+    E --> F
+    J -- Devuelve a --> E
+    F -- Devuelve a --> E
+    E -- Actualiza Estado --> G
+    G --> C
+    
     subgraph "Persistencia de Datos"
         G -- Si usuario está logueado --> I
         G -- Si usuario es invitado --> K
@@ -78,6 +86,7 @@ graph TD
         I <.-> C
         K <.-> C
     end
+
     style A fill:#f9f,stroke:#333,stroke-width:2px
     style J fill:#bbf,stroke:#333,stroke-width:2px
     style C fill:#9f9,stroke:#333,stroke-width:2px
@@ -93,25 +102,29 @@ graph TD
 src/
 ├── app/                  # Rutas de la aplicación (App Router)
 │   ├── dashboard/
-│   ├── calculators/      # Sección de calculadoras
+│   ├── calculators/
 │   ├── goals/
-│   ├── reports/
+│   ├── budgets/
 │   └── transactions/
 ├── components/           # Componentes reutilizables
 │   ├── auth/
 │   ├── assistant/
 │   ├── dashboard/
+│   ├── layout/           # Nuevo ModernLayout
 │   └── ui/               # Componentes base de shadcn/ui
 ├── store/                # Gestor de estado global
 │   ├── useAppStore.ts
 │   └── selectors.ts
-├── engine/               # Lógica de negocio pura
-│   └── FinancialEngine.ts
-├── hooks/                # Hooks reutilizables
-│   └── useFinancialAnalysis.ts
+├── engine/               # Lógica de negocio pura (Cálculos)
+│   ├── FinancialEngine.ts
+│   └── BankingEngine.ts
+├── hooks/                # Hooks reutilizables para lógica de UI
+│   ├── useFinancialAnalysis.ts
+│   └── useSmartCategorization.ts
 ├── ai/                   # Lógica de IA (Genkit)
-│   ├── flows/
-│   └── genkit.ts
+│   ├── flows/            # Contienen la lógica de los flujos de IA
+│   ├── genkit.ts         # Configuración de Genkit
+│   └── schemas.ts        # Schemas de Zod y tipos para IA
 └── lib/                  # Utilidades y configuración de servicios
     ├── firebase.ts
     └── utils.ts
@@ -129,7 +142,7 @@ El estado global, gestionado con Zustand, ha sido optimizado para evitar re-rend
 ### 4.3. Optimización de Renderizado en la UI
 
 *   **Virtualización de Listas (`@tanstack/react-virtual`)**: Para la tabla de transacciones, que puede crecer indefinidamente, se implementó la virtualización. Solo se renderizan las filas visibles en pantalla, manteniendo la aplicación fluida incluso con un historial de transacciones enorme.
-*   **Panel Lateral Colapsable**: El layout principal ahora cuenta con un panel de navegación lateral que puede colapsarse para mostrar solo íconos, maximizando el espacio disponible para el contenido y ofreciendo una experiencia de usuario limpia y moderna.
+*   **Panel Lateral Colapsable**: El layout principal (`ModernLayout`) ahora cuenta con un panel de navegación lateral que puede colapsarse para mostrar solo íconos, maximizando el espacio disponible para el contenido y ofreciendo una experiencia de usuario limpia y moderna.
 *   **Memoización (`React.memo` y `useMemo`)**: Componentes costosos como los gráficos están envueltos en `React.memo`. Los cálculos complejos dentro de los componentes se envuelven en el hook `useMemo` para cachear sus resultados.
 *   **Error Boundaries**: El Dashboard está envuelto en un `ErrorBoundary` personalizado. Si ocurre un error de renderizado, la aplicación no se bloquea y muestra un mensaje amigable.
 
@@ -157,9 +170,13 @@ Toda la inteligencia financiera está encapsulada en `src/engine/FinancialEngine
 *   **Authentication**: Gestiona el registro e inicio de sesión de usuarios con correo y contraseña.
 *   **Firestore**: Base de datos NoSQL con una estructura escalable y reglas de seguridad robustas que garantizan que un usuario solo puede acceder a sus propios datos.
 
-### 6.2. IA con Genkit
+### 6.2. IA con Genkit y Next.js Server Actions
 
-El asistente de IA utiliza flujos de Genkit para interactuar con modelos de lenguaje de Google, proveyendo recomendaciones personalizadas basadas en el contexto financiero del usuario.
+El asistente de IA utiliza flujos de Genkit para interactuar con modelos de lenguaje de Google. Para cumplir con las estrictas reglas de los Server Actions de Next.js (`"use server"`), la arquitectura de IA ha sido refactorizada:
+
+1.  **`src/ai/schemas.ts`**: Un archivo central que contiene todos los esquemas de Zod y las definiciones de tipos de TypeScript. Este archivo **no** usa `"use server"`, por lo que puede exportar tipos y objetos libremente.
+2.  **`src/ai/flows/*.ts`**: Cada archivo de flujo (ej. `categorizationFlow.ts`) contiene la directiva `"use server"` y exporta **únicamente una función asíncrona** que envuelve la definición y ejecución del flujo de Genkit. Esto resuelve los errores de compilación de Next.js.
+3.  **`src/hooks/useSmartCategorization.ts`**: Un hook de cliente que llama a la función de flujo del servidor para obtener sugerencias de IA, desacoplando la UI de la lógica de backend.
 
 **Ejemplo del prompt avanzado:**
 ```handlebars
@@ -187,7 +204,6 @@ Basado en TODO esto, genera una lista de 2 a 4 recomendaciones clave.
 ## 7. Próximos Pasos y Mejoras
 
 *   **Expandir Asistente de IA**:
-    *   **Categorización automática**: Sugerir una categoría al crear una transacción usando un flujo de Genkit.
     *   **Chatbot conversacional**: Permitir al usuario hacer preguntas en lenguaje natural sobre sus finanzas ("¿Cuánto gasté en comida el mes pasado?").
 *   **Notificaciones Push**: Utilizar Firebase Cloud Messaging para enviar alertas importantes incluso cuando el usuario no está en la aplicación.
 *   **Pruebas (Testing)**: Implementar tests unitarios (con Jest/Vitest) para el `FinancialEngine` y tests E2E (con Playwright/Cypress) para los flujos críticos.
