@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calculator, FileText, TrendingDown, AlertCircle } from 'lucide-react';
 import { bankingEngine, LoanCalculation } from '@/engine/BankingEngine';
@@ -12,6 +12,14 @@ export function LoanCalculator() {
   const [result, setResult] = useState<LoanCalculation | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showAmortization, setShowAmortization] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (result) {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [result]);
+
   const handleInputChange = (field: string, value: string) => {
     const numValue = parseFloat(value) || 0;
     setFormData(prev => ({ ...prev, [field]: numValue }));
@@ -180,73 +188,75 @@ export function LoanCalculator() {
           </div>
         </motion.div>
         {/* Resultados */}
-        {result && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700"
-          >
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
-              <TrendingDown className="w-5 h-5 mr-2 text-blue-600" />
-              Resumen del Préstamo
-            </h3>
-            <div className="space-y-4">
-              {/* Cuota mensual */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
-                <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                  Cuota Mensual Fija
-                </p>
-                <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
-                  {formatCurrency(result.monthlyPayment)}
-                </p>
-              </div>
-              {/* Total a pagar */}
-              <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-200 dark:border-orange-800">
-                <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">
-                  Total a Pagar
-                </p>
-                <p className="text-xl font-bold text-orange-700 dark:text-orange-300">
-                  {formatCurrency(result.totalPayment)}
-                </p>
-              </div>
-              {/* Total intereses */}
-              <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-200 dark:border-red-800">
-                <p className="text-sm text-red-600 dark:text-red-400 font-medium">
-                  Total Intereses
-                </p>
-                <p className="text-xl font-bold text-red-700 dark:text-red-300">
-                  {formatCurrency(result.totalInterest)}
-                </p>
-              </div>
-              {/* Alerta de costo */}
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-200 dark:border-yellow-800 flex items-start space-x-3">
-                <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                    Costo del préstamo
-                  </p>
-                  <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                    Pagarás {((result.totalInterest / result.principal) * 100).toFixed(1)}% más del monto solicitado
-                  </p>
+        <div ref={resultsRef} className="lg:col-span-1">
+            {result && (
+            <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700"
+            >
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+                <TrendingDown className="w-5 h-5 mr-2 text-blue-600" />
+                Resumen del Préstamo
+                </h3>
+                <div className="space-y-4">
+                {/* Cuota mensual */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                    Cuota Mensual Fija
+                    </p>
+                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                    {formatCurrency(result.monthlyPayment)}
+                    </p>
                 </div>
-              </div>
-              {/* Botón tabla amortización */}
-              <button
-                onClick={() => setShowAmortization(!showAmortization)}
-                className="w-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-3 rounded-xl font-medium transition-all duration-200"
-              >
-                {showAmortization ? 'Ocultar' : 'Ver'} Tabla de Amortización
-              </button>
-            </div>
-          </motion.div>
-        )}
+                {/* Total a pagar */}
+                <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-200 dark:border-orange-800">
+                    <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">
+                    Total a Pagar
+                    </p>
+                    <p className="text-xl font-bold text-orange-700 dark:text-orange-300">
+                    {formatCurrency(result.totalPayment)}
+                    </p>
+                </div>
+                {/* Total intereses */}
+                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-200 dark:border-red-800">
+                    <p className="text-sm text-red-600 dark:text-red-400 font-medium">
+                    Total Intereses
+                    </p>
+                    <p className="text-xl font-bold text-red-700 dark:text-red-300">
+                    {formatCurrency(result.totalInterest)}
+                    </p>
+                </div>
+                {/* Alerta de costo */}
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-200 dark:border-yellow-800 flex items-start space-x-3">
+                    <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                    <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                        Costo del préstamo
+                    </p>
+                    <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                        Pagarás {((result.totalInterest / result.principal) * 100).toFixed(1)}% más del monto solicitado
+                    </p>
+                    </div>
+                </div>
+                {/* Botón tabla amortización */}
+                <button
+                    onClick={() => setShowAmortization(!showAmortization)}
+                    className="w-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-3 rounded-xl font-medium transition-all duration-200"
+                >
+                    {showAmortization ? 'Ocultar' : 'Ver'} Tabla de Amortización
+                </button>
+                </div>
+            </motion.div>
+            )}
+        </div>
       </div>
       {/* Tabla de Amortización */}
       {result && showAmortization && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+          className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mt-6"
         >
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">

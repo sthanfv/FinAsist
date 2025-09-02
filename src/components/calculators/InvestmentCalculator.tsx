@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, DollarSign, Calendar, Target } from 'lucide-react';
 import { bankingEngine, InvestmentProjection } from '@/engine/BankingEngine';
@@ -12,6 +12,14 @@ export function InvestmentCalculator() {
   });
   const [result, setResult] = useState<InvestmentProjection | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (result) {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [result]);
+
   const handleInputChange = (field: string, value: string) => {
     const numValue = parseFloat(value) || 0;
     setFormData(prev => ({ ...prev, [field]: numValue }));
@@ -208,131 +216,132 @@ export function InvestmentCalculator() {
           </div>
         </motion.div>
         {/* Resultados */}
-        {result && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700"
-          >
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
-              <DollarSign className="w-5 h-5 mr-2 text-orange-600" />
-              Proyección de Inversión
-            </h3>
-            <div className="space-y-4">
-              {/* Monto final */}
-              <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-200 dark:border-orange-800">
-                <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">
-                  Valor Final de tu Inversión
+        <div ref={resultsRef} className="lg:col-span-1">
+            {result && (
+            <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700"
+            >
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+                <DollarSign className="w-5 h-5 mr-2 text-orange-600" />
+                Proyección de Inversión
+                </h3>
+                <div className="space-y-4">
+                {/* Monto final */}
+                <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-200 dark:border-orange-800">
+                    <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">
+                    Valor Final de tu Inversión
+                    </p>
+                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">
+                    {formatCurrency(result.finalAmount)}
+                    </p>
+                </div>
+                {/* Total contribuido */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                    Total Contribuido
+                    </p>
+                    <p className="text-xl font-bold text-blue-700 dark:text-blue-300">
+                    {formatCurrency(result.totalContributions)}
+                    </p>
+                </div>
+                {/* Ganancias */}
+                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl border border-green-200 dark:border-green-800">
+                    <p className="text-sm text-green-600 dark:text-green-400 font-medium">
+                    Ganancias por Interés Compuesto
+                    </p>
+                    <p className="text-xl font-bold text-green-700 dark:text-green-300">
+                    {formatCurrency(result.totalReturns)}
+                    </p>
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                    {((result.totalReturns / result.totalContributions) * 100).toFixed(1)}% de ganancia sobre lo aportado
+                    </p>
+                </div>
+                {/* Multiplicador */}
+                <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-200 dark:border-purple-800">
+                    <p className="text-sm text-purple-600 dark:text-purple-400 font-medium">
+                    Factor de Multiplicación
+                    </p>
+                    <p className="text-xl font-bold text-purple-700 dark:text-purple-300">
+                    {(result.finalAmount / result.totalContributions).toFixed(1)}x
+                    </p>
+                    <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                    Cada peso se convierte en {(result.finalAmount / result.totalContributions).toFixed(1)} pesos
+                    </p>
+                </div>
+                </div>
+            </motion.div>
+            )}
+            {result && (
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mt-6"
+            >
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                    <Calendar className="w-5 h-5 mr-2 text-orange-600" />
+                    Cronograma de Crecimiento Anual
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    Ve cómo crece tu inversión año tras año
                 </p>
-                <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">
-                  {formatCurrency(result.finalAmount)}
-                </p>
-              </div>
-              {/* Total contribuido */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
-                <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                  Total Contribuido
-                </p>
-                <p className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                  {formatCurrency(result.totalContributions)}
-                </p>
-              </div>
-              {/* Ganancias */}
-              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl border border-green-200 dark:border-green-800">
-                <p className="text-sm text-green-600 dark:text-green-400 font-medium">
-                  Ganancias por Interés Compuesto
-                </p>
-                <p className="text-xl font-bold text-green-700 dark:text-green-300">
-                  {formatCurrency(result.totalReturns)}
-                </p>
-                <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                  {((result.totalReturns / result.totalContributions) * 100).toFixed(1)}% de ganancia sobre lo aportado
-                </p>
-              </div>
-              {/* Multiplicador */}
-              <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-200 dark:border-purple-800">
-                <p className="text-sm text-purple-600 dark:text-purple-400 font-medium">
-                  Factor de Multiplicación
-                </p>
-                <p className="text-xl font-bold text-purple-700 dark:text-purple-300">
-                  {(result.finalAmount / result.totalContributions).toFixed(1)}x
-                </p>
-                <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
-                  Cada peso se convierte en {(result.finalAmount / result.totalContributions).toFixed(1)} pesos
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        )}
+                </div>
+                <div className="overflow-x-auto">
+                <table className="w-full">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Año
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Saldo Inicial
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Aportes
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Ganancias
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Saldo Final
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {result.yearlyBreakdown.map((year, index) => (
+                        <tr 
+                        key={year.year}
+                        className={`
+                            ${index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700/50'}
+                            hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors
+                        `}
+                        >
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                            {year.year}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
+                            {formatCurrency(year.startBalance)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right text-blue-600 dark:text-blue-400">
+                            {formatCurrency(year.contributions)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right text-green-600 dark:text-green-400">
+                            {formatCurrency(year.returns)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right text-orange-600 dark:text-orange-400 font-bold">
+                            {formatCurrency(year.endBalance)}
+                        </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+                </div>
+            </motion.div>
+            )}
+        </div>
       </div>
-      {/* Cronograma anual */}
-      {result && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
-        >
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-              <Calendar className="w-5 h-5 mr-2 text-orange-600" />
-              Cronograma de Crecimiento Anual
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Ve cómo crece tu inversión año tras año
-            </p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Año
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Saldo Inicial
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Aportes
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Ganancias
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Saldo Final
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {result.yearlyBreakdown.map((year, index) => (
-                  <tr 
-                    key={year.year}
-                    className={`
-                      ${index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700/50'}
-                      hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors
-                    `}
-                  >
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                      {year.year}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
-                      {formatCurrency(year.startBalance)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-right text-blue-600 dark:text-blue-400">
-                      {formatCurrency(year.contributions)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-right text-green-600 dark:text-green-400">
-                      {formatCurrency(year.returns)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-right text-orange-600 dark:text-orange-400 font-bold">
-                      {formatCurrency(year.endBalance)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </motion.div>
-      )}
     </div>
   );
 }

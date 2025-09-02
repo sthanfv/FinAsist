@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Target, Calendar, TrendingUp, AlertCircle, CheckCircle2, Crown } from 'lucide-react';
 import { bankingEngine } from '@/engine/BankingEngine';
@@ -24,6 +24,13 @@ export function FinancialFreedomCalculator() {
   });
   const [result, setResult] = useState<FinancialFreedomResult | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (result) {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [result]);
 
   const handleInputChange = (field: string, value: string) => {
     const numValue = parseFloat(value) || 0;
@@ -311,138 +318,140 @@ export function FinancialFreedomCalculator() {
         </motion.div>
 
         {/* Resultados */}
-        {result && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="space-y-4"
-          >
-            {/* Meta objetivo */}
-            <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl p-6 shadow-lg">
-              <h4 className="font-semibold text-violet-700 dark:text-violet-300 mb-4 flex items-center">
-                <Target className="w-5 h-5 mr-2" />
-                Tu Meta de Libertad Financiera
-              </h4>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Meta total (25x gastos anuales):</span>
-                  <span className="font-bold text-violet-700 dark:text-violet-300">
-                    {formatCurrency(result.targetAmount)}
-                  </span>
+        <div ref={resultsRef} className="lg:col-span-1">
+            {result && (
+            <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="space-y-4"
+            >
+                {/* Meta objetivo */}
+                <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl p-6 shadow-lg">
+                <h4 className="font-semibold text-violet-700 dark:text-violet-300 mb-4 flex items-center">
+                    <Target className="w-5 h-5 mr-2" />
+                    Tu Meta de Libertad Financiera
+                </h4>
+                <div className="space-y-2">
+                    <div className="flex justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Meta total (25x gastos anuales):</span>
+                    <span className="font-bold text-violet-700 dark:text-violet-300">
+                        {formatCurrency(result.targetAmount)}
+                    </span>
+                    </div>
+                    <div className="flex justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Te falta:</span>
+                    <span className="font-bold text-violet-700 dark:text-violet-300">
+                        {formatCurrency(result.remainingAmount)}
+                    </span>
+                    </div>
+                    <div className="flex justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Progreso actual:</span>
+                    <span className="font-bold text-violet-700 dark:text-violet-300">
+                        {((formData.currentSavings / result.targetAmount) * 100).toFixed(1)}%
+                    </span>
+                    </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Te falta:</span>
-                  <span className="font-bold text-violet-700 dark:text-violet-300">
-                    {formatCurrency(result.remainingAmount)}
-                  </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Progreso actual:</span>
-                  <span className="font-bold text-violet-700 dark:text-violet-300">
-                    {((formData.currentSavings / result.targetAmount) * 100).toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-            </div>
 
-            {/* Tiempo para libertad */}
-            {(() => {
-              const freedom = getFreedomLevel();
-              if (!freedom) return null;
-              
-              const colors = getColorClasses(freedom.color);
-              const Icon = freedom.icon;
-              
-              return (
-                <div className={`${colors.bg} ${colors.border} border rounded-2xl p-6 shadow-lg`}>
-                  <div className="flex items-center space-x-3 mb-4">
-                    <Icon className={`w-6 h-6 ${colors.iconColor}`} />
-                    <h4 className={`font-semibold ${colors.text}`}>
-                      Nivel: {freedom.level}
-                    </h4>
-                  </div>
-                  
-                  {result.monthsToFreedom !== Infinity ? (
-                    <div className="space-y-3">
-                      <div className="text-center">
-                        <p className={`text-3xl font-bold ${colors.text}`}>
-                          {result.yearsToFreedom} años
-                        </p>
-                        <p className={`text-sm ${colors.text} opacity-75`}>
-                          ({result.monthsToFreedom} meses)
-                        </p>
-                      </div>
-                      
-                      <div className={`text-center text-sm ${colors.text}`}>
-                        <p className="font-medium">Fecha estimada de libertad financiera:</p>
-                        <p className="text-lg font-bold">
-                          {new Date(Date.now() + result.monthsToFreedom * 30.44 * 24 * 60 * 60 * 1000).getFullYear()}
-                        </p>
-                      </div>
+                {/* Tiempo para libertad */}
+                {(() => {
+                const freedom = getFreedomLevel();
+                if (!freedom) return null;
+                
+                const colors = getColorClasses(freedom.color);
+                const Icon = freedom.icon;
+                
+                return (
+                    <div className={`${colors.bg} ${colors.border} border rounded-2xl p-6 shadow-lg`}>
+                    <div className="flex items-center space-x-3 mb-4">
+                        <Icon className={`w-6 h-6 ${colors.iconColor}`} />
+                        <h4 className={`font-semibold ${colors.text}`}>
+                        Nivel: {freedom.level}
+                        </h4>
                     </div>
-                  ) : (
-                    <div className="text-center">
-                      <p className={`text-xl font-bold ${colors.text}`}>
-                        ⚠️ Plan Insostenible
-                      </p>
-                      <p className={`text-sm ${colors.text} mt-2`}>
-                        Necesitas ahorrar al menos algo mensualmente
-                      </p>
+                    
+                    {result.monthsToFreedom !== Infinity ? (
+                        <div className="space-y-3">
+                        <div className="text-center">
+                            <p className={`text-3xl font-bold ${colors.text}`}>
+                            {result.yearsToFreedom} años
+                            </p>
+                            <p className={`text-sm ${colors.text} opacity-75`}>
+                            ({result.monthsToFreedom} meses)
+                            </p>
+                        </div>
+                        
+                        <div className={`text-center text-sm ${colors.text}`}>
+                            <p className="font-medium">Fecha estimada de libertad financiera:</p>
+                            <p className="text-lg font-bold">
+                            {new Date(Date.now() + result.monthsToFreedom * 30.44 * 24 * 60 * 60 * 1000).getFullYear()}
+                            </p>
+                        </div>
+                        </div>
+                    ) : (
+                        <div className="text-center">
+                        <p className={`text-xl font-bold ${colors.text}`}>
+                            ⚠️ Plan Insostenible
+                        </p>
+                        <p className={`text-sm ${colors.text} mt-2`}>
+                            Necesitas ahorrar al menos algo mensualmente
+                        </p>
+                        </div>
+                    )}
+                    
+                    <p className={`text-sm ${colors.text} mt-4 text-center italic`}>
+                        {freedom.message}
+                    </p>
                     </div>
-                  )}
-                  
-                  <p className={`text-sm ${colors.text} mt-4 text-center italic`}>
-                    {freedom.message}
-                  </p>
-                </div>
-              );
-            })()}
-            
-            {/* Recomendaciones */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6 shadow-lg">
-              <h4 className="font-semibold text-blue-700 dark:text-blue-300 mb-4 flex items-center">
-                <TrendingUp className="w-5 h-5 mr-2" />
-                Estrategias para Acelerar tu Plan
-              </h4>
-              
-              <div className="space-y-3 text-sm">
-                {result.monthsToFreedom > 180 && (
-                  <div className="flex items-start space-x-2">
+                );
+                })()}
+                
+                {/* Recomendaciones */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6 shadow-lg">
+                <h4 className="font-semibold text-blue-700 dark:text-blue-300 mb-4 flex items-center">
+                    <TrendingUp className="w-5 h-5 mr-2" />
+                    Estrategias para Acelerar tu Plan
+                </h4>
+                
+                <div className="space-y-3 text-sm">
+                    {result.monthsToFreedom > 180 && (
+                    <div className="flex items-start space-x-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <p className="text-blue-700 dark:text-blue-300">
+                        <strong>Aumenta tu ahorro:</strong> Si ahorraras {formatCurrency(formData.monthlySavings * 1.5)} 
+                        mensuales, te liberarías {Math.round((result.monthsToFreedom - result.monthsToFreedom * 0.67) / 12)} años antes
+                        </p>
+                    </div>
+                    )}
+                    
+                    <div className="flex items-start space-x-2">
                     <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                     <p className="text-blue-700 dark:text-blue-300">
-                      <strong>Aumenta tu ahorro:</strong> Si ahorraras {formatCurrency(formData.monthlySavings * 1.5)} 
-                      mensuales, te liberarías {Math.round((result.monthsToFreedom - result.monthsToFreedom * 0.67) / 12)} años antes
+                        <strong>Reduce gastos:</strong> Cada {formatCurrency(100000)} menos de gastos mensuales 
+                        reduce tu meta en {formatCurrency(100000 * 12 * 25)}
                     </p>
-                  </div>
-                )}
-                
-                <div className="flex items-start space-x-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <p className="text-blue-700 dark:text-blue-300">
-                    <strong>Reduce gastos:</strong> Cada {formatCurrency(100000)} menos de gastos mensuales 
-                    reduce tu meta en {formatCurrency(100000 * 12 * 25)}
-                  </p>
+                    </div>
+                    
+                    <div className="flex items-start space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-blue-700 dark:text-blue-300">
+                        <strong>Mejora tu retorno:</strong> Aumentar el retorno a {formData.expectedReturn + 2}% 
+                        podría acelerar tu plan significativamente
+                    </p>
+                    </div>
+                    
+                    <div className="flex items-start space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-blue-700 dark:text-blue-300">
+                        <strong>Ingresos pasivos:</strong> Busca fuentes de ingresos adicionales 
+                        (alquileres, dividendos, negocios)
+                    </p>
+                    </div>
                 </div>
-                
-                <div className="flex items-start space-x-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <p className="text-blue-700 dark:text-blue-300">
-                    <strong>Mejora tu retorno:</strong> Aumentar el retorno a {formData.expectedReturn + 2}% 
-                    podría acelerar tu plan significativamente
-                  </p>
                 </div>
-                
-                <div className="flex items-start space-x-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <p className="text-blue-700 dark:text-blue-300">
-                    <strong>Ingresos pasivos:</strong> Busca fuentes de ingresos adicionales 
-                    (alquileres, dividendos, negocios)
-                  </p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
+            </motion.div>
+            )}
+        </div>
       </div>
 
       {/* Información de la regla del 4% */}

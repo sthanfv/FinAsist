@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PiggyBank, TrendingUp, Clock, DollarSign } from 'lucide-react';
 import { bankingEngine, CDTCalculation } from '@/engine/BankingEngine';
@@ -12,6 +12,13 @@ export function CDTCalculator() {
   });
   const [result, setResult] = useState<CDTCalculation | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (result) {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [result]);
 
   const handleInputChange = (field: string, value: string) => {
     const numValue = parseFloat(value) || 0;
@@ -182,59 +189,61 @@ export function CDTCalculator() {
         </motion.div>
 
         {/* Resultados */}
-        {result && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700"
-          >
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
-              <Clock className="w-5 h-5 mr-2 text-emerald-600" />
-              Resultados del CDT
-            </h3>
-            <div className="space-y-4">
-              {/* Monto final */}
-              <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
-                  Monto Final
-                </p>
-                <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">
-                  {formatCurrency(result.finalAmount)}
-                </p>
-              </div>
+        <div ref={resultsRef} className="lg:col-span-1">
+            {result && (
+            <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700"
+            >
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+                <Clock className="w-5 h-5 mr-2 text-emerald-600" />
+                Resultados del CDT
+                </h3>
+                <div className="space-y-4">
+                {/* Monto final */}
+                <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                    <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+                    Monto Final
+                    </p>
+                    <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">
+                    {formatCurrency(result.finalAmount)}
+                    </p>
+                </div>
 
-              {/* Ganancia total */}
-              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl">
-                <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                  Ganancia Total
-                </p>
-                <p className="text-xl font-bold text-gray-900 dark:text-white">
-                  {formatCurrency(result.totalInterest)}
-                </p>
-              </div>
+                {/* Ganancia total */}
+                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                    Ganancia Total
+                    </p>
+                    <p className="text-xl font-bold text-gray-900 dark:text-white">
+                    {formatCurrency(result.totalInterest)}
+                    </p>
+                </div>
 
-              {/* Ganancia mensual */}
-              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl">
-                <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                  Ganancia Mensual Promedio
-                </p>
-                <p className="text-xl font-bold text-gray-900 dark:text-white">
-                  {formatCurrency(result.monthlyInterest)}
-                </p>
-              </div>
+                {/* Ganancia mensual */}
+                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                    Ganancia Mensual Promedio
+                    </p>
+                    <p className="text-xl font-bold text-gray-900 dark:text-white">
+                    {formatCurrency(result.monthlyInterest)}
+                    </p>
+                </div>
 
-              {/* Tasa efectiva */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
-                <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                  Tasa Efectiva Anual
-                </p>
-                <p className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                  {result.effectiveRate.toFixed(2)}%
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        )}
+                {/* Tasa efectiva */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                    Tasa Efectiva Anual
+                    </p>
+                    <p className="text-xl font-bold text-blue-700 dark:text-blue-300">
+                    {result.effectiveRate.toFixed(2)}%
+                    </p>
+                </div>
+                </div>
+            </motion.div>
+            )}
+        </div>
       </div>
     </div>
   );

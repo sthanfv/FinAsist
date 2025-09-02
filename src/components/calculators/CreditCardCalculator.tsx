@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CreditCard, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { bankingEngine, CreditCardSimulation } from '@/engine/BankingEngine';
@@ -12,6 +12,14 @@ export function CreditCardCalculator() {
   });
   const [result, setResult] = useState<CreditCardSimulation | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (result) {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [result]);
+
   const handleInputChange = (field: string, value: string) => {
     const numValue = parseFloat(value) || 0;
     setFormData(prev => ({ ...prev, [field]: numValue }));
@@ -200,130 +208,132 @@ export function CreditCardCalculator() {
           </div>
         </motion.div>
         {/* Resultados */}
-        {result && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="space-y-4"
-          >
-            {/* Escenario pago mínimo */}
-            {(() => {
-              const scenario = result.scenarios.minimumPayment;
-              const colors = getScenarioColor('minimum');
-              const Icon = colors.icon;
-              
-              return (
-                <div className={`${colors.bg} ${colors.border} border rounded-2xl p-6 shadow-lg`}>
-                  <div className="flex items-center space-x-3 mb-4">
-                    <Icon className={`w-5 h-5 ${colors.iconColor}`} />
-                    <h4 className={`font-semibold ${colors.text}`}>Pago Mínimo (2%)</h4>
-                  </div>
-                  <div className="space-y-2">
+        <div ref={resultsRef} className="lg:col-span-1">
+            {result && (
+            <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="space-y-4"
+            >
+                {/* Escenario pago mínimo */}
+                {(() => {
+                const scenario = result.scenarios.minimumPayment;
+                const colors = getScenarioColor('minimum');
+                const Icon = colors.icon;
+                
+                return (
+                    <div className={`${colors.bg} ${colors.border} border rounded-2xl p-6 shadow-lg`}>
+                    <div className="flex items-center space-x-3 mb-4">
+                        <Icon className={`w-5 h-5 ${colors.iconColor}`} />
+                        <h4 className={`font-semibold ${colors.text}`}>Pago Mínimo (2%)</h4>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Pago mensual:</span>
+                        <span className={`font-medium ${colors.text}`}>{formatCurrency(scenario.monthlyPayment)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Tiempo:</span>
+                        <span className={`font-medium ${colors.text}`}>{scenario.totalMonths} meses</span>
+                        </div>
+                        <div className="flex justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Total a pagar:</span>
+                        <span className={`font-bold ${colors.text}`}>{formatCurrency(scenario.totalPayment)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Intereses:</span>
+                        <span className={`font-bold ${colors.text}`}>{formatCurrency(scenario.totalInterest)}</span>
+                        </div>
+                    </div>
+                    </div>
+                );
+                })()}
+                {/* Escenario pago personalizado */}
+                {(() => {
+                const scenario = result.scenarios.customPayment;
+                const colors = getScenarioColor('custom');
+                const Icon = colors.icon;
+                
+                return (
+                    <div className={`${colors.bg} ${colors.border} border rounded-2xl p-6 shadow-lg`}>
+                    <div className="flex items-center space-x-3 mb-4">
+                        <Icon className={`w-5 h-5 ${colors.iconColor}`} />
+                        <h4 className={`font-semibold ${colors.text}`}>Tu Pago Planificado</h4>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Pago mensual:</span>
+                        <span className={`font-medium ${colors.text}`}>{formatCurrency(scenario.monthlyPayment)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Tiempo:</span>
+                        <span className={`font-medium ${colors.text}`}>{scenario.totalMonths} meses</span>
+                        </div>
+                        <div className="flex justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Total a pagar:</span>
+                        <span className={`font-bold ${colors.text}`}>{formatCurrency(scenario.totalPayment)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Intereses:</span>
+                        <span className={`font-bold ${colors.text}`}>{formatCurrency(scenario.totalInterest)}</span>
+                        </div>
+                    </div>
+                    </div>
+                );
+                })()}
+                {/* Escenario pago completo */}
+                {(() => {
+                const scenario = result.scenarios.fullPayment;
+                const colors = getScenarioColor('full');
+                const Icon = colors.icon;
+                
+                return (
+                    <div className={`${colors.bg} ${colors.border} border rounded-2xl p-6 shadow-lg`}>
+                    <div className="flex items-center space-x-3 mb-4">
+                        <Icon className={`w-5 h-5 ${colors.iconColor}`} />
+                        <h4 className={`font-semibold ${colors.text}`}>Pago Completo</h4>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Pago único:</span>
+                        <span className={`font-medium ${colors.text}`}>{formatCurrency(scenario.monthlyPayment)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Tiempo:</span>
+                        <span className={`font-medium ${colors.text}`}>Inmediato</span>
+                        </div>
+                        <div className="flex justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Intereses:</span>
+                        <span className={`font-bold ${colors.text}`}>$0</span>
+                        </div>
+                    </div>
+                    </div>
+                );
+                })()}
+                {/* Comparación de ahorros */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6 shadow-lg">
+                <h4 className="font-semibold text-blue-700 dark:text-blue-300 mb-4 flex items-center">
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Ahorro con tu estrategia
+                </h4>
+                <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Pago mensual:</span>
-                      <span className={`font-medium ${colors.text}`}>{formatCurrency(scenario.monthlyPayment)}</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Ahorras en intereses:</span>
+                    <span className="font-bold text-green-600 dark:text-green-400">
+                        {formatCurrency(result.scenarios.minimumPayment.totalInterest - result.scenarios.customPayment.totalInterest)}
+                    </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Tiempo:</span>
-                      <span className={`font-medium ${colors.text}`}>{scenario.totalMonths} meses</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Te liberas en:</span>
+                    <span className="font-bold text-blue-600 dark:text-blue-400">
+                        {result.scenarios.minimumPayment.totalMonths - result.scenarios.customPayment.totalMonths} meses menos
+                    </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Total a pagar:</span>
-                      <span className={`font-bold ${colors.text}`}>{formatCurrency(scenario.totalPayment)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Intereses:</span>
-                      <span className={`font-bold ${colors.text}`}>{formatCurrency(scenario.totalInterest)}</span>
-                    </div>
-                  </div>
                 </div>
-              );
-            })()}
-            {/* Escenario pago personalizado */}
-            {(() => {
-              const scenario = result.scenarios.customPayment;
-              const colors = getScenarioColor('custom');
-              const Icon = colors.icon;
-              
-              return (
-                <div className={`${colors.bg} ${colors.border} border rounded-2xl p-6 shadow-lg`}>
-                  <div className="flex items-center space-x-3 mb-4">
-                    <Icon className={`w-5 h-5 ${colors.iconColor}`} />
-                    <h4 className={`font-semibold ${colors.text}`}>Tu Pago Planificado</h4>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Pago mensual:</span>
-                      <span className={`font-medium ${colors.text}`}>{formatCurrency(scenario.monthlyPayment)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Tiempo:</span>
-                      <span className={`font-medium ${colors.text}`}>{scenario.totalMonths} meses</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Total a pagar:</span>
-                      <span className={`font-bold ${colors.text}`}>{formatCurrency(scenario.totalPayment)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Intereses:</span>
-                      <span className={`font-bold ${colors.text}`}>{formatCurrency(scenario.totalInterest)}</span>
-                    </div>
-                  </div>
                 </div>
-              );
-            })()}
-            {/* Escenario pago completo */}
-            {(() => {
-              const scenario = result.scenarios.fullPayment;
-              const colors = getScenarioColor('full');
-              const Icon = colors.icon;
-              
-              return (
-                <div className={`${colors.bg} ${colors.border} border rounded-2xl p-6 shadow-lg`}>
-                  <div className="flex items-center space-x-3 mb-4">
-                    <Icon className={`w-5 h-5 ${colors.iconColor}`} />
-                    <h4 className={`font-semibold ${colors.text}`}>Pago Completo</h4>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Pago único:</span>
-                      <span className={`font-medium ${colors.text}`}>{formatCurrency(scenario.monthlyPayment)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Tiempo:</span>
-                      <span className={`font-medium ${colors.text}`}>Inmediato</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Intereses:</span>
-                      <span className={`font-bold ${colors.text}`}>$0</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-            {/* Comparación de ahorros */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6 shadow-lg">
-              <h4 className="font-semibold text-blue-700 dark:text-blue-300 mb-4 flex items-center">
-                <CheckCircle className="w-5 h-5 mr-2" />
-                Ahorro con tu estrategia
-              </h4>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Ahorras en intereses:</span>
-                  <span className="font-bold text-green-600 dark:text-green-400">
-                    {formatCurrency(result.scenarios.minimumPayment.totalInterest - result.scenarios.customPayment.totalInterest)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Te liberas en:</span>
-                  <span className="font-bold text-blue-600 dark:text-blue-400">
-                    {result.scenarios.minimumPayment.totalMonths - result.scenarios.customPayment.totalMonths} meses menos
-                  </span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
+            </motion.div>
+            )}
+        </div>
       </div>
     </div>
   );
