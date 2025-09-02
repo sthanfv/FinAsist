@@ -562,7 +562,9 @@ export const useAppStore = create<AppState>()(
             console.log('❌ No user found in subscribeToUserData');
             return () => {};
           }
+          // CRÍTICO: No suscribirse si el email no está verificado
           if (!user.emailVerified) {
+              console.log('📬 Email not verified. Clearing data and stopping subscription.');
               setTransactions([]);
               setGoals([]);
               setBudgets([]);
@@ -651,3 +653,5 @@ export const useAppStore = create<AppState>()(
     )
   )
 );
+
+    
