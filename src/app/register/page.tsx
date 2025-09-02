@@ -1,10 +1,10 @@
 "use client";
-import Register from "@/components/auth/Register";
+import { AuthPanel } from "@/components/auth/AuthPanel";
 
 export default function RegisterPage() {
   return (
     <main>
-      <Register />
+      <AuthPanel initialMode="register" />
     </main>
   );
 }

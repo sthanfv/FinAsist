@@ -1,10 +1,10 @@
 "use client";
-import Login from "@/components/auth/Login";
+import { AuthPanel } from "@/components/auth/AuthPanel";
 
 export default function LoginPage() {
   return (
     <main>
-      <Login />
+      <AuthPanel initialMode="login" />
     </main>
   );
 }
