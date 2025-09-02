@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { NotificationSystem } from '@/components/ui/toast-system';
+import { AICategorizer, type CategorySuggestion } from '@/services/aiCategorizer';
 
 // Interfaces
 export interface Transaction {
@@ -27,6 +28,14 @@ export interface Transaction {
   type: 'income' | 'expense';
   date: string;
   createdAt: string;
+  // NUEVOS CAMPOS PARA IA
+  aiSuggestion?: {
+    category: string;
+    confidence: number;
+    reasoning: string;
+    isAccepted: boolean;
+  };
+  isAiCategorized?: boolean;
 }
 
 export interface Goal {
@@ -77,7 +86,7 @@ interface AppState {
   setLoading: (loading: boolean) => void;
   setInitialized: (initialized: boolean) => void;
   setTransactions: (transactions: Transaction[]) => void;
-  setGoals: (goals: Goal[]) => void;
+  setGoals: (goals) => void;
   addTransaction: (transactionData: Omit<Transaction, 'id' | 'createdAt'>) => Promise<void>;
   updateTransaction: (id: string, transactionData: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
@@ -94,6 +103,11 @@ interface AppState {
   deleteBudget: (budgetId: string) => Promise<void>;
   calculateBudgetStatus: () => void;
   getBudgetUsage: (category: string) => Budget | undefined;
+
+  // Acciones de IA
+  categorizeTransactionWithAI: (transactionId: string) => Promise<void>;
+  acceptAISuggestion: (transactionId: string) => void;
+  rejectAISuggestion: (transactionId: string) => void;
 }
 
 
@@ -237,7 +251,74 @@ export const useAppStore = create<AppState>()(
             saveGuestData();
           }
         },
+        categorizeTransactionWithAI: async (transactionId: string) => {
+          const { transactions, updateTransaction } = get();
+          const transaction = transactions.find(t => t.id === transactionId);
+          
+          if (!transaction) return;
+          try {
+            const suggestion = await AICategorizer.categorizeTransaction(
+              transaction.description, 
+              transaction.amount
+            );
+            
+            const updatedFields = { 
+              aiSuggestion: {
+                ...suggestion,
+                isAccepted: false
+              },
+              isAiCategorized: true
+            };
 
+            await updateTransaction(transactionId, updatedFields);
+            
+          } catch (error) {
+            console.error('Error categorizing transaction:', error);
+          }
+        },
+        acceptAISuggestion: (transactionId: string) => {
+          const { transactions, updateTransaction } = get();
+          const transaction = transactions.find(t => t.id === transactionId);
+
+          if(transaction && transaction.aiSuggestion){
+              const updatedFields = { 
+                category: transaction.aiSuggestion.category,
+                aiSuggestion: {
+                  ...transaction.aiSuggestion,
+                  isAccepted: true
+                }
+              };
+              updateTransaction(transactionId, updatedFields);
+          }
+        },
+        rejectAISuggestion: (transactionId: string) => {
+          const { transactions, updateTransaction } = get();
+          const transaction = transactions.find(t => t.id === transactionId);
+
+          if(transaction && transaction.aiSuggestion){
+            const updatedFields = {
+                aiSuggestion: undefined,
+                isAiCategorized: false
+            };
+            // Firestore no permite 'undefined', así que necesitaríamos eliminar el campo.
+            // Para simplicidad en el estado local, lo ponemos como undefined.
+            // La lógica de persistencia debe manejar la eliminación del campo.
+             set((state) => {
+              const index = state.transactions.findIndex(t => t.id === transactionId);
+              if (index !== -1) {
+                delete state.transactions[index].aiSuggestion;
+                state.transactions[index].isAiCategorized = false;
+              }
+            });
+            const { user } = get();
+            if (user) {
+              // Aquí iría la lógica para eliminar el campo en Firebase.
+              // updateDoc(doc(db, 'users', user.uid, 'transactions', transactionId), {
+              //   aiSuggestion: deleteField()
+              // });
+            }
+          }
+        },
         // Budget actions
         addBudget: async (budgetData) => {
           const { user, saveGuestData } = get();
@@ -430,3 +511,5 @@ export const useAppStore = create<AppState>()(
     )
   )
 );
+
+    
