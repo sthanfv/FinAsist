@@ -14,6 +14,13 @@ type Props = {
   onTransactionAdded: () => void;
 };
 
+const categories = [
+  'Alimentación', 'Transporte', 'Entretenimiento', 'Salud',
+  'Educación', 'Servicios', 'Compras', 'Hogar', 'Cuidado Personal',
+  'Mascotas', 'Suscripciones', 'Deudas', 'Inversiones', 'Regalos',
+  'Ingreso', 'Otros'
+];
+
 export const EnhancedTransactionForm = ({ onTransactionAdded }: Props) => {
   const { addTransaction, getBudgetUsage } = useAppStore();
   const { suggestCategory, isLoading } = useSmartCategorization();
@@ -119,8 +126,7 @@ export const EnhancedTransactionForm = ({ onTransactionAdded }: Props) => {
                     <SelectValue placeholder="Selecciona categoría" />
                   </SelectTrigger>
                   <SelectContent>
-                    {['Alimentación', 'Transporte', 'Entretenimiento', 'Salud',
-                      'Educación', 'Servicios', 'Compras', 'Otros'].map(cat => (
+                    {categories.map(cat => (
                       <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                     ))}
                   </SelectContent>

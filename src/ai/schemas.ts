@@ -48,12 +48,19 @@ const categories = [
   'Educación',
   'Servicios',
   'Compras',
+  'Hogar',
+  'Cuidado Personal',
+  'Mascotas',
+  'Suscripciones',
+  'Deudas',
+  'Inversiones',
+  'Regalos',
   'Ingreso',
   'Otros',
 ];
 
 export const CategorizationOutputSchema = z.object({
-  category: z.enum(categories).describe('La categoría sugerida para la transacción.'),
+  category: z.enum(categories as [string, ...string[]]).describe('La categoría sugerida para la transacción.'),
   confidence: z
     .number()
     .describe(

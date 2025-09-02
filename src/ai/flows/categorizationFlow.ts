@@ -22,6 +22,13 @@ const categories = [
   'Educación',
   'Servicios',
   'Compras',
+  'Hogar',
+  'Cuidado Personal',
+  'Mascotas',
+  'Suscripciones',
+  'Deudas',
+  'Inversiones',
+  'Regalos',
   'Ingreso',
   'Otros',
 ];
