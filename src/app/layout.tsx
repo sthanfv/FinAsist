@@ -20,25 +20,23 @@ export default function RootLayout({
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      setLoading(true);
       setUser(user);
       if (user) {
+        // Logged in user
         const unsubscribeData = subscribeToUserData();
         setInitialized(true);
-        setLoading(false);
         // Devuelve la función de limpieza para los datos del usuario
         return () => unsubscribeData();
       } else {
+        // Guest user
         loadGuestData();
         setInitialized(true);
-        setLoading(false);
       }
     });
 
-    return () => {
-      unsubscribeAuth();
-    };
-  }, [setLoading, setUser, setInitialized, subscribeToUserData, loadGuestData]);
+    // Cleanup the auth subscription on unmount
+    return () => unsubscribeAuth();
+  }, [setUser, setInitialized, subscribeToUserData, loadGuestData]);
 
 
   if (!isInitialized) {

@@ -144,7 +144,9 @@ export const useAppStore = create<AppState>()(
         isDarkMode: false,
 
         // Auth actions
-        setUser: (user) => set((state) => { state.user = user; }),
+        setUser: (user) => set((state) => { 
+          state.user = user; 
+        }),
         setLoading: (loading) => set((state) => { state.isLoading = loading; }),
         setInitialized: (initialized) => set((state) => { state.isInitialized = initialized; }),
         logout: async () => {
@@ -156,6 +158,7 @@ export const useAppStore = create<AppState>()(
               state.goals = [];
               state.budgets = [];
               state.balance = 0;
+              state.isInitialized = false; // Force re-initialization for next user
             });
             localStorage.removeItem(GUEST_DATA_KEY);
             toast.success('Has cerrado sesión correctamente');
@@ -185,6 +188,10 @@ export const useAppStore = create<AppState>()(
           
           if (user) {
             try {
+              if(!user.emailVerified) {
+                 toast.error('Debes verificar tu email para añadir transacciones.');
+                 return;
+              }
               await addDoc(collection(db, 'users', user.uid, 'transactions'), newTransaction);
               toast.success('Transacción agregada correctamente');
             } catch (error) {
@@ -211,6 +218,10 @@ export const useAppStore = create<AppState>()(
           
           if (user) {
             try {
+              if(!user.emailVerified) {
+                 toast.error('Debes verificar tu email para editar.');
+                 return;
+              }
               await updateDoc(doc(db, 'users', user.uid, 'transactions', id), transactionData);
               toast.success('Transacción actualizada');
             } catch (error) {
@@ -237,6 +248,10 @@ export const useAppStore = create<AppState>()(
           
           if (user) {
             try {
+               if(!user.emailVerified) {
+                 toast.error('Debes verificar tu email para eliminar.');
+                 return;
+              }
               await deleteDoc(doc(db, 'users', user.uid, 'transactions', id));
               toast.success('Transacción eliminada');
             } catch (error) {
@@ -267,6 +282,10 @@ export const useAppStore = create<AppState>()(
           
           if (user) {
             try {
+              if(!user.emailVerified) {
+                 toast.error('Debes verificar tu email para añadir metas.');
+                 return;
+              }
               await setDoc(doc(db, 'users', user.uid, 'goals', newGoal.id), newGoal);
               toast.success('Meta creada correctamente');
             } catch (error) {
@@ -286,6 +305,10 @@ export const useAppStore = create<AppState>()(
           
           if (user) {
             try {
+               if(!user.emailVerified) {
+                 toast.error('Debes verificar tu email para editar metas.');
+                 return;
+              }
               await updateDoc(doc(db, 'users', user.uid, 'goals', id), goalData);
               toast.success('Meta actualizada');
             } catch (error) {
@@ -308,6 +331,10 @@ export const useAppStore = create<AppState>()(
           
           if (user) {
             try {
+               if(!user.emailVerified) {
+                 toast.error('Debes verificar tu email para eliminar metas.');
+                 return;
+              }
               await deleteDoc(doc(db, 'users', user.uid, 'goals', id));
               toast.success('Meta eliminada');
             } catch (error) {
@@ -335,6 +362,10 @@ export const useAppStore = create<AppState>()(
           
           if (user) {
             try {
+              if(!user.emailVerified) {
+                 toast.error('Debes verificar tu email para crear presupuestos.');
+                 return;
+              }
               await setDoc(doc(db, 'users', user.uid, 'budgets', newBudget.id), newBudget);
               toast.success('Presupuesto creado');
             } catch (error) {
@@ -355,6 +386,10 @@ export const useAppStore = create<AppState>()(
           
           if (user) {
             try {
+              if(!user.emailVerified) {
+                 toast.error('Debes verificar tu email para editar presupuestos.');
+                 return;
+              }
               await updateDoc(doc(db, 'users', user.uid, 'budgets', budgetId), updates);
               toast.success('Presupuesto actualizado');
             } catch (error) {
@@ -378,6 +413,10 @@ export const useAppStore = create<AppState>()(
           
           if (user) {
             try {
+              if(!user.emailVerified) {
+                 toast.error('Debes verificar tu email para eliminar presupuestos.');
+                 return;
+              }
               await deleteDoc(doc(db, 'users', user.uid, 'budgets', budgetId));
               toast.success('Presupuesto eliminado');
             } catch (error) {
@@ -476,21 +515,21 @@ export const useAppStore = create<AppState>()(
         }),
         subscribeToUserData: () => {
           const { user, setTransactions, setGoals, setBudgets } = get();
-          if (!user) return () => {};
+          if (!user || !user.emailVerified) {
+              setTransactions([]);
+              setGoals([]);
+              setBudgets([]);
+              return () => {};
+          }
 
           const unsubscribers: Unsubscribe[] = [];
 
           // Suscripción a transacciones
-          const transactionsUnsubscribe = onSnapshot(
-            collection(db, 'users', user.uid, 'transactions'),
-            (snapshot) => {
-              const transactions = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-              } as Transaction));
+          const transactionsQuery = query(collection(db, 'users', user.uid, 'transactions'));
+          const transactionsUnsubscribe = onSnapshot(transactionsQuery, (snapshot) => {
+              const transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
               setTransactions(transactions);
-            },
-            (error) => {
+            }, (error) => {
               console.error('Error in transactions subscription:', error);
               toast.error('Error al cargar transacciones');
             }
@@ -498,16 +537,11 @@ export const useAppStore = create<AppState>()(
           unsubscribers.push(transactionsUnsubscribe);
 
           // Suscripción a metas
-          const goalsUnsubscribe = onSnapshot(
-            collection(db, 'users', user.uid, 'goals'),
-            (snapshot) => {
-              const goals = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-              } as Goal));
+          const goalsQuery = query(collection(db, 'users', user.uid, 'goals'));
+          const goalsUnsubscribe = onSnapshot(goalsQuery, (snapshot) => {
+              const goals = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Goal));
               setGoals(goals);
-            },
-            (error) => {
+            }, (error) => {
               console.error('Error in goals subscription:', error);
               toast.error('Error al cargar metas');
             }
@@ -515,17 +549,12 @@ export const useAppStore = create<AppState>()(
           unsubscribers.push(goalsUnsubscribe);
 
           // Suscripción a presupuestos
-          const budgetsUnsubscribe = onSnapshot(
-            collection(db, 'users', user.uid, 'budgets'),
-            (snapshot) => {
-              const budgets = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-              } as Budget));
+          const budgetsQuery = query(collection(db, 'users', user.uid, 'budgets'));
+          const budgetsUnsubscribe = onSnapshot(budgetsQuery, (snapshot) => {
+              const budgets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Budget));
               setBudgets(budgets);
               get().calculateBudgetStatus();
-            },
-            (error) => {
+            }, (error) => {
               console.error('Error in budgets subscription:', error);
               toast.error('Error al cargar presupuestos');
             }
