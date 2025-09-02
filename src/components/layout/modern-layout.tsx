@@ -9,18 +9,37 @@ import {
   ChevronRight, Home, CreditCard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useUser, useBalance } from '@/store/selectors';
+import { useUser, useBalance, useTransactions, useGoals } from '@/store/selectors';
 import Link from 'next/link';
 import { ThemeToggle } from '../ThemeToggle';
+import { useRouter } from 'next/navigation';
+
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { EnhancedTransactionForm } from '@/components/transactions/enhanced-transaction-form';
+import AddGoalForm from '@/components/goals/AddGoalForm';
+import UnifiedAssistant from '@/components/assistant/UnifiedAssistant';
+import { useAppStore } from '@/store/useAppStore';
+import type { Goal } from '@/store/useAppStore';
 
 interface ModernLayoutProps {
   children: React.ReactNode;
 }
 export const ModernLayout = ({ children }: ModernLayoutProps) => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // Inicia cerrado en móvil
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
+
+  // State for modals
+  const [isTransactionModalOpen, setTransactionModalOpen] = useState(false);
+  const [isGoalModalOpen, setGoalModalOpen] = useState(false);
+  const [isAssistantModalOpen, setAssistantModalOpen] = useState(false);
+
+  const router = useRouter();
   const user = useUser();
   const balance = useBalance();
+  const transactions = useTransactions();
+  const goals = useGoals();
+  const addGoal = useAppStore(state => state.addGoal);
+
 
   const navigationItems = [
     { icon: Home, label: 'Dashboard', href: '/dashboard', color: 'text-blue-500' },
@@ -29,12 +48,39 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
     { icon: TrendingUp, label: 'Reportes', href: '/reports', color: 'text-orange-500' },
     { icon: Calculator, label: 'Calculadoras', href: '/calculators', color: 'text-cyan-500' },
   ];
+
   const quickActions = [
     { icon: Plus, label: 'Nueva Transacción', action: 'add-transaction', color: 'bg-blue-500' },
     { icon: Target, label: 'Nueva Meta', action: 'add-goal', color: 'bg-purple-500' },
     { icon: Sparkles, label: 'Consejo IA', action: 'ai-advice', color: 'bg-gradient-to-r from-pink-500 to-violet-500' },
     { icon: FileText, label: 'Generar Reporte', action: 'generate-report', color: 'bg-orange-500' },
   ];
+
+  const handleQuickAction = (action: string) => {
+    setQuickActionsOpen(false); // Close panel after action
+    switch (action) {
+      case 'add-transaction':
+        setTransactionModalOpen(true);
+        break;
+      case 'add-goal':
+        setGoalModalOpen(true);
+        break;
+      case 'ai-advice':
+        setAssistantModalOpen(true);
+        break;
+      case 'generate-report':
+        router.push('/reports');
+        break;
+      default:
+        console.warn(`Unknown quick action: ${action}`);
+    }
+  };
+
+  const handleGoalAdded = (newGoal: Omit<Goal, 'id' | 'createdAt' | 'currentAmount'>) => {
+    addGoal({...newGoal, currentAmount: 0});
+    setGoalModalOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       {/* Header Flotante */}
@@ -211,6 +257,7 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
                   whileHover={{ x: 4 }}
+                  onClick={() => handleQuickAction(action.action)}
                   className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group"
                 >
                   <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", action.color)}>
@@ -245,6 +292,32 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
       )}>
         {children}
       </main>
+
+      {/* Modals for Quick Actions */}
+      <Dialog open={isTransactionModalOpen} onOpenChange={setTransactionModalOpen}>
+        <DialogContent>
+          <EnhancedTransactionForm onTransactionAdded={() => setTransactionModalOpen(false)} />
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isGoalModalOpen} onOpenChange={setGoalModalOpen}>
+        <DialogContent>
+           <AddGoalForm onAddGoal={handleGoalAdded} />
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isAssistantModalOpen} onOpenChange={setAssistantModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Asistente Financiero IA</DialogTitle>
+          </DialogHeader>
+          <UnifiedAssistant 
+            balance={balance}
+            transactions={transactions}
+            goals={goals}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
