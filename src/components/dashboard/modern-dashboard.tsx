@@ -26,7 +26,8 @@ export const ModernDashboard = () => {
   const analysis = useFinancialAnalysis();
 
   const [isGoalModalOpen, setGoalModalOpen] = useState(false);
-  const addGoal = useAppStore(state => state.addGoal);
+  const { addGoal } = useAppStore();
+
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -62,8 +63,8 @@ export const ModernDashboard = () => {
   const savingsRate = thisMonthIncome > 0 ? 
     ((thisMonthIncome - thisMonthExpenses) / thisMonthIncome) * 100 : 0;
   
-  const handleGoalAdded = (newGoal: Omit<Goal, 'id' | 'createdAt' | 'currentAmount'>) => {
-    addGoal({...newGoal, currentAmount: 0});
+  const handleGoalAdded = (newGoal: Omit<Goal, 'id' | 'createdAt'>) => {
+    addGoal(newGoal);
     setGoalModalOpen(false);
   };
 
@@ -268,6 +269,7 @@ export const ModernDashboard = () => {
                 <div className="text-center">
                   <motion.p 
                     className="text-4xl font-black text-blue-600 dark:text-blue-400"
+                    key={goals.length} // Force re-animation when goal count changes
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", bounce: 0.5, delay: 0.1 }}

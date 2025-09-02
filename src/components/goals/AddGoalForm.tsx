@@ -14,12 +14,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Goal } from "@/store/useAppStore";
+import type { Goal } from "@/store/useAppStore";
 
 const formSchema = z.object({
   name: z.string().min(1, "El título es requerido."),
   targetAmount: z.coerce.number().positive("El monto objetivo debe ser positivo."),
-  currentAmount: z.coerce.number().min(0, "El monto ahorrado no puede ser negativo."),
+  currentAmount: z.coerce.number().min(0, "El monto ahorrado no puede ser negativo.").optional().default(0),
   deadline: z.string().min(1, "La fecha límite es requerida."),
 });
 
@@ -39,7 +39,12 @@ export default function AddGoalForm({ onAddGoal }: AddGoalFormProps) {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    onAddGoal(values);
+    onAddGoal({
+        name: values.name,
+        targetAmount: values.targetAmount,
+        currentAmount: values.currentAmount || 0,
+        deadline: values.deadline,
+    });
     form.reset();
   }
 
