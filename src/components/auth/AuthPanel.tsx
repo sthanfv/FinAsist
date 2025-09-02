@@ -14,13 +14,12 @@ import { useAppStore } from '@/store/useAppStore';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
-  GoogleAuthProvider,
   signInWithPopup,
   sendPasswordResetEmail,
   sendEmailVerification,
   updateProfile
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, configureGoogleProvider } from '@/lib/firebase';
 import { 
   ArrowLeft, 
   Eye, 
@@ -228,10 +227,7 @@ export const AuthPanel = ({ initialMode = 'login' }: AuthPanelProps) => {
   const handleGoogleAuth = async () => {
     setLoading(true);
     try {
-      const provider = new GoogleAuthProvider();
-      provider.addScope('email');
-      provider.addScope('profile');
-      
+      const provider = configureGoogleProvider();
       const result = await signInWithPopup(auth, provider);
       toast.success(`¡Bienvenido ${result.user.displayName}!`);
       router.push('/dashboard');
