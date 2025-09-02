@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { 
   Menu, X, Plus, Sparkles, TrendingUp, Target, 
   Calculator, FileText, User, 
-  ChevronRight, Home, CreditCard, LogOut, UserPlus, LogIn
+  ChevronRight, Home, CreditCard, LogOut, UserPlus, LogIn, Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useBalance, useTransactions, useGoals } from '@/store/selectors';
@@ -47,6 +47,7 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
     { icon: Target, label: 'Metas', href: '/goals', color: 'text-purple-500' },
     { icon: TrendingUp, label: 'Reportes', href: '/reports', color: 'text-orange-500' },
     { icon: Calculator, label: 'Calculadoras', href: '/calculators', color: 'text-cyan-500' },
+    { icon: Activity, label: 'Análisis Avanzado', href: '/dashboard/analysis', color: 'text-pink-500' },
   ];
 
   const quickActions = [
