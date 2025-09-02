@@ -17,7 +17,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { NotificationSystem } from '@/components/ui/toast-system';
-import { AICategorizer, type CategorySuggestion } from '@/services/aiCategorizer';
+
 
 // Interfaces
 export interface Transaction {
@@ -256,25 +256,6 @@ export const useAppStore = create<AppState>()(
           const transaction = transactions.find(t => t.id === transactionId);
           
           if (!transaction) return;
-          try {
-            const suggestion = await AICategorizer.categorizeTransaction(
-              transaction.description, 
-              transaction.amount
-            );
-            
-            const updatedFields = { 
-              aiSuggestion: {
-                ...suggestion,
-                isAccepted: false
-              },
-              isAiCategorized: true
-            };
-
-            await updateTransaction(transactionId, updatedFields);
-            
-          } catch (error) {
-            console.error('Error categorizing transaction:', error);
-          }
         },
         acceptAISuggestion: (transactionId: string) => {
           const { transactions, updateTransaction } = get();

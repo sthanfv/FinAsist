@@ -34,29 +34,7 @@ export async function categorizeTransaction(input: CategorizationInput): Promise
       outputSchema: CategorizationOutputSchema,
     },
     async (input) => {
-      const { userHistory = [], description } = input;
-      // Caché simple para descripciones similares
-      const similarTransaction = userHistory.find(
-        (h) =>
-          h.description &&
-          description &&
-          h.description
-            .toLowerCase()
-            .includes(description.toLowerCase().split(' ')[0]) &&
-          description
-            .toLowerCase()
-            .includes(h.description.toLowerCase().split(' ')[0])
-      );
-  
-      if (similarTransaction) {
-        return {
-          category: similarTransaction.category as any,
-          confidence: 0.9,
-          reason: `Basado en transacción similar: "${similarTransaction.description}"`,
-        };
-      }
-  
-      try {
+      
         const prompt = await ai.definePrompt({
           name: 'categorizationPrompt',
           input: {schema: CategorizationInputSchema},
@@ -69,29 +47,28 @@ export async function categorizeTransaction(input: CategorizationInput): Promise
   Categorías disponibles: ${categories.join(', ')}
   
   {{#if userHistory}}
-  Historial del usuario (últimas transacciones):
+  Historial del usuario (últimas transacciones para dar contexto):
   {{#each userHistory}}
-  - "{{this.description}}" -> {{this.category}}
+  - "{{this.description}}" fue categorizado como {{this.category}}
   {{/each}}
   {{/if}}
   
-  Responde SOLO con el nombre exacto de la categoría, nada más. Si la descripción sugiere un ingreso, responde 'Ingreso'.
-  Considera el historial del usuario para hacer una mejor sugerencia.
-  Basado en la descripción y el historial, proporciona la categoría, un nivel de confianza y una razón corta.`,
+  Basado en la descripción y el historial, proporciona la categoría, un nivel de confianza (confidence) de 0 a 1, y una razón (reason) corta para tu elección.
+  Si la descripción sugiere un ingreso (salario, pago, etc.), la categoría debe ser 'Ingreso'.`,
         })(input);
   
         if (!prompt.output) {
           throw new Error('No se recibió respuesta del modelo de IA');
         }
+        
+        // Asegurarnos que la categoría está en la lista permitida
+        if(!categories.includes(prompt.output.category)) {
+            prompt.output.category = 'Otros';
+            prompt.output.confidence = Math.min(prompt.output.confidence, 0.5);
+            prompt.output.reason = `Categoría no reconocida, asignada a Otros. Razón original: ${prompt.output.reason}`;
+        }
+        
         return prompt.output;
-      } catch (error) {
-        console.error('Error en categorización:', error);
-        return {
-          category: 'Otros',
-          confidence: 0.1,
-          reason: 'Error en IA, categorización manual requerida',
-        };
-      }
     }
   );
   return await categorizationFlow(input);
