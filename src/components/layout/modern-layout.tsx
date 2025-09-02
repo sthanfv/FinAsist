@@ -2,11 +2,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { 
   Menu, X, Plus, Sparkles, TrendingUp, Target, 
-  Calculator, FileText, Settings, User, 
-  ChevronRight, Home, CreditCard
+  Calculator, FileText, User, 
+  ChevronRight, Home, CreditCard, LogOut, UserPlus, LogIn
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useBalance, useTransactions, useGoals } from '@/store/selectors';
@@ -15,6 +14,7 @@ import { ThemeToggle } from '../ThemeToggle';
 import { useRouter } from 'next/navigation';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { EnhancedTransactionForm } from '@/components/transactions/enhanced-transaction-form';
 import AddGoalForm from '@/components/goals/AddGoalForm';
 import UnifiedAssistant from '@/components/assistant/UnifiedAssistant';
@@ -38,7 +38,7 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
   const balance = useBalance();
   const transactions = useTransactions();
   const goals = useGoals();
-  const addGoal = useAppStore(state => state.addGoal);
+  const { addGoal, logout } = useAppStore();
 
 
   const navigationItems = [
@@ -80,6 +80,11 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
     addGoal({...newGoal, currentAmount: 0});
     setGoalModalOpen(false);
   };
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
@@ -132,7 +137,7 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
                   FinAssist
                 </h1>
                 <p className="text-xs text-muted-foreground">
-                  {user ? `Bienvenido, ${user.email}` : 'Modo Invitado'}
+                  {user ? `Bienvenido` : 'Modo Invitado'}
                 </p>
               </div>
             </div>
@@ -160,13 +165,50 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
             >
               <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline text-xs sm:text-sm">Acciones</span>
-              <span className="sm:hidden text-xs">+</span>
             </Button>
             
             <ThemeToggle />
-            <Button variant="ghost" size="sm" className="p-1 sm:p-2">
-              <User className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="p-1 sm:p-2 rounded-full">
+                  <User className="h-4 w-4 sm:h-5 sm:w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                {user ? (
+                   <>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">Mi Cuenta</p>
+                        <p className="text-xs leading-none text-muted-foreground truncate">
+                          {user.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Cerrar Sesión</span>
+                    </DropdownMenuItem>
+                   </>
+                ) : (
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel>Modo Invitado</DropdownMenuLabel>
+                     <DropdownMenuSeparator />
+                     <DropdownMenuItem onSelect={() => router.push('/login')}>
+                      <LogIn className="mr-2 h-4 w-4" />
+                      <span>Iniciar Sesión</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => router.push('/register')}>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      <span>Registrarse</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
           </div>
         </div>
       </motion.header>

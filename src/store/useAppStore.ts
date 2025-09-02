@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { User } from 'firebase/auth';
+import { User, signOut } from 'firebase/auth';
 import { 
   collection, 
   query, 
@@ -16,7 +16,7 @@ import {
   deleteField,
   type Unsubscribe
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { toast } from 'sonner';
 
 // Interfaces corregidas
@@ -89,6 +89,7 @@ interface AppState {
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
   setInitialized: (initialized: boolean) => void;
+  logout: () => Promise<void>;
   
   // Data actions
   setTransactions: (transactions: Transaction[]) => void;
@@ -146,6 +147,23 @@ export const useAppStore = create<AppState>()(
         setUser: (user) => set((state) => { state.user = user; }),
         setLoading: (loading) => set((state) => { state.isLoading = loading; }),
         setInitialized: (initialized) => set((state) => { state.isInitialized = initialized; }),
+        logout: async () => {
+          try {
+            await signOut(auth);
+            set(state => {
+              state.user = null;
+              state.transactions = [];
+              state.goals = [];
+              state.budgets = [];
+              state.balance = 0;
+            });
+            localStorage.removeItem(GUEST_DATA_KEY);
+            toast.success('Has cerrado sesión correctamente');
+          } catch(error) {
+            console.error("Error al cerrar sesión", error);
+            toast.error('Hubo un problema al cerrar sesión');
+          }
+        },
 
         // Data setters
         setTransactions: (transactions) => set((state) => {
