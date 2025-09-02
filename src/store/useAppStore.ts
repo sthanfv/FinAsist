@@ -169,15 +169,35 @@ export const useAppStore = create<AppState>()(
           }
         },
         initializeAuthListener: () => {
-          const { setUser, subscribeToUserData, loadGuestData, setInitialized } = get();
-          return onAuthStateChanged(auth, (user) => {
-            setUser(user);
-            if (user) {
-              subscribeToUserData();
-            } else {
-              loadGuestData();
+          const { setUser, setLoading, subscribeToUserData, loadGuestData, setInitialized } = get();
+          
+          setLoading(true); // Inicia el loading
+          
+          return onAuthStateChanged(auth, async (user) => {
+            console.log('🔥 Auth state changed:', user ? 'User logged in' : 'No user');
+            
+            try {
+              setUser(user);
+              
+              if (user) {
+                console.log('👤 Setting up user data subscription...');
+                subscribeToUserData();
+              } else {
+                console.log('👻 Loading guest data...');
+                loadGuestData();
+              }
+              
+              // CRÍTICO: Finalizar el loading e inicializar
+              setInitialized(true);
+              setLoading(false);
+              
+              console.log('✅ Auth initialization completed');
+              
+            } catch (error) {
+              console.error('❌ Auth initialization error:', error);
+              setLoading(false);
+              setInitialized(true);
             }
-            setInitialized(true);
           });
         },
 
@@ -528,7 +548,13 @@ export const useAppStore = create<AppState>()(
         }),
         subscribeToUserData: () => {
           const { user, setTransactions, setGoals, setBudgets } = get();
-          if (!user || !user.emailVerified) {
+          console.log('🔄 subscribeToUserData called for user:', user?.email);
+          
+          if (!user) {
+            console.log('❌ No user found in subscribeToUserData');
+            return () => {};
+          }
+          if (!user.emailVerified) {
               setTransactions([]);
               setGoals([]);
               setBudgets([]);
@@ -579,8 +605,10 @@ export const useAppStore = create<AppState>()(
           };
         },
         loadGuestData: () => {
+          console.log('📦 Loading guest data...');
           try {
             const data = localStorage.getItem(GUEST_DATA_KEY);
+            console.log('📦 Guest data found:', !!data);
             if (data) {
               const parsedData = JSON.parse(data);
               set((state) => {
