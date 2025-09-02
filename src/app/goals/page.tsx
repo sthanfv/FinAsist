@@ -1,3 +1,4 @@
+
 "use client";
 import { useState } from 'react';
 import { ModernLayout } from '@/components/layout/modern-layout';
@@ -7,12 +8,13 @@ import { Button } from '@/components/ui/button';
 import BackButton from '@/components/BackButton';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
-import { useGoals } from '@/store/selectors';
+import { useBalance, useGoals } from '@/store/selectors';
 import type { Goal } from '@/store/useAppStore';
 import { NotificationSystem } from '@/components/ui/toast-system';
 
 export default function GoalsPage() {
     const goals = useGoals();
+    const balance = useBalance();
     const { addGoal, addTransaction, updateGoal, deleteGoal } = useAppStore();
     const [isFormVisible, setIsFormVisible] = useState(false);
 
@@ -25,6 +27,12 @@ export default function GoalsPage() {
         const goal = goals.find(g => g.id === goalId);
         if (!goal) return;
 
+        // VERIFICACIÓN DE SALDO
+        if (amount > balance) {
+            NotificationSystem.error('No tienes saldo suficiente para realizar este abono');
+            return;
+        }
+
         const newCurrentAmount = goal.currentAmount + amount;
         
         // No permitir sobrepasar la meta
@@ -34,10 +42,8 @@ export default function GoalsPage() {
         }
 
         try {
-            // 1. Actualizar el monto de la meta
-            await updateGoal(goalId, { currentAmount: newCurrentAmount });
-
-            // 2. Crear una transacción de gasto para registrar el ahorro
+            // 1. Crear una transacción de gasto para registrar el ahorro
+            // Se hace primero para asegurar que el dinero se descuenta del balance
             await addTransaction({
                 description: `Ahorro para meta: ${goal.name}`,
                 amount,
@@ -45,6 +51,9 @@ export default function GoalsPage() {
                 category: 'Ahorro a Meta',
                 date: new Date().toISOString().split('T')[0]
             });
+
+            // 2. Actualizar el monto de la meta
+            await updateGoal(goalId, { currentAmount: newCurrentAmount });
 
             NotificationSystem.success(`Se añadieron ${amount.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })} a tu meta`);
         } catch (error) {
