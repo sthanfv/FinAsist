@@ -10,9 +10,9 @@ El proyecto está diseñado para ser funcional tanto para **usuarios registrados
 
 *   **Gestión de Transacciones**: Registro, edición y eliminación de ingresos y gastos, con una interfaz virtualizada para manejar grandes volúmenes de datos sin pérdida de rendimiento.
 *   **Metas de Ahorro**: Creación y seguimiento de objetivos financieros.
-*   **Asistente con IA**: Recomendaciones financieras personalizadas y contextuales basadas en el estado financiero del usuario.
+*   **Asistente con IA**: Recomendaciones financieras personalizadas y categorización automática de transacciones.
 *   **Sistema de Alertas Proactivo**: Detecta gastos anómalos y metas en riesgo, notificando al usuario a través de alertas en el dashboard.
-*   **Dashboard Interactivo**: Visualización rápida del balance, gastos por categoría y estado de las metas.
+*   **Dashboard Interactivo y Moderno**: Visualización rápida del balance, gastos por categoría y estado de las metas con un diseño de "efecto cristal" (glassmorphism).
 *   **Simulador Bancario**: Un conjunto de calculadoras profesionales para simular productos como CDTs, préstamos, tarjetas de crédito e inversiones.
 *   **Navegación Profesional**: Un panel lateral colapsable que maximiza el espacio de contenido y ofrece una experiencia de usuario moderna.
 *   **Modo Invitado**: Funcionalidad completa sin necesidad de registro.
@@ -31,7 +31,7 @@ El proyecto está diseñado para ser funcional tanto para **usuarios registrados
 | **Componentes de UI**       | [shadcn/ui](https://ui.shadcn.com/)                                      | Componentes accesibles, personalizables y reutilizables.           |
 | **Animaciones**           | [Framer Motion](https://www.framer.com/motion/)                          | Animaciones fluidas para una mejor experiencia de usuario.         |
 | **Backend & Base de Datos** | [Firebase (Firestore & Authentication)](https://firebase.google.com/) | Autenticación de usuarios y base de datos NoSQL en tiempo real.  |
-| **Inteligencia Artificial** | [Genkit (Google AI)](https://firebase.google.com/docs/genkit)      | Orquestación de flujos de IA generativa.        |
+| **Inteligencia Artificial** | [Genkit (Google AI)](https://firebase.google.com/docs/genkit)      | Orquestación de flujos de IA generativa del lado del servidor.        |
 | **Gestión de Estado**       | [Zustand](https://github.com/pmndrs/zustand)                             | Gestor de estado global optimizado con selectores `shallow`.       |
 | **Lógica de Negocio**     | **Motor Financiero (`FinancialEngine`)**                                 | Encapsulación de cálculos complejos, proyecciones y alertas.     |
 | **Optimización Frontend** | **`@tanstack/react-virtual` & `React.memo`**                             | Virtualización de listas y memoización para alto rendimiento.    |
@@ -54,30 +54,34 @@ graph TD
         D[Layout / Páginas]
     end
 
-    subgraph "Lógica de Negocio"
+    subgraph "Lógica de Negocio (Frontend)"
         E[Hooks Personalizados<br/>(useFinancialAnalysis, useSmartCategorization)]
+    end
+    
+    subgraph "Lógica de Negocio (Backend)"
         F[FinancialEngine / BankingEngine]
-        G[Acciones de Zustand]
+        J[Flujos de IA (Genkit)]
     end
 
-    subgraph "Backend & Servicios"
+    subgraph "Persistencia de Datos"
         H(Firebase Auth)
         I(Firestore DB)
-        J[Flujos de IA (Genkit)]
         K[LocalStorage]
     end
-
+    
     A --> B
     B --> E
-    B --> G
+    E -- Llama a Flujo de Servidor --> J
+    J -- Ejecuta lógica de backend y devuelve --> E
+    E -- Actualiza Estado --> G[Acciones de Zustand]
+    G --> C
     C --> D
     D --> B
-    E --> J
-    E --> F
-    J -- Devuelve a --> E
-    F -- Devuelve a --> E
-    E -- Actualiza Estado --> G
-    G --> C
+    
+    subgraph "Cálculos"
+        E --> F
+        F -- Devuelve a --> E
+    end
     
     subgraph "Persistencia de Datos"
         G -- Si usuario está logueado --> I
@@ -109,8 +113,8 @@ src/
 ├── components/           # Componentes reutilizables
 │   ├── auth/
 │   ├── assistant/
-│   ├── dashboard/
-│   ├── layout/           # Nuevo ModernLayout
+│   ├── dashboard/        # Componentes del dashboard rediseñado
+│   ├── layout/           # Nuevo ModernLayout flotante y responsivo
 │   └── ui/               # Componentes base de shadcn/ui
 ├── store/                # Gestor de estado global
 │   ├── useAppStore.ts
@@ -139,11 +143,13 @@ El estado global, gestionado con Zustand, ha sido optimizado para evitar re-rend
 1.  **Selectores con `shallow`**: En `src/store/selectors.ts`, hemos creado hooks específicos como `useTransactions` o `useGoals`. Estos hooks utilizan el comparador `shallow` de Zustand. Esto significa que un componente que use `useTransactions` solo se volverá a renderizar si el array de transacciones en sí cambia (se añade o elimina un elemento), pero no si cambia otra parte del estado como `user` o `goals`.
 2.  **Cálculo Derivado y Centralizado**: El balance del usuario se calcula dinámicamente (`deriva`) a partir de la lista de transacciones usando el hook `useBalance`. Esto elimina la necesidad de sincronizar el balance y previene errores de estado inconsistente.
 
-### 4.3. Optimización de Renderizado en la UI
+### 4.3. Layout y Optimización de Renderizado en la UI
 
+*   **Layout Moderno y Flotante**: Se ha implementado un `ModernLayout` con una cabecera flotante que utiliza efectos de desenfoque (`backdrop-blur`) para una apariencia moderna.
+*   **Panel Lateral Responsivo**: El panel lateral es totalmente responsivo:
+    *   **En Escritorio**: Se mantiene fijo a la izquierda, empujando el contenido principal.
+    *   **En Móvil/Tablet**: Funciona como un `overlay` que se despliega desde la izquierda, con un botón animado de menú/cierre para una experiencia nativa.
 *   **Virtualización de Listas (`@tanstack/react-virtual`)**: Para la tabla de transacciones, que puede crecer indefinidamente, se implementó la virtualización. Solo se renderizan las filas visibles en pantalla, manteniendo la aplicación fluida incluso con un historial de transacciones enorme.
-*   **Panel Lateral Colapsable**: El layout principal (`ModernLayout`) ahora cuenta con un panel de navegación lateral que puede colapsarse para mostrar solo íconos, maximizando el espacio disponible para el contenido y ofreciendo una experiencia de usuario limpia y moderna.
-*   **Memoización (`React.memo` y `useMemo`)**: Componentes costosos como los gráficos están envueltos en `React.memo`. Los cálculos complejos dentro de los componentes se envuelven en el hook `useMemo` para cachear sus resultados.
 *   **Error Boundaries**: El Dashboard está envuelto en un `ErrorBoundary` personalizado. Si ocurre un error de renderizado, la aplicación no se bloquea y muestra un mensaje amigable.
 
 ---
@@ -170,33 +176,37 @@ Toda la inteligencia financiera está encapsulada en `src/engine/FinancialEngine
 *   **Authentication**: Gestiona el registro e inicio de sesión de usuarios con correo y contraseña.
 *   **Firestore**: Base de datos NoSQL con una estructura escalable y reglas de seguridad robustas que garantizan que un usuario solo puede acceder a sus propios datos.
 
-### 6.2. IA con Genkit y Next.js Server Actions
+### 6.2. Arquitectura de IA Segura con Genkit
 
-El asistente de IA utiliza flujos de Genkit para interactuar con modelos de lenguaje de Google. Para cumplir con las estrictas reglas de los Server Actions de Next.js (`"use server"`), la arquitectura de IA ha sido refactorizada:
+La funcionalidad de IA, como la categorización automática de transacciones, se ha implementado siguiendo un patrón seguro y robusto del lado del servidor.
 
-1.  **`src/ai/schemas.ts`**: Un archivo central que contiene todos los esquemas de Zod y las definiciones de tipos de TypeScript. Este archivo **no** usa `"use server"`, por lo que puede exportar tipos y objetos libremente.
-2.  **`src/ai/flows/*.ts`**: Cada archivo de flujo (ej. `categorizationFlow.ts`) contiene la directiva `"use server"` y exporta **únicamente una función asíncrona** que envuelve la definición y ejecución del flujo de Genkit. Esto resuelve los errores de compilación de Next.js.
-3.  **`src/hooks/useSmartCategorization.ts`**: Un hook de cliente que llama a la función de flujo del servidor para obtener sugerencias de IA, desacoplando la UI de la lógica de backend.
+**Problema Resuelto**: Se eliminó un `anti-pattern` que intentaba usar la clave de API de IA en el lado del cliente, lo cual es un grave riesgo de seguridad y causaba errores en Next.js.
 
-**Ejemplo del prompt avanzado:**
+**Solución Arquitectónica:**
+
+1.  **Flujos Exclusivos del Servidor**: Toda la lógica que interactúa con las APIs de IA reside en los flujos de Genkit (`src/ai/flows/*.ts`). Estos archivos se ejecutan **únicamente en el servidor de Next.js**.
+2.  **Llamada Segura desde el Frontend**: El frontend (a través de hooks como `useSmartCategorization`) llama a estos flujos como si fueran endpoints de una API. Next.js gestiona esta comunicación de forma segura.
+3.  **Seguridad de Claves**: Las claves de API (ej. `GEMINI_API_KEY`) se almacenan de forma segura como variables de entorno en el servidor y **nunca se exponen al navegador**.
+4.  **Robustez con Zod**: Se utilizan esquemas de `Zod` (`src/ai/schemas.ts`) para validar las entradas y, más importante, para forzar a la IA a devolver los datos en un formato JSON estructurado y predecible.
+
+**Ejemplo del prompt de categorización (`categorizationFlow.ts`):**
 ```handlebars
-Eres un asistente financiero experto. Analiza los datos y da una lista de recomendaciones cortas y útiles.
+Analiza esta transacción y sugiere la categoría más apropiada:
+      
+Descripción: "{{description}}"
+Monto: {{amount}}
 
-Saldo actual: {{{balance}}}
+Categorías disponibles: ${categories.join(', ')}
 
-Transacciones Recientes:
-{{#each transactions}}
-- Categoría: {{{category}}}, Monto: {{{amount}}}, Tipo: {{{type}}}
+{{#if userHistory}}
+Historial del usuario (últimas transacciones para dar contexto):
+{{#each userHistory}}
+- "{{this.description}}" fue categorizado como {{this.category}}
 {{/each}}
+{{/if}}
 
-Metas de Ahorro:
-{{#each goals}}
-- Meta: "{{{name}}}", Progreso: {{progress}}%
-{{/each}}
-
-Tu análisis inicial indica una tasa de ahorro del {{analysis.metrics.savingsRate}}% y un nivel de riesgo {{analysis.riskProfile.level}}.
-
-Basado en TODO esto, genera una lista de 2 a 4 recomendaciones clave.
+Basado en la descripción y el historial, proporciona la categoría, un nivel de confianza (confidence) de 0 a 1, y una razón (reason) corta para tu elección.
+Si la descripción sugiere un ingreso (salario, pago, etc.), la categoría debe ser 'Ingreso'.
 ```
 
 ---
@@ -208,3 +218,4 @@ Basado en TODO esto, genera una lista de 2 a 4 recomendaciones clave.
 *   **Notificaciones Push**: Utilizar Firebase Cloud Messaging para enviar alertas importantes incluso cuando el usuario no está en la aplicación.
 *   **Pruebas (Testing)**: Implementar tests unitarios (con Jest/Vitest) para el `FinancialEngine` y tests E2E (con Playwright/Cypress) para los flujos críticos.
 *   **Internacionalización (i18n)**: Adaptar la aplicación para soportar múltiples idiomas y monedas.
+```
