@@ -61,26 +61,26 @@ export const ModernDashboard = () => {
       animate="visible"
       className="space-y-8"
     >
-      {/* Hero Section con métricas principales */}
+      {/* Hero Section - MEJORADO CON SEPARACIÓN */}
       <motion.div variants={itemVariants} className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 rounded-3xl" />
-        <div className="relative p-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {/* Balance Principal - MEJORADO */}
+        <div className="relative p-8 lg:p-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 lg:gap-10">
+            {/* Balance Principal - CON MEJOR SEPARACIÓN */}
             <div className="md:col-span-2">
               <motion.div
-                whileHover={{ scale: 1.02, y: -4 }}
-                className="relative bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl rounded-3xl p-8 border border-white/30 dark:border-slate-700/30 shadow-2xl shadow-green-500/10 overflow-hidden"
+                whileHover={{ scale: 1.02, y: -6 }}
+                className="relative bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border-2 border-white/40 dark:border-slate-700/40 shadow-2xl shadow-green-500/20 overflow-hidden"
               >
-                {/* Efectos de fondo animados */}
-                <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5" />
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-400/20 to-emerald-600/20 rounded-full blur-xl" />
+                {/* Efectos de fondo más sutiles */}
+                <div className="absolute inset-0 bg-gradient-to-br from-green-500/8 to-emerald-500/8" />
+                <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-green-400/15 to-emerald-600/15 rounded-full blur-2xl" />
                 
-                <div className="relative flex items-center justify-between mb-6">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Balance Total</p>
+                <div className="relative flex items-center justify-between mb-8">
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground mb-3">Balance Total</p>
                     <motion.h2 
-                      className="text-5xl font-black bg-gradient-to-r from-green-600 via-emerald-500 to-green-700 bg-clip-text text-transparent"
+                      className="text-5xl lg:text-6xl font-black bg-gradient-to-r from-green-600 via-emerald-500 to-green-700 bg-clip-text text-transparent"
                       initial={{ scale: 0.8 }}
                       animate={{ scale: 1 }}
                       transition={{ type: "spring", bounce: 0.3 }}
@@ -89,21 +89,21 @@ export const ModernDashboard = () => {
                     </motion.h2>
                   </div>
                   <motion.div 
-                    className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl flex items-center justify-center shadow-lg shadow-green-500/30"
-                    whileHover={{ rotate: 10 }}
+                    className="w-24 h-24 bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl flex items-center justify-center shadow-xl shadow-green-500/40"
+                    whileHover={{ rotate: 10, scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
                   >
-                    <DollarSign className="h-10 w-10 text-white" />
+                    <DollarSign className="h-12 w-12 text-white" />
                   </motion.div>
                 </div>
                 
-                <div className="relative flex items-center gap-3">
-                  <Badge className="bg-green-100 text-green-700 border-green-200 px-3 py-1">
+                <div className="relative flex items-center gap-4">
+                  <Badge className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800 px-4 py-2 text-sm">
                     <TrendingUp className="h-4 w-4 mr-2" />
                     +12.5% este mes
                   </Badge>
                   <motion.div 
-                    className="flex items-center gap-1 text-xs text-muted-foreground"
+                    className="flex items-center gap-2 text-xs text-muted-foreground"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
