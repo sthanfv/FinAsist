@@ -23,6 +23,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Transaction } from "@/store/useAppStore";
 import { Textarea } from "../ui/textarea";
+import { useEffect, useState } from "react";
+import { Sparkles, Loader2 } from "lucide-react";
+import { useDebounce } from "use-debounce";
+import { useSmartCategorization } from "@/hooks/useSmartCategorization";
 
 const formSchema = z.object({
   date: z.string().min(1, "La fecha es requerida."),
@@ -48,9 +52,30 @@ export default function AddTransactionForm({ onAddTransaction }: AddTransactionF
     },
   });
 
+  const { suggestCategory, isLoading: isCategorizing } = useSmartCategorization();
+  const [isAiPowered, setIsAiPowered] = useState(false);
+  const descriptionValue = form.watch("description");
+  const amountValue = form.watch("amount");
+  const [debouncedDescription] = useDebounce(descriptionValue, 500);
+
+  useEffect(() => {
+    const handleSuggestion = async () => {
+      if (debouncedDescription && amountValue > 0) {
+        setIsAiPowered(false);
+        const result = await suggestCategory(debouncedDescription, amountValue);
+        if (result && result.category !== 'Otros' && result.confidence > 0.7) {
+          form.setValue("category", result.category, { shouldValidate: true });
+          setIsAiPowered(true);
+        }
+      }
+    };
+    handleSuggestion();
+  }, [debouncedDescription, amountValue, form, suggestCategory]);
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     onAddTransaction(values);
     form.reset();
+    setIsAiPowered(false);
   }
 
   return (
@@ -80,7 +105,13 @@ export default function AddTransactionForm({ onAddTransaction }: AddTransactionF
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Categoría</FormLabel>
+                    <FormLabel>
+                      <span className="flex items-center gap-2">
+                        Categoría
+                        {isCategorizing && <Loader2 className="h-4 w-4 animate-spin" />}
+                        {isAiPowered && <Sparkles className="h-4 w-4 text-primary" />}
+                      </span>
+                    </FormLabel>
                     <FormControl>
                       <Input placeholder="Ej: Comida, Ocio" {...field} />
                     </FormControl>

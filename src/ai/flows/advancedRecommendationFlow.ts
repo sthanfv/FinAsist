@@ -74,6 +74,9 @@ const advancedRecommendationFlow = ai.defineFlow(
   },
   async (input) => {
     const { output } = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('No se recibió respuesta del modelo de IA');
+    }
+    return output;
   }
 );
