@@ -42,26 +42,26 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
       <motion.header 
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className="fixed top-4 left-4 right-4 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border border-slate-200/50 dark:border-slate-700/50 rounded-2xl shadow-lg"
+        className="fixed top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-4 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border border-slate-200/50 dark:border-slate-700/50 rounded-xl sm:rounded-2xl shadow-lg"
       >
-        <div className="flex items-center justify-between px-6 py-4">
+        <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4">
           {/* Left Side */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="lg:hidden"
+              className="lg:hidden p-2"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
             
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">F</span>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xs sm:text-sm">F</span>
               </div>
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <div className="hidden sm:block">
+                <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                   FinAssist
                 </h1>
                 <p className="text-xs text-muted-foreground">
@@ -70,9 +70,9 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
               </div>
             </div>
           </div>
-          {/* Center - Balance prominente */}
+          {/* Center - Balance solo en desktop */}
           <motion.div 
-            className="hidden md:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-xl border border-green-200/50"
+            className="hidden lg:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-xl border border-green-200/50"
             whileHover={{ scale: 1.02 }}
           >
             <TrendingUp className="h-5 w-5 text-green-600" />
@@ -83,22 +83,22 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
               </p>
             </div>
           </motion.div>
-          {/* Right Side - Quick Actions */}
-          <div className="flex items-center gap-2">
+          {/* Right Side */}
+          <div className="flex items-center gap-1 sm:gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setQuickActionsOpen(!quickActionsOpen)}
-              className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0 hover:shadow-lg"
+              className="gap-1 sm:gap-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0 hover:shadow-lg px-2 sm:px-3 py-1 sm:py-2"
             >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Acciones</span>
+              <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline text-xs sm:text-sm">Acciones</span>
+              <span className="sm:hidden text-xs">+</span>
             </Button>
             
             <ThemeToggle />
-
-            <Button variant="ghost" size="sm">
-              <User className="h-5 w-5" />
+            <Button variant="ghost" size="sm" className="p-1 sm:p-2">
+              <User className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
           </div>
         </div>

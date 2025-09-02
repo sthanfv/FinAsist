@@ -180,8 +180,8 @@ export const ModernDashboard = () => {
         </div>
       </motion.div>
 
-      {/* Grid de Widgets */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
+      {/* Grid de Widgets - MÓVIL OPTIMIZADO */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-10">
         {/* Tasa de Ahorro - MEJORADA */}
         <motion.div variants={itemVariants}>
           <Card className="relative bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800 overflow-hidden">
