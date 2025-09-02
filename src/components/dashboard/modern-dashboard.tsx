@@ -13,12 +13,20 @@ import { useAppStore } from '@/store/useAppStore';
 import { useFinancialAnalysis } from '@/hooks/useFinancialAnalysis';
 import { useBalance, useTransactions, useGoals } from '@/store/selectors';
 import { cn } from '@/lib/utils';
+import UnifiedAssistant from '../assistant/UnifiedAssistant';
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import AddGoalForm from '../goals/AddGoalForm';
+import type { Goal } from '@/store/useAppStore';
 
 export const ModernDashboard = () => {
   const transactions = useTransactions();
   const goals = useGoals();
   const balance = useBalance();
   const analysis = useFinancialAnalysis();
+
+  const [isGoalModalOpen, setGoalModalOpen] = useState(false);
+  const addGoal = useAppStore(state => state.addGoal);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -53,8 +61,14 @@ export const ModernDashboard = () => {
 
   const savingsRate = thisMonthIncome > 0 ? 
     ((thisMonthIncome - thisMonthExpenses) / thisMonthIncome) * 100 : 0;
+  
+  const handleGoalAdded = (newGoal: Omit<Goal, 'id' | 'createdAt' | 'currentAmount'>) => {
+    addGoal({...newGoal, currentAmount: 0});
+    setGoalModalOpen(false);
+  };
 
   return (
+    <>
     <motion.div
       variants={containerVariants}
       initial="hidden"
@@ -215,7 +229,7 @@ export const ModernDashboard = () => {
                   <p className="text-sm text-muted-foreground">Este mes</p>
                 </div>
                 <div className="relative">
-                  <Progress value={Math.min(savingsRate, 100)} className="h-3 bg-purple-100 dark:bg-purple-900" />
+                  <Progress value={Math.max(0, Math.min(savingsRate, 100))} className="h-3 bg-purple-100 dark:bg-purple-900" />
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full opacity-20" />
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground">
@@ -284,7 +298,7 @@ export const ModernDashboard = () => {
                     </motion.div>
                   ))}
                 </div>
-                <Button variant="outline" size="sm" className="w-full gap-2 border-blue-200 hover:bg-blue-50">
+                <Button variant="outline" size="sm" className="w-full gap-2 border-blue-200 hover:bg-blue-50" onClick={() => setGoalModalOpen(true)}>
                   <Plus className="h-4 w-4" />
                   Nueva Meta
                 </Button>
@@ -318,20 +332,12 @@ export const ModernDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="relative">
-              <div className="space-y-4">
-                <motion.div 
-                  className="text-sm text-muted-foreground p-3 bg-white/50 dark:bg-slate-800/50 rounded-lg backdrop-blur-sm"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  "Basándome en tus patrones de gasto, podrías ahorrar $150,000 reduciendo gastos de entretenimiento."
-                </motion.div>
-                <Button className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 gap-2 shadow-lg shadow-pink-500/25">
-                  <Sparkles className="h-4 w-4" />
-                  Obtener Consejo
-                </Button>
-              </div>
+              <UnifiedAssistant 
+                balance={balance}
+                transactions={transactions}
+                goals={goals}
+                isGlobal={true}
+              />
             </CardContent>
           </Card>
         </motion.div>
@@ -389,5 +395,14 @@ export const ModernDashboard = () => {
         </Card>
       </motion.div>
     </motion.div>
+    <Dialog open={isGoalModalOpen} onOpenChange={setGoalModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+              <DialogTitle>Nueva Meta</DialogTitle>
+          </DialogHeader>
+           <AddGoalForm onAddGoal={handleGoalAdded} />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
