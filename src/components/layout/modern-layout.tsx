@@ -211,8 +211,8 @@ export const ModernLayout = ({ children }: ModernLayoutProps) => {
       </AnimatePresence>
       {/* Main Content */}
       <main className={cn(
-        "transition-all duration-300 pt-28 pb-8",
-        sidebarCollapsed ? "pl-24 pr-8" : "pl-80 pr-8"
+        "transition-all duration-300 pt-28 pb-6 px-4 sm:px-6 md:px-8",
+        sidebarCollapsed ? "lg:pl-24" : "lg:pl-80"
       )}>
         {children}
       </main>

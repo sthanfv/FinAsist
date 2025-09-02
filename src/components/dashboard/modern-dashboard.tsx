@@ -1,4 +1,3 @@
-
 'use client';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,26 +60,26 @@ export const ModernDashboard = () => {
       animate="visible"
       className="space-y-8"
     >
-      {/* Hero Section - MEJORADO CON SEPARACIÓN */}
+      {/* Hero Section - OPTIMIZADO MÓVIL */}
       <motion.div variants={itemVariants} className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 rounded-3xl" />
-        <div className="relative p-8 lg:p-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 lg:gap-10">
-            {/* Balance Principal - CON MEJOR SEPARACIÓN */}
-            <div className="md:col-span-2">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 rounded-2xl sm:rounded-3xl" />
+        <div className="relative p-4 sm:p-6 lg:p-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-10">
+            
+            {/* Balance Principal - MÓVIL OPTIMIZADO */}
+            <div className="sm:col-span-2 lg:col-span-2">
               <motion.div
                 whileHover={{ scale: 1.02, y: -6 }}
-                className="relative bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border-2 border-white/40 dark:border-slate-700/40 shadow-2xl shadow-green-500/20 overflow-hidden"
+                className="relative bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-10 border-2 border-white/40 dark:border-slate-700/40 shadow-2xl shadow-green-500/20 overflow-hidden"
               >
-                {/* Efectos de fondo más sutiles */}
                 <div className="absolute inset-0 bg-gradient-to-br from-green-500/8 to-emerald-500/8" />
-                <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-green-400/15 to-emerald-600/15 rounded-full blur-2xl" />
+                <div className="absolute top-0 right-0 w-32 h-32 sm:w-40 sm:h-40 bg-gradient-to-br from-green-400/15 to-emerald-600/15 rounded-full blur-2xl" />
                 
-                <div className="relative flex items-center justify-between mb-8">
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground mb-3">Balance Total</p>
+                <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-8 gap-4">
+                  <div className="space-y-1 sm:space-y-2">
+                    <p className="text-xs sm:text-sm text-muted-foreground">Balance Total</p>
                     <motion.h2 
-                      className="text-5xl lg:text-6xl font-black bg-gradient-to-r from-green-600 via-emerald-500 to-green-700 bg-clip-text text-transparent"
+                      className="text-3xl sm:text-4xl lg:text-6xl font-black bg-gradient-to-r from-green-600 via-emerald-500 to-green-700 bg-clip-text text-transparent"
                       initial={{ scale: 0.8 }}
                       animate={{ scale: 1 }}
                       transition={{ type: "spring", bounce: 0.3 }}
@@ -89,45 +88,46 @@ export const ModernDashboard = () => {
                     </motion.h2>
                   </div>
                   <motion.div 
-                    className="w-24 h-24 bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl flex items-center justify-center shadow-xl shadow-green-500/40"
+                    className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-xl shadow-green-500/40"
                     whileHover={{ rotate: 10, scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
                   >
-                    <DollarSign className="h-12 w-12 text-white" />
+                    <DollarSign className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 text-white" />
                   </motion.div>
                 </div>
                 
-                <div className="relative flex items-center gap-4">
-                  <Badge className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800 px-4 py-2 text-sm">
-                    <TrendingUp className="h-4 w-4 mr-2" />
+                <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+                  <Badge className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800 px-3 py-1 text-xs sm:text-sm">
+                    <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                     +12.5% este mes
                   </Badge>
                   <motion.div 
-                    className="flex items-center gap-2 text-xs text-muted-foreground"
+                    className="flex items-center gap-1 sm:gap-2 text-xs text-muted-foreground"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
                   >
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                    Actualizado hace un momento
+                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse" />
+                    <span className="hidden sm:inline">Actualizado hace un momento</span>
+                    <span className="sm:hidden">Actualizado</span>
                   </motion.div>
                 </div>
               </motion.div>
             </div>
-            {/* Ingresos del mes - MEJOR PROPORCIÓN */}
+            {/* Ingresos - MÓVIL OPTIMIZADO */}
             <motion.div
-              whileHover={{ scale: 1.03, y: -8 }}
-              className="relative bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-3xl p-6 lg:p-8 border-2 border-white/40 dark:border-slate-700/40 shadow-2xl shadow-blue-500/15 overflow-hidden min-h-[160px]"
+              whileHover={{ scale: 1.03, y: -6 }}
+              className="relative bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border-2 border-white/40 dark:border-slate-700/40 shadow-2xl shadow-blue-500/15 overflow-hidden min-h-[120px] sm:min-h-[140px] lg:min-h-[160px]"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/8 to-cyan-500/8" />
-              <div className="absolute -top-6 -right-6 w-28 h-28 bg-gradient-to-br from-blue-400/20 to-cyan-500/20 rounded-full blur-xl" />
+              <div className="absolute -top-4 -right-4 sm:-top-6 sm:-right-6 w-20 h-20 sm:w-28 sm:h-28 bg-gradient-to-br from-blue-400/20 to-cyan-500/20 rounded-full blur-xl" />
               
               <div className="relative h-full flex flex-col justify-between">
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start justify-between mb-2 sm:mb-4">
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Ingresos</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Ingresos</p>
                     <motion.p 
-                      className="text-3xl lg:text-4xl font-bold text-blue-600 dark:text-blue-400"
+                      className="text-xl sm:text-2xl lg:text-4xl font-bold text-blue-600 dark:text-blue-400"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.2 }}
@@ -137,28 +137,28 @@ export const ModernDashboard = () => {
                   </div>
                   <motion.div
                     whileHover={{ scale: 1.15, rotate: 45 }}
-                    className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg shadow-blue-500/30"
+                    className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl sm:rounded-2xl shadow-lg shadow-blue-500/30"
                   >
-                    <ArrowUpRight className="h-6 w-6 text-white" />
+                    <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-white" />
                   </motion.div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-auto">Este mes</p>
               </div>
             </motion.div>
-            {/* Gastos del mes - MEJOR PROPORCIÓN */}
+            {/* Gastos - MÓVIL OPTIMIZADO */}
             <motion.div
-              whileHover={{ scale: 1.03, y: -8 }}
-              className="relative bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-3xl p-6 lg:p-8 border-2 border-white/40 dark:border-slate-700/40 shadow-2xl shadow-red-500/15 overflow-hidden min-h-[160px]"
+              whileHover={{ scale: 1.03, y: -6 }}
+              className="relative bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border-2 border-white/40 dark:border-slate-700/40 shadow-2xl shadow-red-500/15 overflow-hidden min-h-[120px] sm:min-h-[140px] lg:min-h-[160px]"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-red-500/8 to-pink-500/8" />
-              <div className="absolute -top-6 -right-6 w-28 h-28 bg-gradient-to-br from-red-400/20 to-pink-500/20 rounded-full blur-xl" />
+              <div className="absolute -top-4 -right-4 sm:-top-6 sm:-right-6 w-20 h-20 sm:w-28 sm:h-28 bg-gradient-to-br from-red-400/20 to-pink-500/20 rounded-full blur-xl" />
               
               <div className="relative h-full flex flex-col justify-between">
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start justify-between mb-2 sm:mb-4">
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Gastos</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Gastos</p>
                     <motion.p 
-                      className="text-3xl lg:text-4xl font-bold text-red-500 dark:text-red-400"
+                      className="text-xl sm:text-2xl lg:text-4xl font-bold text-red-500 dark:text-red-400"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.3 }}
@@ -168,9 +168,9 @@ export const ModernDashboard = () => {
                   </div>
                   <motion.div
                     whileHover={{ scale: 1.15, rotate: -45 }}
-                    className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-lg shadow-red-500/30"
+                    className="p-2 sm:p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-xl sm:rounded-2xl shadow-lg shadow-red-500/30"
                   >
-                    <ArrowDownRight className="h-6 w-6 text-white" />
+                    <ArrowDownRight className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-white" />
                   </motion.div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-auto">Este mes</p>
@@ -179,6 +179,7 @@ export const ModernDashboard = () => {
           </div>
         </div>
       </motion.div>
+
       {/* Grid de Widgets */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
         {/* Tasa de Ahorro - MEJORADA */}
