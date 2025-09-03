@@ -15,9 +15,7 @@
     "build:prod": "NODE_ENV=production next build",
     "preview": "npm run build:prod && npm run start",
     "deploy": "npm run typecheck && npm run build:prod",
-    "postbuild": "next-sitemap",
-    "size-check": "npx bundlesize",
-    "postinstall": "patch-package"
+    "postbuild": "patch-package"
   },
   "dependencies": {
     "@genkit-ai/flow": "latest",
