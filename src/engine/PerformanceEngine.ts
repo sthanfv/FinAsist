@@ -4,6 +4,18 @@ import { ComputationCache } from './cache/ComputationCache';
 import { MathUtils } from './utils/MathUtils';
 import { workerManager } from './workers/WorkerManager';
 import { globalCache } from './cache/MemoryCache';
+
+// NUEVO: Cache inteligente con TTL
+interface CacheConfig {
+  ttl: number;
+  maxSize: number;
+  compressionThreshold: number;
+}
+const CACHE_CONFIG: CacheConfig = {
+  ttl: 300000, // 5 minutos
+  maxSize: 50, // máximo 50 análisis cacheados
+  compressionThreshold: 1000 // comprimir si >1000 transacciones
+};
 interface PerformanceMetrics {
   calculationTime: number;
   cacheHitRate: number;
@@ -182,19 +194,38 @@ export class PerformanceEngine {
   }
   // Decidir si usar Worker basado en la carga de trabajo
   private static shouldUseWorker(transactionCount: number): boolean {
-    // Usar Worker para datasets grandes o cuando hay múltiples cálculos pendientes
+    // Nuevo algoritmo más inteligente
     const workerStats = workerManager.getStats();
+    const memoryPressure = this.getMemoryPressure();
+    const cpuLoad = this.getCPULoad();
     
-    return (
-      transactionCount > 100 || // Datasets grandes
-      workerStats.pendingCalculations < 2 || // Worker no está sobrecargado
-      this.isMainThreadBusy() // Main thread está ocupado
-    );
+    // Factores de decisión mejorados
+    const factors = {
+      dataSize: transactionCount > 50 ? 30 : 0,
+      workerAvailability: workerStats.pendingCalculations < 3 ? 25 : 0,
+      memoryPressure: memoryPressure < 0.8 ? 25 : 0,
+      cpuLoad: cpuLoad < 0.7 ? 20 : 0
+    };
+    
+    const score = Object.values(factors).reduce((sum, val) => sum + val, 0);
+    return score >= 60; // 60% threshold
   }
-  private static isMainThreadBusy(): boolean {
-    // Detectar si el main thread está ocupado (simplificado)
-    return this.performanceMetrics.slice(-5).some(m => m.calculationTime > 100);
+  // NUEVAS funciones de soporte
+  private static getMemoryPressure(): number {
+    if (typeof window !== 'undefined' && 'memory' in performance) {
+      const memory = (performance as any).memory;
+      return memory.usedJSHeapSize / memory.jsHeapSizeLimit;
+    }
+    return 0.5; // fallback conservador
   }
+  private static getCPULoad(): number {
+    const recentMetrics = this.performanceMetrics.slice(-10);
+    if (recentMetrics.length === 0) return 0.5;
+    
+    const avgTime = recentMetrics.reduce((sum, m) => sum + m.calculationTime, 0) / recentMetrics.length;
+    return Math.min(avgTime / 200, 1); // normalizar a 0-1
+  }
+
   // Fallback para main thread
   private static async performMainThreadAnalysis(
     transactions: Transaction[],
@@ -222,7 +253,7 @@ export class PerformanceEngine {
         
         resolve(analysis);
       };
-      if ('requestIdleCallback' in window) {
+      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
         requestIdleCallback(callback);
       } else {
         setTimeout(callback, 0);
@@ -347,4 +378,5 @@ export class PerformanceEngine {
     console.log('🧹 Performance Engine cleaned up');
   }
 }
+    
     
