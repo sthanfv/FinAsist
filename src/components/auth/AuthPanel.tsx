@@ -251,7 +251,7 @@ export const AuthPanel = ({ initialMode = 'login' }: AuthPanelProps) => {
       await sendPasswordResetEmail(auth, data.email);
       toast.success('¡Email de recuperación enviado! Revisa tu bandeja de entrada.');
       setEmailSent(true);
-    } catch (error: any) => {
+    } catch (error: any) {
       let errorMessage = 'Error al enviar email';
       
       switch (error.code) {
@@ -277,7 +277,7 @@ export const AuthPanel = ({ initialMode = 'login' }: AuthPanelProps) => {
       const result = await signInWithPopup(auth, provider);
       toast.success(`¡Bienvenido ${result.user.displayName}!`);
       router.push('/dashboard');
-    } catch (error: any) => {
+    } catch (error: any) {
       let errorMessage = 'Error con autenticación de Google';
       
       switch (error.code) {

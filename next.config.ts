@@ -39,7 +39,6 @@ let nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,
-  swcMinify: true,
 }
 
 if (process.env.ANALYZE === 'true') {
