@@ -39,6 +39,17 @@ let nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,
+
+  // NUEVO: Redirects para SEO
+  async redirects() {
+    return [
+      {
+        source: '/home',
+        destination: '/dashboard',
+        permanent: true,
+      },
+    ]
+  },
 }
 
 if (process.env.ANALYZE === 'true') {
