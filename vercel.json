@@ -4,7 +4,7 @@
   "outputDirectory": ".next",
   "installCommand": "npm install --production=false",
   "functions": {
-    "src/ai/**/*": {
+    "app/api/genkit/**/*.ts": {
       "maxDuration": 30
     }
   },
