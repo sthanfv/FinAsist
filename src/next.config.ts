@@ -38,7 +38,6 @@ let nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,
-  swcMinify: true,
 
   // NUEVO: Redirects para SEO
   async redirects() {
