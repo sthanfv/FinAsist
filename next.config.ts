@@ -1,11 +1,6 @@
 
 import type { NextConfig } from 'next';
 let nextConfig: NextConfig = {
-  experimental: {
-    turbo: {
-      resolveExtensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json']
-    },
-  },
   
   // NUEVO: Optimizaciones de producción
   compiler: {
