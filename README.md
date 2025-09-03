@@ -1,4 +1,5 @@
-# Informe Técnico del Proyecto: FinAssist
+# Informe Técnico
+del Proyecto: FinAssist
 
 ## 1. Descripción General
 
