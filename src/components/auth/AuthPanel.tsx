@@ -148,11 +148,21 @@ export const AuthPanel = ({ initialMode = 'login' }: AuthPanelProps) => {
   };
   const handleLogin = async (data: LoginForm) => {
     setLoading(true);
+    const loadingToast = toast.loading('Iniciando sesión...', {
+        duration: 10000,
+        description: 'Verificando credenciales'
+    });
     try {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       
+      toast.dismiss(loadingToast);
+      toast.loading('Verificando email...', { 
+        id: 'verification-check',
+        duration: 5000 
+      });
       // SOLUCIÓN: Refrescar el token para obtener el estado más reciente
       await userCredential.user.reload();
+      toast.dismiss('verification-check');
       
       // Verificar si el email está verificado DESPUÉS del reload
       if (!userCredential.user.emailVerified) {
@@ -165,6 +175,7 @@ export const AuthPanel = ({ initialMode = 'login' }: AuthPanelProps) => {
       toast.success('¡Bienvenido de vuelta!');
       router.push('/dashboard');
     } catch (error: any) {
+      toast.dismiss(loadingToast);
       let errorMessage = 'Error al iniciar sesión';
       
       switch (error.code) {
@@ -240,7 +251,7 @@ export const AuthPanel = ({ initialMode = 'login' }: AuthPanelProps) => {
       await sendPasswordResetEmail(auth, data.email);
       toast.success('¡Email de recuperación enviado! Revisa tu bandeja de entrada.');
       setEmailSent(true);
-    } catch (error: any) {
+    } catch (error: any) => {
       let errorMessage = 'Error al enviar email';
       
       switch (error.code) {
@@ -266,7 +277,7 @@ export const AuthPanel = ({ initialMode = 'login' }: AuthPanelProps) => {
       const result = await signInWithPopup(auth, provider);
       toast.success(`¡Bienvenido ${result.user.displayName}!`);
       router.push('/dashboard');
-    } catch (error: any) {
+    } catch (error: any) => {
       let errorMessage = 'Error con autenticación de Google';
       
       switch (error.code) {
@@ -554,6 +565,26 @@ export const AuthPanel = ({ initialMode = 'login' }: AuthPanelProps) => {
                         </p>
                       )}
                     </div>
+                    {/* NUEVO: Banner de verificación */}
+                    {verificationSent && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4"
+                      >
+                        <div className="flex items-center gap-3">
+                          <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                              Verificación pendiente
+                            </p>
+                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                              Revisa tu email y haz clic en el enlace de verificación. La página se actualizará automáticamente.
+                            </p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
                     <div className="flex justify-end">
                       <button
                         type="button"

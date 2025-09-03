@@ -1,61 +1,46 @@
-/** @type {import('next').NextConfig} */
-let nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
+
+import type { NextConfig } from 'next';
+let nextConfig: NextConfig = {
+  experimental: {
+    turbo: {
+      resolveExtensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json']
+    },
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  compress: true,
-  images: {
-    formats: ['image/webp', 'image/avif'],
-    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 días
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        port: '',
-        pathname: '/**',
-      },
-    ],
-  },
+  
+  // NUEVO: Optimizaciones de producción
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? {
       exclude: ['error', 'warn']
     } : false,
   },
+  
+  // MEJORADO: Headers de seguridad enterprise
   async headers() {
     return [
       {
         source: '/(.*)',
         headers: [
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          }
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
         ],
       },
-    ];
+    ]
   },
-};
+  
+  // MEJORADO: Optimización de imágenes
+  images: {
+    formats: ['image/webp', 'image/avif'],
+    minimumCacheTTL: 60,
+    dangerouslyAllowSVG: false,
+  },
+  
+  compress: true,
+  poweredByHeader: false,
+  reactStrictMode: true,
+  swcMinify: true,
+}
 
 if (process.env.ANALYZE === 'true') {
   const withBundleAnalyzer = require('@next/bundle-analyzer')({
@@ -64,6 +49,4 @@ if (process.env.ANALYZE === 'true') {
   nextConfig = withBundleAnalyzer(nextConfig);
 }
 
-module.exports = nextConfig;
-
-    
+export default nextConfig;
