@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,22 +21,23 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { auth, configureGoogleProvider } from '@/lib/firebase';
-import { 
-  ArrowLeft, 
-  Eye, 
-  EyeOff, 
-  Mail, 
-  Lock, 
-  Sparkles,
-  TrendingUp,
-  Shield,
-  Zap,
-  Chrome,
-  KeyRound,
-  CheckCircle,
-  AlertCircle,
-  User
-} from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+const ArrowLeft = dynamic(() => import('lucide-react').then(mod => mod.ArrowLeft), { ssr: false });
+const Eye = dynamic(() => import('lucide-react').then(mod => mod.Eye), { ssr: false });
+const EyeOff = dynamic(() => import('lucide-react').then(mod => mod.EyeOff), { ssr: false });
+const Mail = dynamic(() => import('lucide-react').then(mod => mod.Mail), { ssr: false });
+const Lock = dynamic(() => import('lucide-react').then(mod => mod.Lock), { ssr: false });
+const Sparkles = dynamic(() => import('lucide-react').then(mod => mod.Sparkles), { ssr: false });
+const TrendingUp = dynamic(() => import('lucide-react').then(mod => mod.TrendingUp), { ssr: false });
+const Shield = dynamic(() => import('lucide-react').then(mod => mod.Shield), { ssr: false });
+const Zap = dynamic(() => import('lucide-react').then(mod => mod.Zap), { ssr: false });
+const Chrome = dynamic(() => import('lucide-react').then(mod => mod.Chrome), { ssr: false });
+const KeyRound = dynamic(() => import('lucide-react').then(mod => mod.KeyRound), { ssr: false });
+const CheckCircle = dynamic(() => import('lucide-react').then(mod => mod.CheckCircle), { ssr: false });
+const AlertCircle = dynamic(() => import('lucide-react').then(mod => mod.AlertCircle), { ssr: false });
+const User = dynamic(() => import('lucide-react').then(mod => mod.User), { ssr: false });
+
 // Schemas de validación ultra-seguros
 const loginSchema = z.object({
   email: z.string()

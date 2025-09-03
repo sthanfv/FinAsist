@@ -1,11 +1,13 @@
 
 "use client";
 import { utils, writeFile } from 'xlsx';
-import { jsPDF } from 'jspdf';
 import { ChartComponent } from '@/components/dashboard/ChartComponent';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileDown, FileText } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+const jsPDF = dynamic(() => import('jspdf').then(mod => mod.jsPDF), { ssr: false });
 import 'jspdf-autotable'; // Import jspdf-autotable
 
 // Extend jsPDF interface
@@ -38,7 +40,8 @@ export default function ReportCard({ title, data, dataKey, xAxisKey, type, confi
     writeFile(wb, `${title.replace(/ /g, '_')}.xlsx`);
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
+    const { jsPDF } = await import('jspdf');
     const doc = new jsPDF();
     doc.setFontSize(18);
     doc.text(title, 14, 22);
